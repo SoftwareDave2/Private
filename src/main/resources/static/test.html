@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+<div>
+  <h1>
+    First Example:
+  </h1>
+  <p>Adding a User to the Database.</p>
+  <form action="http://localhost:8080/user/add" method="POST">
+    <input type="text" name="name" value="First">
+    <input type="email" name="email" value="someemail@someemailprovider.com">
+    <input type="submit" value="Submit">
+  </form>
+</div>
+
+<div>
+  <h1>
+    Second Example:
+  </h1>
+  <p>Adding a Display to the Database.</p>
+  <form action="http://localhost:8080/display/add" method="post">
+    <label for="brand">Brand:</label>
+    <input type="text" id="brand" name="brand" required><br><br>
+
+    <label for="model">Model:</label>
+    <input type="text" id="model" name="model" required><br><br>
+
+    <label for="width">Width:</label>
+    <input type="number" id="width" name="width" required><br><br>
+
+    <label for="height">Height:</label>
+    <input type="number" id="height" name="height" required><br><br>
+
+    <label for="orientation">Orientation:</label>
+    <input type="text" id="orientation" name="orientation" required><br><br>
+
+    <button type="submit">Save Display</button>
+  </form>
+</div>
+
+
+
+</body>
+</html>
