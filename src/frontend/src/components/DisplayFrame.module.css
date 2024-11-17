@@ -1,0 +1,9 @@
+.frame {
+    width: 9rem;
+    height: 16rem;
+    border-width: .4rem;
+}
+
+.name {
+    font-size: .6rem;
+}
