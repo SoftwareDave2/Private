@@ -5,6 +5,10 @@ import master.it_projekt_tablohm.repositories.DisplayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
 
 @Controller
 @RequestMapping(path = "/display")
@@ -13,7 +17,13 @@ public class DisplayController {
     private DisplayRepository displayRepository;
 
     @PostMapping(path = "/add")
-    public @ResponseBody String addDisplay (@RequestParam String brand, @RequestParam String model, @RequestParam Integer width, @RequestParam Integer height, @RequestParam String orientation) {
+    public @ResponseBody String addDisplay(
+            @RequestParam String brand,
+            @RequestParam String model,
+            @RequestParam Integer width,
+            @RequestParam Integer height,
+            @RequestParam String orientation,
+            @RequestParam String image_filename) {
 
         Display display = new Display();
         display.setBrand(brand);
@@ -21,6 +31,7 @@ public class DisplayController {
         display.setWidth(width);
         display.setHeight(height);
         display.setOrientation(orientation);
+        display.setImage_filename(image_filename);
         displayRepository.save(display);
         return "Saved";
     }

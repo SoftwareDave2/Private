@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Test</title>
+  <meta charset="UTF-8">
+  <title>Test</title>
 </head>
 <body>
 <div>
@@ -42,7 +42,18 @@
   </form>
 </div>
 
+<div>
+  <h1>
+    Third Example:
+  </h1>
+  <p>Uploading an Image.</p>
+  <form action="http://localhost:8080/image/upload" method="post" enctype="multipart/form-data">
+    <label for="image">Choose an image (PNG format only):</label>
+    <input type="file" id="image" name="image" accept=".png" required><br><br>
 
+    <button type="submit">Upload Image</button>
+  </form>
+</div>
 
 </body>
 </html>
