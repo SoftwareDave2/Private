@@ -23,7 +23,7 @@ public class DisplayController {
             @RequestParam Integer width,
             @RequestParam Integer height,
             @RequestParam String orientation,
-            @RequestParam String image_filename) {
+            @RequestParam String filename) {
 
         Display display = new Display();
         display.setBrand(brand);
@@ -31,9 +31,20 @@ public class DisplayController {
         display.setWidth(width);
         display.setHeight(height);
         display.setOrientation(orientation);
-        display.setImage_filename(image_filename);
+        display.setFilename(filename);
         displayRepository.save(display);
         return "Saved";
+    }
+
+    @DeleteMapping(path = "/delete/{id}")
+    public @ResponseBody String deleteDisplay(@PathVariable Integer id) {
+        // Check if the display exists
+        if (displayRepository.existsById(id)) {
+            displayRepository.deleteById(id);
+            return "Display with ID " + id + " deleted.";
+        } else {
+            return "Display with ID " + id + " not found.";
+        }
     }
 
     @GetMapping(path = "/all")

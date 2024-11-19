@@ -20,14 +20,14 @@ public class Display {
 
     private String orientation;
 
-    private String image_filename;
+    private String filename;
 
-    public String getImage_filename() {
-        return image_filename;
+    public String getFilename() {
+        return filename;
     }
 
-    public void setImage_filename(String image_filename) {
-        this.image_filename = image_filename;
+    public void setFilename(String image_filename) {
+        this.filename = image_filename;
     }
 
     public Integer getId() {

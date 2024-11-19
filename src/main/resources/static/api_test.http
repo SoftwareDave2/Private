@@ -1,0 +1,18 @@
+### Example 1: Get JSON of all Displays
+GET http://localhost:8080/display/all
+
+### Example 2: Adding a Display to the Database
+POST http://localhost:8080/display/add
+Content-Type: application/x-www-form-urlencoded
+
+brand=Phillips &
+model=Tableux &
+width=1920 &
+height=1080 &
+orientation=vertical &
+filename=moon.png
+
+
+### Example 3: Deleting a Display by ID
+DELETE http://localhost:8080/display/delete/3
+
