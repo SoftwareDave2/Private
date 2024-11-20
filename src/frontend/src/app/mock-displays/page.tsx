@@ -20,7 +20,7 @@ export default async function MockUsers() {
         const res = await fetch("http://localhost:8080/display/add", {
                 method: "POST",
                 headers: {"Content-Type": "application/x-www-form-urlencoded",
-                    //Authorization: "Bearer YOUR_PRIVATE_KEY" // secure because it is server side code
+                    //Authorization: "Bearer YOUR_PRIVATE_KEY" // secure because it is server side code.
                 },
                 body: 'brand=Phillips&model=Tableux&width=1920&height=1080&orientation=vertical&filename='+name
             }
