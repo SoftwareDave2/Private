@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import DisplayFrame from "@/components/DisplayFrame";
+import Fetch_picture from "@/components/Fetch_picture";
 
 export default function Home() {
     let displays = [
@@ -20,6 +21,7 @@ export default function Home() {
           <div className={`flex gap-4 flex-wrap`}>
               {displays.map(display => <DisplayFrame key={display.name} name={display.name} />)}
           </div>
+          < Fetch_picture />
       </main>
   );
 }
