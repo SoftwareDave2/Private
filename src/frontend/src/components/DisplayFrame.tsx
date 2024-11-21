@@ -13,7 +13,7 @@ export default function DisplayFrame({id, width, height, orientation, filename}:
     return (
         <div className={`flex flex-col`}>
             <div className={`${styles.frame} border-gray-700 rounded`}>
-                <img src={sampleImage.src} alt={''} className={`h-full object-fill`}/>
+                <img src={`/uploads/${filename}`} alt={''} className={`h-full object-fill`}/>
             </div>
             <span className={`${styles.name} text-gray-800`}>Display {id}</span>
         </div>
