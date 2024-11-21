@@ -2,16 +2,20 @@ import styles from './DisplayFrame.module.css'
 import sampleImage from '../app/images/Free-Stock-Photos-01 1.png'
 
 type DisplayFrameProps = {
-    name: string,
+    id: number,
+    width: number,
+    height: number,
+    orientation: string,
+    filename: string,
 }
 
-export default function DisplayFrame({name}: DisplayFrameProps) {
+export default function DisplayFrame({id, width, height, orientation, filename}: DisplayFrameProps) {
     return (
         <div className={`flex flex-col`}>
             <div className={`${styles.frame} border-gray-700 rounded`}>
                 <img src={sampleImage.src} alt={''} className={`h-full object-fill`}/>
             </div>
-            <span className={`${styles.name} text-gray-800`}>{name}</span>
+            <span className={`${styles.name} text-gray-800`}>Display {id}</span>
         </div>
     )
 }

@@ -11,6 +11,7 @@ import java.io.IOException;
 @RequestMapping(path = "/image")
 public class ImageController {
 
+    @CrossOrigin(origins = "*")
     @PostMapping(path = "/upload")
     public @ResponseBody String uploadImage(@RequestParam("image") MultipartFile image) {
         // Define the uploads directory outside the src folder
