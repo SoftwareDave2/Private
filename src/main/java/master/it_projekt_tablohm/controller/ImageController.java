@@ -11,10 +11,13 @@ import java.io.IOException;
 @RequestMapping(path = "/image")
 public class ImageController {
 
+    @CrossOrigin(origins = "*")
     @PostMapping(path = "/upload")
     public @ResponseBody String uploadImage(@RequestParam("image") MultipartFile image) {
         // Define the uploads directory outside the src folder
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator + "uploads";
+        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+                "src" + File.separator + "frontend" + File.separator +
+                "public" + File.separator + "uploads";
         File uploadsDir = new File(uploadsDirPath);
 
         // Create the directory if it does not exist

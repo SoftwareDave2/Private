@@ -16,6 +16,7 @@ public class DisplayController {
     @Autowired
     private DisplayRepository displayRepository;
 
+    @CrossOrigin(origins = "*")
     @PostMapping(path = "/add")
     public @ResponseBody String addDisplay(
             @RequestParam String brand,
@@ -36,6 +37,7 @@ public class DisplayController {
         return "Saved";
     }
 
+    @CrossOrigin(origins = "*")
     @DeleteMapping(path = "/delete/{id}")
     public @ResponseBody String deleteDisplay(@PathVariable Integer id) {
         // Check if the display exists
@@ -47,6 +49,7 @@ public class DisplayController {
         }
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping(path = "/all")
     public @ResponseBody Iterable<Display> getAllDisplays() {
         return displayRepository.findAll();

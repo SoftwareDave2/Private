@@ -10,9 +10,9 @@ model=Tableux &
 width=1920 &
 height=1080 &
 orientation=vertical &
-filename=moon.png
+filename=moon.jpg
 
 
 ### Example 3: Deleting a Display by ID
-DELETE http://localhost:8080/display/delete/3
+DELETE http://localhost:8080/display/delete/2
 
