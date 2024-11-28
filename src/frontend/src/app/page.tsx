@@ -1,10 +1,11 @@
 'use client'
 
-import {useState, useEffect} from 'react'
+import React, {useState, useEffect} from 'react'
 import PageHeader from "@/components/PageHeader";
 import DisplayFrame from "@/components/DisplayFrame";
 import { DisplayData } from "@/types/displayData"
 import getConfig from 'next/config'
+import PageHeaderButton from "@/components/PageHeaderButton";
 
 
 export default function Home() {
@@ -29,6 +30,7 @@ export default function Home() {
     return (
       <main>
           <PageHeader title={'Dashboard'} info={`${displays.length} Bildschirme laufen - 0 Bildschirme gestoppt`}>
+              <PageHeaderButton onClick={() => { }}>Add Display</PageHeaderButton>
           </PageHeader>
           <div className={`flex gap-4 flex-wrap`}>
               {displays.map(display =>
