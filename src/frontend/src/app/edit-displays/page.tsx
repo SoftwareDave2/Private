@@ -112,7 +112,6 @@ export default async function MockDisplays() {
             */}
 
             <form action={addDisplay} className=" ">
-                <br></br>
                 <label htmlFor="add_new_display" className="inline-block mr-2">Add a new Display:</label>
                 <br></br>
                 <label htmlFor="brand" className="inline-block w-24 mb-4 mt-4">Brand:</label>
@@ -122,7 +121,7 @@ export default async function MockDisplays() {
                 <br></br>
                 <label htmlFor="model" className="inline-block w-24">Model:</label>
                 <label htmlFor="Phillips">Tableaux:</label>
-                <input type="radio" id="Tableux" value="Tableux" name="model" required={true}
+                <input type="radio" id="Tableaux" value="Tableaux" name="model" required={true}
                        className="inline-block w-24 mb-4 mt-4" defaultChecked/>
                 <br></br>
                 <div className=" ">
