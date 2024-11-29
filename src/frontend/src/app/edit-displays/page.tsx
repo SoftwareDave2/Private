@@ -22,18 +22,33 @@ export default async function MockDisplays() {
 
     async function addDisplay(formdata: FormData){
         "use server"
-        const filename = formdata.get("filename");
+        const brand = formdata.get("brand");
+        const model = formdata.get("model");
+        const width = formdata.get("width");
+        const height = formdata.get("height");
+        const orientation = formdata.get("orientation");
+        const file = formdata.get("file");
+        var  filename ="test.png";
+        if (file instanceof File) {
+            filename = file.name;
+        }
+
         const res = await fetch("http://localhost:8080/display/add", {
                 method: "POST",
                 headers: {"Content-Type": "application/x-www-form-urlencoded",
                     //Authorization: "Bearer YOUR_PRIVATE_KEY" // secure because it is server side code.
                 },
-                body: 'brand=Phillips&model=Tableux&width=1920&height=1080&orientation=vertical&filename='+filename
+                body: 'brand='+brand +
+                    '&model='+model+
+                    '&width='+ width +
+                    '&height='+ height +
+                    '&orientation='+ orientation +
+                    '&filename='+ filename
             }
         );
         //const newUser = await res.json();
         //await res.json();
-        revalidatePath("/mock-displays");
+        revalidatePath("/edit-displays");
         //console.log(newUser);
     }
 
@@ -89,21 +104,80 @@ export default async function MockDisplays() {
 
     return (
         <div className="py-10">
+            {/*
             <form action={addDisplay} className="mb-4">
                 <input type="text" name="filename" required className="border p-2 mr-2"/>
                 <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Add display</button>
             </form>
+            */}
+
+            <form action={addDisplay} className=" ">
+                <br></br>
+                <label htmlFor="add_new_display" className="inline-block mr-2">Add a new Display:</label>
+                <br></br>
+                <label htmlFor="brand" className="inline-block w-24 mb-4 mt-4">Brand:</label>
+                <label htmlFor="Phillips">Phillips:</label>
+                <input type="radio" id="Phillips" value="Phillips" name="brand" required={true}
+                       className="inline-block w-24 mb-4 mt-4" defaultChecked/>
+                <br></br>
+                <label htmlFor="model" className="inline-block w-24">Model:</label>
+                <label htmlFor="Phillips">Tableaux:</label>
+                <input type="radio" id="Tableux" value="Tableux" name="model" required={true}
+                       className="inline-block w-24 mb-4 mt-4" defaultChecked/>
+                <br></br>
+                <div className=" ">
+                    <label htmlFor="orientation" className="inline-block w-24 mb-4 mt-4 mr-2">Orientation:</label>
+                    <select id="orientation" name="orientation" required={true}
+                            className="h-12 border border-gray-300 text-base rounded-lg bg-white appearance-none py-2.5 px-4 focus:outline-none ">
+                        <option value="vertical">vertical</option>
+                        <option value="horizontal">horizontal</option>
+                    </select>
+                </div>
+                <br></br>
+                <label htmlFor="width" className="inline-block w-24">Width:</label>
+                <input type="number" id="width" min="0" placeholder="1920" defaultValue="1920" name="width" required
+                       className="border p-2 mr-2 ml-2 mb-4"/>
+                <br></br>
+                <label htmlFor="height" className="inline-block w-24">Height:</label>
+                <input type="number" id="height" min="0" placeholder="1080" defaultValue="1080" name="height" required
+                       className="border p-2 mr-2 ml-2 mb-4"/>
+                <br></br>
+                <label htmlFor="file" className="inline-block w-24 mb-4 mt-4 ">Filename:</label>
+                <input type="file" id="file" name="file" className="text-sm  p-2 mr-2  mb-4"
+                       accept="image/png, image/jpeg" required/>
+                <br></br>
+                <button type="submit" className="mb-4 mt-4 bg-blue-500 text-white px-4 py-2 rounded">Add Display
+                </button>
+                <br></br>
+                <br></br>
+            </form>
+
+
             <form action={removeDisplay} className="mb-4">
-                <input type="text" name="id" required className="border p-2 mr-2"/>
+                <input type="text" name="id" placeholder="Id of the tablet" required className="border p-2 mr-2"/>
                 <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">remove display</button>
             </form>
 
+            <ul className="space-y-4 p-4">
+                {displays.map((display: Display) => (
+                    <li key={display.id} className="p-4 bg-white shadow-md rounded-lg text-grey-700">
+                        Display id: {display.id} <br></br>
+                        Brand: {display.brand} <br></br>
+                        Model: {display.model} <br></br>
+                        Width: {display.width} <br></br>
+                        Height: {display.height} <br></br>
+                        Orientation: {display.orientation} <br></br>
+                        Filename: {display.filename}
+                    </li>
+                ))}
+            </ul>
+
+
             <form action={printData} className="mb-4">
-                <span >
-
-                </span>
-
-                <label htmlFor="brand"  className="inline-block w-24">Brand:</label>
+                <br></br>
+                <label htmlFor="Input_Type_tests" className="inline-block mr-2 mb-4">Input Type tests:</label>
+                <br></br>
+                <label htmlFor="brand" className="inline-block w-24">Brand:</label>
                 <input type="text" id="brand" placeholder="Phillips" defaultValue="Phillips" name="brand" required
                        className="border p-2 mr-2 ml-2 mb-4"/>
                 <br></br>
@@ -135,7 +209,7 @@ export default async function MockDisplays() {
                 <label htmlFor="brand2" className="inline-block w-24 mb-4 mt-4">Brand2:</label>
                 <label htmlFor="Phillips">Phillips:</label>
                 <input type="radio" id="Phillips" value="Phillips" name="brand2" required={true}
-                       className="inline-block w-24 mb-4 mt-4"/>
+                       className="inline-block w-24 mb-4 mt-4" defaultChecked/>
                 <label htmlFor="Samsung">Samsung:</label>
                 <input type="radio" id="Samsung" value="Samsung" name="brand2" required={true}
                        className="inline-block w-24 mb-4 mt-4"/>
@@ -162,19 +236,6 @@ export default async function MockDisplays() {
                 </button>
             </form>
 
-            <ul className="space-y-4 p-4">
-                {displays.map((display: Display) => (
-                    <li key={display.id} className="p-4 bg-white shadow-md rounded-lg text-grey-700">
-                        Display id: {display.id} <br></br>
-                        Brand: {display.brand} <br></br>
-                        Model: {display.model} <br></br>
-                        Width: {display.width} <br></br>
-                        Height: {display.height} <br></br>
-                        Orientation: {display.orientation} <br></br>
-                        Filename: {display.filename}
-                    </li>
-                ))}
-            </ul>
         </div>
 
 
