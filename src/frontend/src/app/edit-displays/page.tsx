@@ -95,7 +95,7 @@ export default async function MockDisplays() {
             }
         );
         //await res.json();
-        revalidatePath("/mock-displays");
+        revalidatePath("/edit-displays");
         //console.log(newUser);
     }
 
