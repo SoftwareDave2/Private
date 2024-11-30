@@ -10,6 +10,9 @@ export default function Calendar() {
             <PageHeader title={'Kalender'} info={''}>
                 <PageHeaderButton onClick={() => { }}>Event Hinzufügen</PageHeaderButton>
             </PageHeader>
+
+
+
         </main>
     )
 }
