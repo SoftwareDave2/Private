@@ -3,6 +3,7 @@
 import { Button, Dialog, DialogHeader, DialogBody, DialogFooter } from "@material-tailwind/react"
 import {open, handler} from "@material-tailwind/react/types/components/dialog";
 import {useState} from 'react'
+import UploadMediaButton from "@/components/UploadMediaButton";
 
 type UploadMediaDialogProps = {
     open: open,
@@ -27,7 +28,6 @@ export default function UploadMediaDialog({open, openHandler}: UploadMediaDialog
             let img = new Image()
             const imgUrl = window.URL.createObjectURL(newFile)
             img.onload = () => {
-                console.log('img.onload()')
                 setImageDimensions({
                     width: img.width,
                     height: img.height,
@@ -36,23 +36,6 @@ export default function UploadMediaDialog({open, openHandler}: UploadMediaDialog
             }
             img.src = imgUrl
         }
-    }
-
-    const handleUpload = async () => {
-        if (file) {
-            console.log('Uploading file...')
-
-            const formData = new FormData()
-            formData.append('file', file)
-
-            try {
-                // TODO: Call Fetch-API
-            } catch (error) {
-                console.error('Error on uploading file.', error)
-            }
-        }
-
-        handleClose()
     }
 
     const handleClose = () => {
@@ -83,7 +66,7 @@ export default function UploadMediaDialog({open, openHandler}: UploadMediaDialog
             </DialogBody>
             <DialogFooter className='space-x-2'>
                 <Button variant='outlined' className='text-primary border-primary' onClick={handleClose}>Cancel</Button>
-                <Button className='bg-primary text-white' onClick={handleUpload}>Speichern</Button>
+                <UploadMediaButton file={file} onClick={handleClose} />
             </DialogFooter>
         </Dialog>
     )
