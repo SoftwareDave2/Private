@@ -1,12 +1,62 @@
 # Webservice IT-Projekt
 
-## Project Infos
-Java Version: 23
-Build Gradle: Maven
-Frontend Framework: next.js
+---
 
+## **Requirements**
 
-## API Documentation: DisplayController
+Before running the application, make sure you have the following installed:
+
+### 1. **Node.js**
+- You need Node.js installed because the frontend is built using Next.js.
+- You can download and install it from [Node.js official website](https://nodejs.org/).
+
+### 2. **Docker Desktop**
+- Docker Desktop is required to run the database container.
+- Download and install Docker Desktop from [Docker official website](https://www.docker.com/products/docker-desktop).
+
+### 3. **Java 17**
+- The backend is developed using Spring Boot and requires Java 17.
+- Download and install Java 17 from [OpenJDK](https://adoptium.net/) or other providers of your choice.
+
+### 4. **Maven (Build Tool)**
+- We use Maven as the build tool for the backend project. Make sure you have it installed on your system.
+- Download and install Maven from [Maven official website](https://maven.apache.org/).
+
+---
+
+## **How to Run the Application**
+
+### 1. **Start the Spring Boot Backend**
+- Navigate to the root directory of the project in your terminal.
+- Use Maven to build and run the backend:
+  ```bash
+  mvn clean install
+  mvn spring-boot:run
+  ```
+- This will start the Spring Boot application with the backend API and necessary endpoints.
+
+### 2. **Start the Next.js Frontend**
+- Navigate to the frontend project directory in your terminal.
+  ```bash
+  src/frontend/
+  ```
+- Install the required Node.js dependencies:
+  ```bash
+  npm install
+  ```
+- After the dependencies are installed, start the Next.js development server:
+  ```bash
+  npm run dev
+  ```
+- This will start the frontend application on [http://localhost:3000](http://localhost:3000).
+
+### 4. **Access the Application**
+- Once both the frontend and backend are running, you can access the application by opening your web browser and navigating to [http://localhost:3000](http://localhost:3000).
+- The backend will be available on the configured API endpoints (e.g., `/display/add`, `/display/delete/{id}`, etc.).
+
+---
+
+### **API Documentation: DisplayController**
 
 This API allows you to interact with the `Display` resource, enabling operations such as adding, deleting, and retrieving displays.
 
@@ -19,19 +69,21 @@ This API allows you to interact with the `Display` resource, enabling operations
 Adds a new display to the database.
 
 ##### Request Parameters:
+- **macAddress** (String, required): The MAC address of the display.
 - **brand** (String, required): The brand of the display.
 - **model** (String, required): The model name of the display.
 - **width** (Integer, required): The width of the display in pixels.
 - **height** (Integer, required): The height of the display in pixels.
 - **orientation** (String, required): The orientation of the display (e.g., "vertical", "horizontal").
 - **filename** (String, optional): The filename associated with the display’s image.
+- **wakeTime** (LocalDateTime, optional): The wake time of the display. If not provided, it will not be set.
 
 ##### Request Example:
 ```http
 POST /display/add
 Content-Type: application/x-www-form-urlencoded
 
-brand=Phillips&model=Tableux&width=1920&height=1080&orientation=vertical&filename=moon.png
+macAddress=00:1B:44:11:3A:B7&brand=Phillips&model=Tableux&width=1920&height=1080&orientation=vertical&filename=moon.png
 ```
 
 ##### Response:
@@ -40,6 +92,7 @@ brand=Phillips&model=Tableux&width=1920&height=1080&orientation=vertical&filenam
 
 ##### Notes:
 - If the display is successfully added, the system will return a simple "Saved" message.
+- If the display with the given MAC address has not been initiated, the system will return an error message.
 
 ---
 
@@ -83,12 +136,14 @@ Retrieves all displays from the database.
 [
   {
     "id": "Integer",
+    "macAddress": "String",
     "brand": "String",
     "model": "String",
     "width": "Integer",
     "height": "Integer",
     "orientation": "String",
-    "filename": "String or null"
+    "filename": "String or null",
+    "wakeTime": "String or null"
   }
 ]
 ```
@@ -98,19 +153,48 @@ Retrieves all displays from the database.
 
 ---
 
-### Error Responses:
+#### **4. Initiate a Display**
+**POST** `/display/initiate`
 
-- **400 Bad Request**: If any required parameter is missing or invalid in the request body (for POST requests).
-- **404 Not Found**: If the requested resource (e.g., display by ID) is not found.
-- **500 Internal Server Error**: For unexpected errors during server processing.
+##### Description:
+Initiates a display by associating it with a MAC address. If a display with the given MAC address already exists, a message is returned indicating that the display is already initiated. If no MAC address is provided, an error message is returned.
+
+##### Request Parameters:
+- **macAddress** (String, required): The MAC address of the display.
+
+##### Request Example:
+```http
+POST /display/initiate
+Content-Type: application/x-www-form-urlencoded
+
+macAddress=00:1B:44:11:3A:B7
+```
+
+##### Response:
+- **200 OK**:
+  - If the display is successfully initiated (new display created): `"Display initiated with mac-address: 00:1B:44:11:3A:B7"`
+  - If the display with the provided MAC address already exists: `"Display with mac-address: 00:1B:44:11:3A:B7 is already initiated."`
+  - The response includes the `currentTime` (current system time) and the `wakeTime` (the calculated wake time for the display).
+
+- **400 Bad Request**: If no MAC address is provided: `"Error: No MAC address was given."`
+
+##### Response Body (Example):
+```json
+{
+  "currentTime": "2024-12-01T12:30:00",
+  "wakeTime": "2024-12-01T13:30:00",
+  "message": "Display initiated with mac-address: 00:1B:44:11:3A:B7"
+}
+```
+
+##### Notes:
+- This endpoint checks if a display with the provided MAC address already exists in the database. If it does, it returns a message indicating that the display has already been initiated.
+- If the MAC address is new, the display is created and saved in the database with a wake time set to one hour from the current time.
+- If no MAC address is provided, the system returns an error message indicating the missing parameter.
 
 ---
 
-Here’s the updated README with the **Image Download** endpoint documentation added:
-
----
-
-#### **4. Upload an Image**
+#### **5. Upload an Image**
 **POST** `/image/upload`
 
 ##### Description:
@@ -139,7 +223,7 @@ Content-Type: multipart/form-data
 
 ---
 
-#### **5. Download an Image**
+#### **6. Download an Image**
 **GET** `/image/download/{filename}`
 
 ##### Description:
@@ -156,8 +240,8 @@ GET /image/download/moon.jpg
 ##### Response:
 - **200 OK**: The image file is successfully retrieved and returned as a downloadable resource.
 - **Response Headers**:
-    - `Content-Disposition`: `attachment; filename="moon.jpg"`
-    - `Content-Type`: The MIME type of the image (e.g., `image/jpeg`).
+  - `Content-Disposition`: `attachment; filename="moon.jpg"`
+  - `Content-Type`: The MIME type of the image (e.g., `image/jpeg`).
 
 - **404 Not Found**: If the image file with the specified name does not exist.
 - **Response Body**: `null`
@@ -171,34 +255,10 @@ GET /image/download/moon.jpg
 
 ---
 
-#### **6. Initiate a Display**
-**POST** `/display/initiate`
+### Error Responses:
 
-##### Description:
-Initiates a display by associating it with a MAC address. If a display with the given MAC address already exists, a message is returned indicating that the display is already initiated. If no MAC address is provided, an error message is returned.
-
-##### Request Parameters:
-- **macAddress** (String, required): The MAC address of the display.
-
-##### Request Example:
-```http
-POST /display/initiate
-Content-Type: application/x-www-form-urlencoded
-
-macAddress=00:1B:44:11:3A:B7
-```
-
-##### Response:
-- **200 OK**:
-  - If the display is successfully initiated (new display created): `"Display initiated with mac-address: 00:1B:44:11:3A:B7"`
-  - If the display with the provided MAC address already exists: `"Display with mac-address: 00:1B:44:11:3A:B7 is already initiated."`
-
-- **400 Bad Request**:
-  - If no MAC address is provided: `"Error: No MAC address was given."`
-
-##### Notes:
-- This endpoint checks if a display with the provided MAC address already exists in the database. If it does, it returns a message indicating that the display has already been initiated.
-- If the MAC address is new, the display is created and saved in the database.
-- If no MAC address is provided, the system returns an error message indicating the missing parameter.
+- **400 Bad Request**: If any required parameter is missing or invalid in the request body (for POST requests).
+- **404 Not Found**: If the requested resource (e.g., display by ID) is not found.
+- **500 Internal Server Error**: For unexpected errors during server processing.
 
 ---

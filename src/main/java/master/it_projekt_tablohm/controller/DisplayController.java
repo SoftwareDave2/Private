@@ -3,12 +3,17 @@ package master.it_projekt_tablohm.controller;
 import master.it_projekt_tablohm.models.Display;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Controller
@@ -20,44 +25,66 @@ public class DisplayController {
     @CrossOrigin(origins = "*")
     @PostMapping(path = "/add")
     public @ResponseBody String addDisplay(
+            @RequestParam String macAddress,
             @RequestParam String brand,
             @RequestParam String model,
             @RequestParam Integer width,
             @RequestParam Integer height,
             @RequestParam String orientation,
-            @RequestParam String filename) {
+            @RequestParam String filename,
+            @RequestParam(required = false) LocalDateTime wakeTime) {
 
-        Display display = new Display();
+        Optional<Display> existingDisplay = displayRepository.findByMacAddress(macAddress);
+        if (!existingDisplay.isPresent()) {
+            return "Display with this Mac Address not initiated yet!";
+        }
+        Display display = existingDisplay.get();
         display.setBrand(brand);
         display.setModel(model);
         display.setWidth(width);
         display.setHeight(height);
         display.setOrientation(orientation);
         display.setFilename(filename);
+
+        // Set wakeTime to null if it's not provided
+        if (wakeTime != null) {
+            display.setWakeTime(wakeTime);
+        }
+
         displayRepository.save(display);
         return "Saved";
     }
 
     @CrossOrigin(origins = "*")
     @PostMapping(path = "/initiate")
-    public @ResponseBody String initiateDisplay(@RequestParam(required = false) String macAddress) {
+    public @ResponseBody ResponseEntity<Map<String, Object>> initiateDisplay(@RequestParam(required = false) String macAddress) {
+        Map<String, Object> response = new HashMap<>();
+
         if (macAddress == null || macAddress.isEmpty()) {
-            return "Error: No MAC address was given.";
+            response.put("error", "No MAC address was given.");
+            return ResponseEntity.badRequest().body(response);
         }
 
         // Check if a display with the given MAC address already exists
         Optional<Display> existingDisplay = displayRepository.findByMacAddress(macAddress);
 
         if (existingDisplay.isPresent()) {
-            return "Display with mac-address: " + macAddress + " is already initiated.";
+            response.put("message", "Display with mac-address: " + macAddress + " is already initiated.");
+            return ResponseEntity.ok(response);
         }
 
         // If not, create and save a new display
         Display display = new Display();
         display.setMacAddress(macAddress);
+        display.setWakeTime(LocalDateTime.now().plusHours(1));
         displayRepository.save(display);
 
-        return "Display initiated with mac-address: " + macAddress;
+        // Add current time and new wake time to the response
+        response.put("currentTime", LocalDateTime.now().toString());
+        response.put("wakeTime", display.getWakeTime().toString());
+        response.put("message", "Display initiated with mac-address: " + macAddress);
+
+        return ResponseEntity.ok(response);
     }
 
 
