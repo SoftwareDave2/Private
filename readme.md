@@ -106,3 +106,67 @@ Retrieves all displays from the database.
 
 ---
 
+Here’s the updated README with the **Image Download** endpoint documentation added:
+
+---
+
+#### **4. Upload an Image**
+**POST** `/image/upload`
+
+##### Description:
+Uploads an image file to the server.
+
+##### Request Parameters:
+- **image** (Multipart File, required): The image file to upload.
+
+##### Request Example:
+```http
+POST /image/upload
+Content-Type: multipart/form-data
+
+(image file attached)
+```
+
+##### Response:
+- **200 OK**: Image is successfully uploaded.
+- **Response Body**: `"Image uploaded successfully to: <file-path>"`
+
+- **400 Bad Request**: If the file is not provided or an error occurs during the upload.
+- **Response Body**: `"Failed to upload image: <error-message>"`
+
+##### Notes:
+- The uploaded images are stored in the `uploads` folder located at `src/frontend/public/uploads`.
+
+---
+
+#### **5. Download an Image**
+**GET** `/image/download/{filename}`
+
+##### Description:
+Downloads an image file from the server by its filename.
+
+##### Path Parameter:
+- **filename** (String, required): The name of the image file to download, including the file extension (e.g., `moon.jpg`).
+
+##### Request Example:
+```http
+GET /image/download/moon.jpg
+```
+
+##### Response:
+- **200 OK**: The image file is successfully retrieved and returned as a downloadable resource.
+- **Response Headers**:
+    - `Content-Disposition`: `attachment; filename="moon.jpg"`
+    - `Content-Type`: The MIME type of the image (e.g., `image/jpeg`).
+
+- **404 Not Found**: If the image file with the specified name does not exist.
+- **Response Body**: `null`
+
+- **500 Internal Server Error**: If an unexpected error occurs while retrieving the file.
+- **Response Body**: `null`
+
+##### Notes:
+- Ensure the requested filename exists in the `uploads` directory. If the file does not exist, the server will return a 404 error.
+- Example files like `moon.jpg` are provided in the `uploads` directory for testing.
+
+---
