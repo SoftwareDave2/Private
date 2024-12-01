@@ -1,11 +1,13 @@
 package master.it_projekt_tablohm.controller;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 @Controller
 @RequestMapping(path = "/image")
@@ -36,6 +38,34 @@ public class ImageController {
         } catch (IOException e) {
             e.printStackTrace();
             return "Failed to upload image: " + e.getMessage();
+        }
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/download/{filename}")
+    public @ResponseBody ResponseEntity<byte[]> downloadImage(@PathVariable("filename") String filename) {
+        // Create path to upload folder
+        // Define the uploads directory outside the src folder
+        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+                "src" + File.separator + "frontend" + File.separator +
+                "public" + File.separator + "uploads";
+        File file = new File(uploadsDirPath, filename);
+
+        if (!file.exists()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        try (InputStream inputStream = new FileInputStream(file)) {
+            byte[] fileContent = inputStream.readAllBytes();
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+            headers.add(HttpHeaders.CONTENT_TYPE, "image/jpeg");
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(fileContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }
