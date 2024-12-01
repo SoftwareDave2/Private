@@ -12,11 +12,14 @@ height=1080 &
 orientation=vertical &
 filename=moon.jpg
 
-
 ### Example 3: Deleting a Display by ID
 DELETE http://localhost:8080/display/delete/2
-
 
 ### Example 4: Download an image from the server
 GET http://localhost:8080/image/download/moon.jpg
 
+### Example 5: Initiate a Display with it's mac address
+POST http://localhost:8080/display/initiate
+Content-Type: application/x-www-form-urlencoded
+
+macAddress=00:00:00:00:00

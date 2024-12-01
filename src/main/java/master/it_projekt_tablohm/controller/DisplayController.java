@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 @Controller
 @RequestMapping(path = "/display")
@@ -36,6 +37,30 @@ public class DisplayController {
         displayRepository.save(display);
         return "Saved";
     }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping(path = "/initiate")
+    public @ResponseBody String initiateDisplay(@RequestParam(required = false) String macAddress) {
+        if (macAddress == null || macAddress.isEmpty()) {
+            return "Error: No MAC address was given.";
+        }
+
+        // Check if a display with the given MAC address already exists
+        Optional<Display> existingDisplay = displayRepository.findByMacAddress(macAddress);
+
+        if (existingDisplay.isPresent()) {
+            return "Display with mac-address: " + macAddress + " is already initiated.";
+        }
+
+        // If not, create and save a new display
+        Display display = new Display();
+        display.setMacAddress(macAddress);
+        displayRepository.save(display);
+
+        return "Display initiated with mac-address: " + macAddress;
+    }
+
+
 
     @CrossOrigin(origins = "*")
     @DeleteMapping(path = "/delete/{id}")

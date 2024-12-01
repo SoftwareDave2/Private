@@ -10,16 +10,12 @@ public class Display {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Integer id;
-
+    private String macAddress;
     private String brand;
-
     private String model;
-
     private Integer width;
     private Integer height;
-
     private String orientation;
-
     private String filename;
 
     public String getFilename() {
@@ -36,6 +32,14 @@ public class Display {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
     }
 
     public String getBrand() {

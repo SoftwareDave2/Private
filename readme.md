@@ -170,3 +170,35 @@ GET /image/download/moon.jpg
 - Example files like `moon.jpg` are provided in the `uploads` directory for testing.
 
 ---
+
+#### **6. Initiate a Display**
+**POST** `/display/initiate`
+
+##### Description:
+Initiates a display by associating it with a MAC address. If a display with the given MAC address already exists, a message is returned indicating that the display is already initiated. If no MAC address is provided, an error message is returned.
+
+##### Request Parameters:
+- **macAddress** (String, required): The MAC address of the display.
+
+##### Request Example:
+```http
+POST /display/initiate
+Content-Type: application/x-www-form-urlencoded
+
+macAddress=00:1B:44:11:3A:B7
+```
+
+##### Response:
+- **200 OK**:
+  - If the display is successfully initiated (new display created): `"Display initiated with mac-address: 00:1B:44:11:3A:B7"`
+  - If the display with the provided MAC address already exists: `"Display with mac-address: 00:1B:44:11:3A:B7 is already initiated."`
+
+- **400 Bad Request**:
+  - If no MAC address is provided: `"Error: No MAC address was given."`
+
+##### Notes:
+- This endpoint checks if a display with the provided MAC address already exists in the database. If it does, it returns a message indicating that the display has already been initiated.
+- If the MAC address is new, the display is created and saved in the database.
+- If no MAC address is provided, the system returns an error message indicating the missing parameter.
+
+---
