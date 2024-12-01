@@ -5,6 +5,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.time.LocalDateTime;
+
 @Entity // This tells Hibernate to make a table out of this class
 public class Display {
     @Id
@@ -18,13 +20,7 @@ public class Display {
     private String orientation;
     private String filename;
 
-    public String getFilename() {
-        return filename;
-    }
-
-    public void setFilename(String image_filename) {
-        this.filename = image_filename;
-    }
+    private LocalDateTime wakeTime;
 
     public Integer getId() {
         return id;
@@ -80,5 +76,21 @@ public class Display {
 
     public void setOrientation(String orientation) {
         this.orientation = orientation;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String image_filename) {
+        this.filename = image_filename;
+    }
+
+    public LocalDateTime getWakeTime() {
+        return wakeTime;
+    }
+
+    public void setWakeTime(LocalDateTime wakeTime) {
+        this.wakeTime = wakeTime;
     }
 }
