@@ -3,6 +3,7 @@
 import {revalidatePath} from "next/cache";
 
 import FormComponentAddDisplay from "@/components/FormComponentAddDisplay";
+
 type Display = {
     id: number;
     brand: string;
@@ -19,6 +20,27 @@ export default async function MockDisplays() {
     //const response = await fetch("der eigentliche Link, von dem die Liste der user gefetched wird");
     const response = await fetch("http://localhost:8080/display/all");
     const displays = await response.json();
+
+
+    let imageTest = await fetch("http://localhost:8080/image/download/moon.jpg");
+    let testObject: any = imageTest
+    let testFile: File = testObject as File
+
+
+
+    if(testFile instanceof File){
+        console.log("Image test ist instance of Image" )
+    }
+    if(imageTest instanceof FormData){
+        console.log("Image test ist instance of FormData")
+    }
+    else{
+        console.log("datatype of imageTest ist noch unbekannt")
+        //console.log(typeof imageTest)
+    }
+
+
+
 
     async function addDisplay(formdata: FormData){
         "use server"
@@ -111,6 +133,9 @@ export default async function MockDisplays() {
             </form>
             */}
 
+
+
+
             <form action={addDisplay} className=" ">
                 <label htmlFor="add_new_display" className="inline-block mr-2">Add a new Display:</label>
                 <br></br>
@@ -170,6 +195,7 @@ export default async function MockDisplays() {
                     </li>
                 ))}
             </ul>
+
 
 
             <form action={printData} className="mb-4">
