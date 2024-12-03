@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @Controller
 @RequestMapping(path = "/image")
@@ -67,5 +70,34 @@ public class ImageController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/download/all")
+    public @ResponseBody ResponseEntity<List<String>> listImages() {
+        // Create path to upload folder
+        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+                "src" + File.separator + "frontend" + File.separator +
+                "public" + File.separator + "uploads";
+        File uploadsDir = new File(uploadsDirPath);
+
+        if (!uploadsDir.exists() || !uploadsDir.isDirectory()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        }
+
+        // Collect all image filenames in the directory
+        String[] imageFiles = uploadsDir.list((dir, name) -> {
+            // Filter for common image file extensions
+            String lowerCaseName = name.toLowerCase();
+            return lowerCaseName.endsWith(".jpg") || lowerCaseName.endsWith(".jpeg") ||
+                    lowerCaseName.endsWith(".png") || lowerCaseName.endsWith(".gif") ||
+                    lowerCaseName.endsWith(".bmp") || lowerCaseName.endsWith(".webp");
+        });
+
+        if (imageFiles == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        }
+
+        return ResponseEntity.ok(Arrays.asList(imageFiles));
     }
 }

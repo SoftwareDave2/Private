@@ -7,7 +7,8 @@ import UploadMediaButton from "@/components/UploadMediaButton";
 
 type UploadMediaDialogProps = {
     open: open,
-    openHandler: handler
+    cancelHandler: handler,
+    savedHandler: handler,
 }
 
 type ImageDimensions = {
@@ -15,7 +16,7 @@ type ImageDimensions = {
     height: Number,
 }
 
-export default function UploadMediaDialog({open, openHandler}: UploadMediaDialogProps) {
+export default function UploadMediaDialog({open, cancelHandler, savedHandler}: UploadMediaDialogProps) {
 
     const [file, setFile] = useState<File | null>(null)
     const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null)
@@ -38,10 +39,19 @@ export default function UploadMediaDialog({open, openHandler}: UploadMediaDialog
         }
     }
 
-    const handleClose = () => {
+    const resetFiles = () => {
         setFile(null)
         setImageDimensions(null)
-        openHandler()
+    }
+
+    const handleCancel = () => {
+        resetFiles()
+        cancelHandler()
+    }
+
+    const handleSaved = () => {
+        resetFiles()
+        savedHandler()
     }
 
     return (
@@ -65,8 +75,8 @@ export default function UploadMediaDialog({open, openHandler}: UploadMediaDialog
 
             </DialogBody>
             <DialogFooter className='space-x-2'>
-                <Button variant='outlined' className='text-primary border-primary' onClick={handleClose}>Cancel</Button>
-                <UploadMediaButton file={file} onClick={handleClose} />
+                <Button variant='outlined' className='text-primary border-primary' onClick={handleCancel}>Cancel</Button>
+                <UploadMediaButton file={file} onClick={handleSaved} />
             </DialogFooter>
         </Dialog>
     )
