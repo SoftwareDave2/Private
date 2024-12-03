@@ -66,6 +66,14 @@ export default async function MockDisplays() {
     }
 
 
+    async function testButtonClick(formdata: FormData){
+        "use server"
+        const macAddress = formdata.get("macAddress");
+        console.log(macAddress)
+
+    }
+
+
     async function printData(formdata: FormData){
         "use server"
         const brand = formdata.get("brand");
@@ -187,11 +195,16 @@ export default async function MockDisplays() {
                         Height: {display.height} <br></br>
                         Orientation: {display.orientation} <br></br>
                         Filename: {display.filename} <br></br>
-                        Wake Time: {display.wakeTime}
+                        Wake Time: {display.wakeTime} <br></br>
+                        <form action={testButtonClick}>
+                            <input name="macAddress" className="hidden" value={display.macAddress}/>
+                            <button type="submit" className="mb-4 mt-4 bg-blue-500 text-white px-4 py-2 rounded">testButton
+                            </button>
+                        </form>
                     </li>
+
                 ))}
             </ul>
-
 
 
             <form action={printData} className="mb-4">
