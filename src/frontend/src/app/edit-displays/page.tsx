@@ -5,6 +5,7 @@ import {revalidatePath} from "next/cache";
 import FormComponentAddDisplay from "@/components/FormComponentAddDisplay";
 
 type Display = {
+    macAddress: string;
     id: number;
     brand: string;
     model: string;
@@ -12,6 +13,7 @@ type Display = {
     height: number;
     orientation: string;
     filename: string;
+    wakeTime: string;
 };
 
 
@@ -22,28 +24,10 @@ export default async function MockDisplays() {
     const displays = await response.json();
 
 
-    let imageTest = await fetch("http://localhost:8080/image/download/moon.jpg");
-    let testObject: any = imageTest
-    let testFile: File = testObject as File
-
-
-
-    if(testFile instanceof File){
-        console.log("Image test ist instance of Image" )
-    }
-    if(imageTest instanceof FormData){
-        console.log("Image test ist instance of FormData")
-    }
-    else{
-        console.log("datatype of imageTest ist noch unbekannt")
-        //console.log(typeof imageTest)
-    }
-
-
-
 
     async function addDisplay(formdata: FormData){
         "use server"
+        const macAddress = formdata.get("macAddress");
         const brand = formdata.get("brand");
         const model = formdata.get("model");
         const width = formdata.get("width");
@@ -54,22 +38,29 @@ export default async function MockDisplays() {
         if (file instanceof File) {
             filename = file.name;
         }
+       //const wakeTime = new Date().toISOString()
+        const wakeTime = "2024-12-01T12:30:00"
 
         const res = await fetch("http://localhost:8080/display/add", {
                 method: "POST",
                 headers: {"Content-Type": "application/x-www-form-urlencoded",
                     //Authorization: "Bearer YOUR_PRIVATE_KEY" // secure because it is server side code.
                 },
-                body: 'brand='+brand +
+                body:
+                   //'macAddress=00:1B:44:21:3A:B7&brand=Phillips&model=Tableux&width=1920&height=1080&orientation=vertical&filename=moon.png'
+                'macAddress='+ macAddress +
+                    '&brand='+brand +
                     '&model='+model+
                     '&width='+ width +
                     '&height='+ height +
                     '&orientation='+ orientation +
                     '&filename='+ filename
+                    + '&wakeTime=' + wakeTime
             }
         );
         //const newUser = await res.json();
-        //await res.json();
+        let erg = await res;
+        console.log(erg)
         revalidatePath("/edit-displays");
         //console.log(newUser);
     }
@@ -134,11 +125,14 @@ export default async function MockDisplays() {
             */}
 
 
-
-
             <form action={addDisplay} className=" ">
                 <label htmlFor="add_new_display" className="inline-block mr-2">Add a new Display:</label>
                 <br></br>
+                <label htmlFor="macAddress" className="inline-block w-24">Mac Address:</label>
+                <input type="text" id="macAddress" placeholder="00-B0-D0-63-C2-26" defaultValue="00-B0-D0-63-C2-26" name="macAddress" required
+                       className="border p-2 mr-2 ml-2 mb-4"/>
+                <br></br>
+
                 <label htmlFor="brand" className="inline-block w-24 mb-4 mt-4">Brand:</label>
                 <label htmlFor="Phillips">Phillips:</label>
                 <input type="radio" id="Phillips" value="Phillips" name="brand" required={true}
@@ -185,13 +179,15 @@ export default async function MockDisplays() {
             <ul className="space-y-4 p-4">
                 {displays.map((display: Display) => (
                     <li key={display.id} className="p-4 bg-white shadow-md rounded-lg text-grey-700">
+                        Mac Adresse: {display.macAddress} <br></br>
                         Display id: {display.id} <br></br>
                         Brand: {display.brand} <br></br>
                         Model: {display.model} <br></br>
                         Width: {display.width} <br></br>
                         Height: {display.height} <br></br>
                         Orientation: {display.orientation} <br></br>
-                        Filename: {display.filename}
+                        Filename: {display.filename} <br></br>
+                        Wake Time: {display.wakeTime}
                     </li>
                 ))}
             </ul>

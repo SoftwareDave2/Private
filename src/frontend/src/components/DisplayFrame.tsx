@@ -21,9 +21,7 @@ export default function DisplayFrame({id, width, height, orientation, filename}:
         const fetchImage = async () => {
             try {
                 let teststring = "http://localhost:8080/image/download/"+filename
-                const response = await fetch(teststring, {
-                    method: 'GET',
-                });
+                const response = await fetch(teststring, {});
 
                 if (response.status === 200) {
                     const blob = await response.blob();
