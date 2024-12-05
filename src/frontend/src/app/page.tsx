@@ -6,7 +6,6 @@ import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import { DisplayData } from "@/types/displayData"
 import getConfig from 'next/config'
 import PageHeaderButton from "@/components/layout/PageHeaderButton";
-import SelectImage from "@/components/edit-display/SelectImage";
 import DisplayInfoDialog from "@/components/dashboard/DisplayInfoDialog";
 
 
@@ -16,7 +15,6 @@ export default function Home() {
     const backendApiUrl = 'http://localhost:8080'
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
-    const [filename, setFilename] = useState<string>('')
     const [displayDialogOpen, setDisplayDialogOpen] = useState<boolean>(false)
     const [selectedDisplay, setSelectedDisplay] = useState<DisplayData | null>(null)
 
@@ -57,10 +55,6 @@ export default function Home() {
               {displays.map(display =>
                   <DisplayFrame key={display.id} displayData={display} clickable={true} onClick={() => displayClickHandler(display.id)} />
               )}
-          </div>
-
-          <div className={`mt-5`}>
-              <SelectImage selectedFilename={filename} onSelect={(filename) => setFilename(filename)} />
           </div>
 
           {selectedDisplay &&
