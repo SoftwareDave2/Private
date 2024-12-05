@@ -76,6 +76,7 @@ public class DisplayController {
         // If not, create and save a new display
         Display display = new Display();
         display.setMacAddress(macAddress);
+        display.setFilename("initial.jpg");
         display.setWakeTime(LocalDateTime.now().plusHours(1));
         displayRepository.save(display);
 
