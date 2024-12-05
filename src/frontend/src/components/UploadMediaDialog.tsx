@@ -55,7 +55,7 @@ export default function UploadMediaDialog({open, cancelHandler, savedHandler}: U
     }
 
     return (
-        <Dialog open={open} handler={handler}>
+        <Dialog open={open} handler={cancelHandler}>
             <DialogHeader>Hochladen</DialogHeader>
             <DialogBody>
                 <p className=''>Ausgewählte Dateien:</p>

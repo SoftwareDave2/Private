@@ -6,6 +6,7 @@ import DisplayFrame from "@/components/DisplayFrame";
 import { DisplayData } from "@/types/displayData"
 import getConfig from 'next/config'
 import PageHeaderButton from "@/components/PageHeaderButton";
+import SelectImage from "@/components/SelectImage";
 
 
 export default function Home() {
@@ -14,6 +15,7 @@ export default function Home() {
     const backendApiUrl = 'http://localhost:8080'
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
+    //const [filename, setFilename] = useState<string>('')
 
     const fetchDisplays = async () => {
         const data = await fetch(backendApiUrl + '/display/all')
@@ -25,6 +27,8 @@ export default function Home() {
         fetchDisplays()
             .then(() => { console.log('Displays updated!') })
             .catch((err) => { console.error('No connection to backend!', err)})
+
+
     }, [])
 
     return (
@@ -37,6 +41,11 @@ export default function Home() {
                   <DisplayFrame key={display.id} id={display.id} width={display.width} height={display.height} orientation={display.orientation} filename={display.filename} />
               )}
           </div>
+
+          {/*<div className={`mt-5`}>*/}
+          {/*    <SelectImage selectedFilename={filename} onSelect={(filename) => setFilename(filename)} />*/}
+          {/*</div>*/}
+
       </main>
   );
 }
