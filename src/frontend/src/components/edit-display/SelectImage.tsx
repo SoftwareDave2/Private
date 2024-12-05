@@ -3,7 +3,7 @@
 import {Button} from '@material-tailwind/react'
 import {useState, useEffect, useRef} from 'react'
 import styles from './SelectImage.module.css'
-import SelectImageDialog from "@/components/SelectImageDialog";
+import SelectImageDialog from "@/components/edit-display/SelectImageDialog";
 import {MediaContentItemData} from "@/types/mediaContentItemData";
 
 type SelectImageProps = {

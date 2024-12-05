@@ -1,9 +1,9 @@
 'use client'
 
-import PageHeader from "@/components/PageHeader";
-import PageHeaderButton from "@/components/PageHeaderButton";
+import PageHeader from "@/components/layout/PageHeader";
+import PageHeaderButton from "@/components/layout/PageHeaderButton";
 import React, {useState, useEffect, useRef} from "react";
-import UploadMediaDialog from "@/components/UploadMediaDialog";
+import UploadMediaDialog from "@/components/media/UploadMediaDialog";
 import {MediaContentItemData} from "@/types/mediaContentItemData";
 import MediaContentItems from "@/components/media/MediaContentItems";
 
@@ -13,7 +13,7 @@ export default function Media() {
 
     const hasFetched = useRef(false)
     const [dialogOpen, setDialogOpen] = useState<boolean>(false)
-    const [images, setImages] = useState<MediaContentItemData[] | null>(null)
+    const [images, setImages] = useState<MediaContentItemData[]>([])
 
     const handleDialogOpen = () => setDialogOpen(!dialogOpen)
 
@@ -46,7 +46,7 @@ export default function Media() {
                 <PageHeaderButton onClick={handleDialogOpen}>Hochladen</PageHeaderButton>
             </PageHeader>
 
-            {images && <MediaContentItems images={images} />}
+            <MediaContentItems images={images} />
 
             <UploadMediaDialog open={dialogOpen} cancelHandler={handleDialogOpen} savedHandler={handleImageUpload} />
         </main>

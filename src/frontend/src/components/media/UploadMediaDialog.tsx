@@ -3,12 +3,12 @@
 import { Button, Dialog, DialogHeader, DialogBody, DialogFooter } from "@material-tailwind/react"
 import {open, handler} from "@material-tailwind/react/types/components/dialog";
 import {useState} from 'react'
-import UploadMediaButton from "@/components/UploadMediaButton";
+import UploadMediaButton from "@/components/media/UploadMediaButton";
 
 type UploadMediaDialogProps = {
     open: open,
-    cancelHandler: handler,
-    savedHandler: handler,
+    cancelHandler: () => void,
+    savedHandler: () => void,
 }
 
 type ImageDimensions = {

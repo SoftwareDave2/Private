@@ -1,5 +1,5 @@
 import styles from './DisplayFrame.module.css'
-import sampleImage from '../app/images/Free-Stock-Photos-01 1.png'
+import sampleImage from '../../app/images/Free-Stock-Photos-01 1.png'
 
 type DisplayFrameProps = {
     id: number,

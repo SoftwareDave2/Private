@@ -26,7 +26,7 @@ export default function NavLinks() {
                 const isActive = pathname === link.href
                 return (
                     <Link
-                        className={`${isActive ? 'text-red-700' : 'text-black'}`}
+                        className={`${isActive ? 'text-primary' : 'text-black'}`}
                         href={link.href}
                         key={link.name}>
                         {link.name}

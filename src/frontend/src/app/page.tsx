@@ -1,12 +1,12 @@
 'use client'
 
 import React, {useState, useEffect} from 'react'
-import PageHeader from "@/components/PageHeader";
-import DisplayFrame from "@/components/DisplayFrame";
+import PageHeader from "@/components/layout/PageHeader";
+import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import { DisplayData } from "@/types/displayData"
 import getConfig from 'next/config'
-import PageHeaderButton from "@/components/PageHeaderButton";
-import SelectImage from "@/components/SelectImage";
+import PageHeaderButton from "@/components/layout/PageHeaderButton";
+import SelectImage from "@/components/edit-display/SelectImage";
 
 
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
     const backendApiUrl = 'http://localhost:8080'
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
-    //const [filename, setFilename] = useState<string>('')
+    const [filename, setFilename] = useState<string>('')
 
     const fetchDisplays = async () => {
         const data = await fetch(backendApiUrl + '/display/all')
@@ -42,9 +42,9 @@ export default function Home() {
               )}
           </div>
 
-          {/*<div className={`mt-5`}>*/}
-          {/*    <SelectImage selectedFilename={filename} onSelect={(filename) => setFilename(filename)} />*/}
-          {/*</div>*/}
+          <div className={`mt-5`}>
+              <SelectImage selectedFilename={filename} onSelect={(filename) => setFilename(filename)} />
+          </div>
 
       </main>
   );
