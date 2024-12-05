@@ -1,21 +1,26 @@
 import styles from './DisplayFrame.module.css'
-import sampleImage from '../../app/images/Free-Stock-Photos-01 1.png'
+import {DisplayData} from "@/types/displayData";
 
 type DisplayFrameProps = {
-    id: number,
-    width: number,
-    height: number,
-    orientation: string,
-    filename: string,
+    displayData: DisplayData,
+    clickable?: boolean,
+    onClick?: () => void,
 }
 
-export default function DisplayFrame({id, width, height, orientation, filename}: DisplayFrameProps) {
+export default function DisplayFrame({displayData, clickable, onClick}: DisplayFrameProps) {
+
+    const clickHandler = () => {
+        if (clickable && onClick) {
+            onClick()
+        }
+    }
+
     return (
-        <div className={`flex flex-col`}>
+        <div className={`flex flex-col ${clickable ? 'cursor-pointer' : null}`} onClick={clickHandler}>
             <div className={`${styles.frame} border-gray-700 rounded`}>
-                <img src={`/uploads/${filename}`} alt={''} className={`h-full object-fill`}/>
+                <img src={`/uploads/${displayData.filename}`} alt={''} className={`h-full object-fill`}/>
             </div>
-            <span className={`${styles.name} text-gray-800`}>Display {id}</span>
+            <span className={`${styles.name} text-gray-800`}>Display {displayData.id}</span>
         </div>
     )
 }

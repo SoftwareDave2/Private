@@ -1,7 +1,7 @@
 'use client'
 
 import { Button, Dialog, DialogHeader, DialogBody, DialogFooter } from "@material-tailwind/react"
-import {open, handler} from "@material-tailwind/react/types/components/dialog";
+import {open} from "@material-tailwind/react/types/components/dialog";
 import {useState} from 'react'
 import UploadMediaButton from "@/components/media/UploadMediaButton";
 

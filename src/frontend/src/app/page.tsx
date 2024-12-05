@@ -7,6 +7,7 @@ import { DisplayData } from "@/types/displayData"
 import getConfig from 'next/config'
 import PageHeaderButton from "@/components/layout/PageHeaderButton";
 import SelectImage from "@/components/edit-display/SelectImage";
+import DisplayInfoDialog from "@/components/dashboard/DisplayInfoDialog";
 
 
 export default function Home() {
@@ -16,12 +17,16 @@ export default function Home() {
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
     const [filename, setFilename] = useState<string>('')
+    const [displayDialogOpen, setDisplayDialogOpen] = useState<boolean>(false)
+    const [selectedDisplay, setSelectedDisplay] = useState<DisplayData | null>(null)
 
     const fetchDisplays = async () => {
         const data = await fetch(backendApiUrl + '/display/all')
         const json = await data.json()
         setDisplays(json)
     }
+
+    const displayDialogHandler = () => setDisplayDialogOpen(!displayDialogOpen)
 
     useEffect(() => {
         fetchDisplays()
@@ -31,6 +36,18 @@ export default function Home() {
 
     }, [])
 
+    const displayClickHandler = (id: number) => {
+        const display = displays.find(d => d.id === id)
+        if (!display) {
+            console.log(`Selected display with id ${id} not found.`)
+            return
+        }
+        console.log('Open display', display)
+        setSelectedDisplay(display)
+
+        displayDialogHandler()
+    }
+
     return (
       <main>
           <PageHeader title={'Dashboard'} info={`${displays.length} Bildschirme laufen - 0 Bildschirme gestoppt`}>
@@ -38,7 +55,7 @@ export default function Home() {
           </PageHeader>
           <div className={`flex gap-4 flex-wrap`}>
               {displays.map(display =>
-                  <DisplayFrame key={display.id} id={display.id} width={display.width} height={display.height} orientation={display.orientation} filename={display.filename} />
+                  <DisplayFrame key={display.id} displayData={display} clickable={true} onClick={() => displayClickHandler(display.id)} />
               )}
           </div>
 
@@ -46,6 +63,8 @@ export default function Home() {
               <SelectImage selectedFilename={filename} onSelect={(filename) => setFilename(filename)} />
           </div>
 
+          {selectedDisplay &&
+              <DisplayInfoDialog open={displayDialogOpen} displayData={selectedDisplay} onClose={displayDialogHandler} />}
       </main>
   );
 }
