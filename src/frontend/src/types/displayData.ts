@@ -1,4 +1,5 @@
 export type DisplayData = {
+    macAddress: string;
     id: number,
     brand: string,
     model: string,
@@ -6,4 +7,5 @@ export type DisplayData = {
     height: number,
     orientation: string,
     filename: string,
+    wakeTime: string;
 }
