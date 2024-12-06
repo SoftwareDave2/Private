@@ -4,6 +4,7 @@ import {DisplayData} from "@/types/displayData";
 import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import DisplayStatusInfos from "@/components/dashboard/DisplayStatusInfos";
 import {EditDisplayDialog} from "@/components/dashboard/EditDisplayDialog";
+import {DeleteDisplayDialog} from "@/components/dashboard/DeleteDisplayDialog";
 
 type DisplayInfoDialogProps = {
     open: boolean,
@@ -17,11 +18,20 @@ export default function DisplayInfoDialog({open, displayData, onClose}: DisplayI
     const [openEditDisplay, setOpenEditDisplay] = useState<boolean>(false)
     const [displayDataForEdit, setDisplayDataForEdit] = useState<DisplayData | null>(null)
 
+    const [openDeleteDisplay, setOpenDeleteDisplay] = useState<boolean>(false)
+    const [displayDataForDelete, setDisplayDataForDelete] = useState<DisplayData | null>(null)
+
     const toggleOpenEditDisplayHandler = () => setOpenEditDisplay(!openEditDisplay)
+
+    const toggleOpenDeleteDisplayHandler = () => setOpenDeleteDisplay(!openDeleteDisplay)
 
     const closeEditDisplayHandler = () => {
         toggleOpenEditDisplayHandler()
         setTimeout(() => setDisplayDataForEdit(null), 500)      // Wait until dialog close animation is over.
+    }
+    const closeDeleteDisplayHandler = () => {
+        toggleOpenDeleteDisplayHandler()
+        setTimeout(() => setDisplayDataForDelete(null), 500)      // Wait until dialog close animation is over.
     }
 
     const editDisplayHandler = async () => {
@@ -42,8 +52,22 @@ export default function DisplayInfoDialog({open, displayData, onClose}: DisplayI
         }
     }
 
-    const deleteDisplayHandler = () => {
-        toggleOpenEditDisplayHandler()
+    const deleteDisplayHandler = async () => {
+        // Fetch new display data from server.
+        try {
+            const data = await fetch(backendApiUrl + '/display/all')
+            const allDisplays = (await data.json()) as DisplayData[]
+            const display = allDisplays.find(d => d.id === displayData.id)
+            if (!display) {
+                console.error('Selected display not found!')
+                return
+            }
+
+            setDisplayDataForDelete(display)
+            toggleOpenDeleteDisplayHandler()
+        } catch (err) {
+            console.error(err)
+        }
     }
 
     const updateDisplayDataHandler = (updatedDisplayData: DisplayData) => {
@@ -68,6 +92,8 @@ export default function DisplayInfoDialog({open, displayData, onClose}: DisplayI
                     </div>
                     {displayDataForEdit &&
                         <EditDisplayDialog open={openEditDisplay} displayData={displayDataForEdit} onClose={closeEditDisplayHandler} onDelete={deleteDisplayHandler} onSave={updateDisplayDataHandler} />}
+                    {displayDataForDelete &&
+                        <DeleteDisplayDialog open={openDeleteDisplay} displayData={displayDataForDelete} onClose={closeDeleteDisplayHandler} onDelete={deleteDisplayHandler} onSave={updateDisplayDataHandler} />}
                 </DialogBody>
                 <DialogFooter className={'space-x-2'}>
                     <Button variant='outlined' className='text-primary border-primary' onClick={onClose}>Cancel</Button>

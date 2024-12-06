@@ -1,4 +1,5 @@
 export type DisplayData = {
+    macAddress: string,
     id: number,
     brand: string,
     model: string,
