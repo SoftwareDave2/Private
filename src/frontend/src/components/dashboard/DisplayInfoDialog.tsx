@@ -4,34 +4,25 @@ import {DisplayData} from "@/types/displayData";
 import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import DisplayStatusInfos from "@/components/dashboard/DisplayStatusInfos";
 import {EditDisplayDialog} from "@/components/dashboard/EditDisplayDialog";
-import {DeleteDisplayDialog} from "@/components/dashboard/DeleteDisplayDialog";
 
 type DisplayInfoDialogProps = {
     open: boolean,
     displayData: DisplayData,
     onClose: () => void,
+    onDisplayDataUpdated: () => void,
 }
 
-export default function DisplayInfoDialog({open, displayData, onClose}: DisplayInfoDialogProps) {
+export default function DisplayInfoDialog({open, displayData, onClose, onDisplayDataUpdated}: DisplayInfoDialogProps) {
     const backendApiUrl = 'http://localhost:8080'
 
     const [openEditDisplay, setOpenEditDisplay] = useState<boolean>(false)
     const [displayDataForEdit, setDisplayDataForEdit] = useState<DisplayData | null>(null)
 
-    const [openDeleteDisplay, setOpenDeleteDisplay] = useState<boolean>(false)
-    const [displayDataForDelete, setDisplayDataForDelete] = useState<DisplayData | null>(null)
-
     const toggleOpenEditDisplayHandler = () => setOpenEditDisplay(!openEditDisplay)
-
-    const toggleOpenDeleteDisplayHandler = () => setOpenDeleteDisplay(!openDeleteDisplay)
 
     const closeEditDisplayHandler = () => {
         toggleOpenEditDisplayHandler()
         setTimeout(() => setDisplayDataForEdit(null), 500)      // Wait until dialog close animation is over.
-    }
-    const closeDeleteDisplayHandler = () => {
-        toggleOpenDeleteDisplayHandler()
-        setTimeout(() => setDisplayDataForDelete(null), 500)      // Wait until dialog close animation is over.
     }
 
     const editDisplayHandler = async () => {
@@ -52,55 +43,35 @@ export default function DisplayInfoDialog({open, displayData, onClose}: DisplayI
         }
     }
 
-    const deleteDisplayHandler = async () => {
-        // Fetch new display data from server.
-        try {
-            const data = await fetch(backendApiUrl + '/display/all')
-            const allDisplays = (await data.json()) as DisplayData[]
-            const display = allDisplays.find(d => d.id === displayData.id)
-            if (!display) {
-                console.error('Selected display not found!')
-                return
-            }
-
-            setDisplayDataForDelete(display)
-            toggleOpenDeleteDisplayHandler()
-        } catch (err) {
-            console.error(err)
-        }
-    }
-
-    const updateDisplayDataHandler = (updatedDisplayData: DisplayData) => {
-        console.log('Update display parameters...', updatedDisplayData)
-        toggleOpenEditDisplayHandler()
+    const displayDataUpdated = () => {
+        closeEditDisplayHandler()
+        onDisplayDataUpdated()
     }
 
     return (
-        <>
-            <Dialog open={open} handler={onClose}>
-                <DialogHeader>Display {displayData.id}</DialogHeader>
-                <DialogBody>
-                    <div className={'flex gap-6'}>
-                        <DisplayFrame displayData={displayData} />
-                        <div>
-                            <DisplayStatusInfos displayData={displayData} />
-                            <div className={'flex gap-2'}>
-                                <Button variant={"outlined"} className={'text-primary border-primary mt-4'} onClick={editDisplayHandler}>Edit Display</Button>
-                                <Button variant={"outlined"} className={'text-primary border-primary mt-4'} onClick={() => { }}>Refresh Display</Button>
-                            </div>
+        <Dialog open={open} handler={onClose}>
+            <DialogHeader>Display {displayData.id}</DialogHeader>
+            <DialogBody>
+                <div className={'flex gap-6'}>
+                    <DisplayFrame displayData={displayData} />
+                    <div>
+                        <DisplayStatusInfos displayData={displayData} />
+                        <div className={'flex gap-2'}>
+                            <Button variant={"outlined"} className={'text-primary border-primary mt-4'} onClick={editDisplayHandler}>Edit Display</Button>
+                            <Button variant={"outlined"} className={'text-primary border-primary mt-4'} onClick={() => { }}>Refresh Display</Button>
                         </div>
                     </div>
-                    {displayDataForEdit &&
-                        <EditDisplayDialog open={openEditDisplay} displayData={displayDataForEdit} onClose={closeEditDisplayHandler} onDelete={deleteDisplayHandler} onSave={updateDisplayDataHandler} />}
-                    {displayDataForDelete &&
-                        <DeleteDisplayDialog open={openDeleteDisplay} displayData={displayDataForDelete} onClose={closeDeleteDisplayHandler} onDelete={deleteDisplayHandler} onSave={updateDisplayDataHandler} />}
-                </DialogBody>
-                <DialogFooter className={'space-x-2'}>
-                    <Button variant='outlined' className='text-primary border-primary' onClick={onClose}>Cancel</Button>
-                    <Button variant={'filled'} className={'bg-primary text-white'}>Standard Content</Button>
-                    <Button variant={'filled'} className={'bg-primary text-white'}>Kalender öffnen</Button>
-                </DialogFooter>
-            </Dialog>
-        </>
+                </div>
+                {displayDataForEdit &&
+                    <EditDisplayDialog open={openEditDisplay} displayData={displayDataForEdit}
+                                       onClose={closeEditDisplayHandler}
+                                       onDataUpdated={displayDataUpdated} />}
+            </DialogBody>
+            <DialogFooter className={'space-x-2'}>
+                <Button variant='outlined' className='text-primary border-primary' onClick={onClose}>Cancel</Button>
+                <Button variant={'filled'} className={'bg-primary text-white'}>Standard Content</Button>
+                <Button variant={'filled'} className={'bg-primary text-white'}>Kalender öffnen</Button>
+            </DialogFooter>
+        </Dialog>
     )
 }

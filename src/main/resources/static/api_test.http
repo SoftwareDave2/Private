@@ -14,7 +14,7 @@ orientation=vertical &
 filename=fruit.jpg
 
 ### Example 3: Deleting a Display by ID
-DELETE http://localhost:8080/display/delete/52
+DELETE http://localhost:8080/display/delete/1
 
 ### Example 4: Download an image from the server
 GET http://localhost:8080/image/download/moon.jpg

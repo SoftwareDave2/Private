@@ -49,7 +49,7 @@ export default function SelectImage({selectedFilename, onSelect}: SelectImagePro
                         <span className={`block text-xs text-gray-700`}>{selectedFilename}</span>
                     </div>
                 )}
-                <Button variant='filled' className={`bg-primary text-white`} onClick={handleDialogOpen}>Bild auswählen</Button>
+                <Button type={'button'} variant='outlined' className={`text-blue-gray-400 border-blue-gray-200`}  onClick={handleDialogOpen}>Bild auswählen</Button>
             </div>
             <SelectImageDialog open={dialogOpen}
                                selectedImage={selectedFilename}

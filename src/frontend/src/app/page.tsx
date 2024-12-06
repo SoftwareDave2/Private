@@ -5,7 +5,6 @@ import PageHeader from "@/components/layout/PageHeader";
 import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import { DisplayData } from "@/types/displayData"
 import getConfig from 'next/config'
-import PageHeaderButton from "@/components/layout/PageHeaderButton";
 import DisplayInfoDialog from "@/components/dashboard/DisplayInfoDialog";
 
 
@@ -30,8 +29,6 @@ export default function Home() {
         fetchDisplays()
             .then(() => { console.log('Displays updated!') })
             .catch((err) => { console.error('No connection to backend!', err)})
-
-
     }, [])
 
     const displayClickHandler = (id: number) => {
@@ -46,10 +43,20 @@ export default function Home() {
         displayDialogHandler()
     }
 
+    const displayUpdatedHandler = async (id: number) => {
+        try {
+            await fetchDisplays()   // Better: Fetch only the display that was updated.
+        } catch (err) {
+            console.error(err)
+        }
+
+        displayDialogHandler()
+    }
+
     return (
       <main>
           <PageHeader title={'Dashboard'} info={`${displays.length} Bildschirme laufen - 0 Bildschirme gestoppt`}>
-              <PageHeaderButton onClick={() => { }}>Add Display</PageHeaderButton>
+
           </PageHeader>
           <div className={`flex gap-4 flex-wrap`}>
               {displays.map(display =>
@@ -58,7 +65,7 @@ export default function Home() {
           </div>
 
           {selectedDisplay &&
-              <DisplayInfoDialog open={displayDialogOpen} displayData={selectedDisplay} onClose={displayDialogHandler} />}
+              <DisplayInfoDialog open={displayDialogOpen} displayData={selectedDisplay} onClose={displayDialogHandler} onDisplayDataUpdated={() => displayUpdatedHandler(selectedDisplay.id)} />}
       </main>
   );
 }
