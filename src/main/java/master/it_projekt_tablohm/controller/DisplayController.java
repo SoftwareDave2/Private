@@ -44,7 +44,7 @@ public class DisplayController {
         display.setWidth(width);
         display.setHeight(height);
         display.setOrientation(orientation);
-        display.setFilename(filename);
+        display.setFilename("src/frontend/public/uploads/" + filename);
 
         // Set wakeTime to null if it's not provided
         if (wakeTime != null) {
@@ -78,7 +78,7 @@ public class DisplayController {
         // If not, create and save a new display
         Display display = new Display();
         display.setMacAddress(macAddress);
-        display.setFilename("initial.jpg");
+        display.setFilename("src/frontend/public/uploads/initial.jpg");
         display.setWidth(width);
         display.setHeight(height);
         display.setWakeTime(LocalDateTime.now().plusHours(1));

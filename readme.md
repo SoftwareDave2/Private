@@ -139,7 +139,7 @@ Adds a new display to the database.
 POST /display/add
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:1B:44:11:3A:B7&brand=Phillips&model=Tableux&width=1920&height=1080&orientation=vertical&filename=moon.png
+macAddress=00:1B:44:11:3A:B7&brand=Phillips&model=Tableux&width=1920&height=1080&orientation=vertical&filename=moon.jpg
 ```
 
 ##### Response:
@@ -347,7 +347,7 @@ GET /display/get/00:1B:44:11:3A:B7
   "width": 1920,
   "height": 1080,
   "orientation": "vertical",
-  "filename": "moon.png",
+  "filename": "src/frontend/public/uploads/moon.jpg",
   "wakeTime": "2024-12-01T13:30:00"
 }
 ```
