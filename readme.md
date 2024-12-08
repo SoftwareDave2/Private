@@ -358,4 +358,31 @@ GET /display/get/00:1B:44:11:3A:B7
 ##### Notes:
 - The display is retrieved only if it exists in the database. If the MAC address is not found, the system will return a "not found" message.
 
+---
+
+#### **8. Delete an Image**
+**DELETE** `/delete/{filename}`
+
+##### Description:
+Deletes an image file from the server by its filename.
+
+##### Path Parameter:
+- **filename** (String, required): The name of the image file to delete, including the file extension (e.g., `moon.jpg`).
+
+##### Request Example:
+```http
+DELETE /delete/moon.jpg
+```
+
+##### Response:
+- **200 OK**: The image file is successfully deleted.
+- **Response Body**: `"Image deleted successfully."`
+
+- **404 Not Found**: If the image file with the specified name does not exist.
+- **Response Body**: `"The image you are trying to delete doesn't exist."`
+
+##### Notes:
+- This endpoint removes the specified image file from the `uploads` directory located at `src/frontend/public/uploads`.
+- Ensure that the filename exists and is correctly specified in the request. If the file does not exist, the server will respond with a message indicating that the file was not found.
+- This operation does not return the deleted file or any other data beyond the success or failure message.
 

@@ -100,4 +100,22 @@ public class ImageController {
 
         return ResponseEntity.ok(Arrays.asList(imageFiles));
     }
+
+    @CrossOrigin("*")
+    @DeleteMapping(path = "/delete/{filename}")
+    public @ResponseBody String deleteImage(@PathVariable("filename") String filename) {
+        // Create path to upload folder
+        // Define the uploads directory outside the src folder
+        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+                "src" + File.separator + "frontend" + File.separator +
+                "public" + File.separator + "uploads";
+        File file = new File(uploadsDirPath, filename);
+
+        if (!file.exists()){
+            return "The image you are trying to delete doesn't exist.";
+        }
+
+        file.delete();
+        return "Image deleted successfully.";
+    }
 }

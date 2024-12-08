@@ -29,3 +29,6 @@ height=1080
 
 ### Example 6: Get single Display based on MAC
 GET http://localhost:8080/display/get/00:00:00:00:99
+
+### Example 7: Delete image based on Filename
+DELETE http://localhost:8080/image/delete/test_delete_image.jpg
