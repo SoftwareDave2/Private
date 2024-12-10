@@ -23,6 +23,20 @@ export default function Home() {
         setDisplays(json)
     }
 
+    const fetchDisplay = async (macAddress: string) => {
+        const data = await fetch(backendApiUrl + '/display/get/' + macAddress)
+        const display = (await data.json()) as DisplayData
+
+        // Update display (this will not add the display if it is not present!)
+        setDisplays(displays.map(d => {
+            if (d.macAddress === display.macAddress) {
+                return display
+            } else {
+                return d
+            }
+        }))
+    }
+
     const displayDialogHandler = () => setDisplayDialogOpen(!displayDialogOpen)
 
     useEffect(() => {
@@ -43,9 +57,9 @@ export default function Home() {
         displayDialogHandler()
     }
 
-    const displayUpdatedHandler = async (id: number) => {
+    const displayUpdatedHandler = async (macAddress: string) => {
         try {
-            await fetchDisplays()   // Better: Fetch only the display that was updated.
+            await fetchDisplay(macAddress)
         } catch (err) {
             console.error(err)
         }
@@ -60,12 +74,15 @@ export default function Home() {
           </PageHeader>
           <div className={`flex gap-4 flex-wrap`}>
               {displays.map(display =>
-                  <DisplayFrame key={display.id} displayData={display} clickable={true} onClick={() => displayClickHandler(display.id)} />
+                  <DisplayFrame key={display.id} displayData={display}
+                                clickable={true} onClick={() => displayClickHandler(display.id)} />
               )}
           </div>
 
           {selectedDisplay &&
-              <DisplayInfoDialog open={displayDialogOpen} displayData={selectedDisplay} onClose={displayDialogHandler} onDisplayDataUpdated={() => displayUpdatedHandler(selectedDisplay.id)} />}
+              <DisplayInfoDialog open={displayDialogOpen} displayData={selectedDisplay}
+                                 onClose={displayDialogHandler}
+                                 onDisplayDataUpdated={() => displayUpdatedHandler(selectedDisplay.macAddress)} />}
       </main>
   );
 }
