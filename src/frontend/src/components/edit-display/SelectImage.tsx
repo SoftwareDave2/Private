@@ -5,6 +5,7 @@ import {useState, useEffect, useRef} from 'react'
 import styles from './SelectImage.module.css'
 import SelectImageDialog from "@/components/edit-display/SelectImageDialog";
 import {MediaContentItemData} from "@/types/mediaContentItemData";
+import Image from "@/components/shared/Image";
 
 type SelectImageProps = {
     selectedFilename?: string,
@@ -45,7 +46,7 @@ export default function SelectImage({selectedFilename, onSelect}: SelectImagePro
             <div className={`flex gap-3 items-center`}>
                 {selectedFilename && (
                     <div>
-                        <img src={`/uploads/${selectedFilename}`} alt={''} className={`rounded-sm ${styles.image}`}/>
+                        <Image filename={selectedFilename} className={`rounded-sm ${styles.image}`} />
                         <span className={`block text-xs text-gray-700`}>{selectedFilename}</span>
                     </div>
                 )}

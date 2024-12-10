@@ -1,5 +1,6 @@
 import styles from './DisplayFrame.module.css'
 import {DisplayData} from "@/types/displayData";
+import Image from "@/components/shared/Image";
 
 type DisplayFrameProps = {
     displayData: DisplayData,
@@ -18,7 +19,7 @@ export default function DisplayFrame({displayData, clickable, onClick}: DisplayF
     return (
         <div className={`flex flex-col ${clickable ? 'cursor-pointer' : null}`} onClick={clickHandler}>
             <div className={`${styles.frame} border-gray-700 rounded`}>
-                <img src={`/uploads/${displayData.filename}`} alt={''} className={`h-full object-fill`}/>
+                <Image filename={displayData.filename} className={`h-full object-fill`} />
             </div>
             <span className={`${styles.name} text-gray-800`}>Display {displayData.id}</span>
         </div>

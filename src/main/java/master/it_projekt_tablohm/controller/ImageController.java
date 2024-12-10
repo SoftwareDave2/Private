@@ -94,6 +94,11 @@ public class ImageController {
                     lowerCaseName.endsWith(".bmp") || lowerCaseName.endsWith(".webp");
         });
 
+        // Add file path to image.
+        //for (int i = 0; i < imageFiles.length; i++) {
+        //    imageFiles[i] = File.separator + "uploads" + File.separator + imageFiles[i];
+        //}
+
         if (imageFiles == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
         }

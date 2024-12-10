@@ -15,7 +15,7 @@ export function DeleteDisplayDialog({open, displayData, onClose, onDisplayDelete
 
     const deleteDisplayHandler = async () => {
         try {
-            const response = await fetch(backendApiUrl + '/display/delete/' + displayData.id, {
+            const response = await fetch(backendApiUrl + '/display/delete/' + displayData.macAddress, {
                 method: 'DELETE'}
             )
             const responseText = await response.text()
