@@ -1,0 +1,218 @@
+"use client";
+
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { useRef, useState } from "react";
+
+type EventDetails = {
+  title: string;
+  date: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  image: string | null; // Typ für das Bild (Base64 oder URL)
+};
+
+export default function Calendar() {
+  const calendarRef = useRef<FullCalendar | null>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [eventDetails, setEventDetails] = useState<EventDetails>({
+    title: "",
+    date: "",
+    start: "",
+    end: "",
+    allDay: false,
+    image: null,
+  });
+
+  const handleAddEvent = () => {
+    const calendarApi = calendarRef.current?.getApi?.() || (calendarRef.current as any)?.getApi?.();
+    if (calendarApi) {
+      const newEvent = {
+        title: eventDetails.title,
+        start: eventDetails.allDay ? eventDetails.date : `${eventDetails.date}T${eventDetails.start}`,
+        end: eventDetails.allDay ? undefined : `${eventDetails.date}T${eventDetails.end}`,
+        allDay: eventDetails.allDay,
+        extendedProps: {
+          image: eventDetails.image, // Bild als zusätzliches Property speichern
+        },
+      };
+      calendarApi.addEvent(newEvent);
+    } else {
+      console.error("Calendar API not available");
+    }
+    closeModal(); // Modal schließen
+  };
+
+  const openModal = (date: string) => {
+    setEventDetails({ ...eventDetails, date }); // Datum setzen
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEventDetails({ title: "", date: "", start: "", end: "", allDay: false, image: null }); // Felder zurücksetzen
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setEventDetails({
+      ...eventDetails,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setEventDetails({
+          ...eventDetails,
+          image: event.target?.result as string, // Base64-String speichern
+        });
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  return (
+    <>
+      <FullCalendar
+        plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
+        headerToolbar={{
+          left: "prev,today,next",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,timeGridDay",
+        }}
+        dateClick={(info) => openModal(info.dateStr)} // Modal öffnen bei Klick auf ein Datum
+        ref={calendarRef}
+        initialView="dayGridMonth"
+        eventContent={(info) => (
+          <div>
+            <b>{info.event.title}</b>
+            {info.event.extendedProps.image && (
+              <img src={info.event.extendedProps.image} alt="Event" style={{ maxWidth: "50px", marginTop: "5px" }} />
+            )}
+          </div>
+        )}
+      />
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h2>Add Event</h2>
+            <form>
+              <div>
+                <label>Title:</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={eventDetails.title}
+                  onChange={handleInputChange}
+                  placeholder="Event Title"
+                />
+              </div>
+              <div>
+                <label>Date:</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={eventDetails.date}
+                  onChange={handleInputChange}
+                />
+              </div>
+              {!eventDetails.allDay && (
+                <>
+                  <div>
+                    <label>Start Time:</label>
+                    <input
+                      type="time"
+                      name="start"
+                      value={eventDetails.start}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div>
+                    <label>End Time:</label>
+                    <input
+                      type="time"
+                      name="end"
+                      value={eventDetails.end}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </>
+              )}
+              <div>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="allDay"
+                    checked={eventDetails.allDay}
+                    onChange={handleInputChange}
+                  />
+                  All Day Event
+                </label>
+              </div>
+              <div>
+                <label>Upload Image:</label>
+                <input type="file" accept="image/*" onChange={handleImageUpload} />
+              </div>
+            </form>
+            <div className="modal-actions">
+              <button onClick={handleAddEvent}>Save</button>
+              <button onClick={closeModal}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Styles */}
+      <style jsx>{`
+          .modal-backdrop {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: rgba(0, 0, 0, 0.5);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 1000;
+          }
+          .modal {
+              background: white;
+              padding: 20px;
+              border-radius: 5px;
+              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+              width: 300px;
+          }
+          .modal h2 {
+              margin-top: 0;
+          }
+          .modal-actions {
+              display: flex;
+              justify-content: space-between;
+          }
+          .modal-actions button {
+              padding: 5px 10px;
+              border: none;
+              border-radius: 3px;
+              cursor: pointer;
+          }
+          .modal-actions button:first-of-type {
+              background-color: #007bff;
+              color: white;
+          }
+          .modal-actions button:last-of-type {
+              background-color: #dc3545;
+              color: white;
+          }
+      `}</style>
+    </>
+  );
+}
