@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @Controller
 @RequestMapping(path = "/image")
@@ -67,5 +70,57 @@ public class ImageController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/download/all")
+    public @ResponseBody ResponseEntity<List<String>> listImages() {
+        // Create path to upload folder
+        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+                "src" + File.separator + "frontend" + File.separator +
+                "public" + File.separator + "uploads";
+        File uploadsDir = new File(uploadsDirPath);
+
+        if (!uploadsDir.exists() || !uploadsDir.isDirectory()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        }
+
+        // Collect all image filenames in the directory
+        String[] imageFiles = uploadsDir.list((dir, name) -> {
+            // Filter for common image file extensions
+            String lowerCaseName = name.toLowerCase();
+            return lowerCaseName.endsWith(".jpg") || lowerCaseName.endsWith(".jpeg") ||
+                    lowerCaseName.endsWith(".png") || lowerCaseName.endsWith(".gif") ||
+                    lowerCaseName.endsWith(".bmp") || lowerCaseName.endsWith(".webp");
+        });
+
+        // Add file path to image.
+        //for (int i = 0; i < imageFiles.length; i++) {
+        //    imageFiles[i] = File.separator + "uploads" + File.separator + imageFiles[i];
+        //}
+
+        if (imageFiles == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        }
+
+        return ResponseEntity.ok(Arrays.asList(imageFiles));
+    }
+
+    @CrossOrigin("*")
+    @DeleteMapping(path = "/delete/{filename}")
+    public @ResponseBody String deleteImage(@PathVariable("filename") String filename) {
+        // Create path to upload folder
+        // Define the uploads directory outside the src folder
+        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+                "src" + File.separator + "frontend" + File.separator +
+                "public" + File.separator + "uploads";
+        File file = new File(uploadsDirPath, filename);
+
+        if (!file.exists()){
+            return "The image you are trying to delete doesn't exist.";
+        }
+
+        file.delete();
+        return "Image deleted successfully.";
     }
 }

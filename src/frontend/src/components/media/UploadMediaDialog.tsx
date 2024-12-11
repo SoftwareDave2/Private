@@ -1,13 +1,14 @@
 'use client'
 
 import { Button, Dialog, DialogHeader, DialogBody, DialogFooter } from "@material-tailwind/react"
-import {open, handler} from "@material-tailwind/react/types/components/dialog";
+import {open} from "@material-tailwind/react/types/components/dialog";
 import {useState} from 'react'
-import UploadMediaButton from "@/components/UploadMediaButton";
+import UploadMediaButton from "@/components/media/UploadMediaButton";
 
 type UploadMediaDialogProps = {
     open: open,
-    openHandler: handler
+    cancelHandler: () => void,
+    savedHandler: () => void,
 }
 
 type ImageDimensions = {
@@ -15,7 +16,7 @@ type ImageDimensions = {
     height: Number,
 }
 
-export default function UploadMediaDialog({open, openHandler}: UploadMediaDialogProps) {
+export default function UploadMediaDialog({open, cancelHandler, savedHandler}: UploadMediaDialogProps) {
 
     const [file, setFile] = useState<File | null>(null)
     const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null)
@@ -38,14 +39,23 @@ export default function UploadMediaDialog({open, openHandler}: UploadMediaDialog
         }
     }
 
-    const handleClose = () => {
+    const resetFiles = () => {
         setFile(null)
         setImageDimensions(null)
-        openHandler()
+    }
+
+    const handleCancel = () => {
+        resetFiles()
+        cancelHandler()
+    }
+
+    const handleSaved = () => {
+        resetFiles()
+        savedHandler()
     }
 
     return (
-        <Dialog open={open} handler={handler}>
+        <Dialog open={open} handler={cancelHandler}>
             <DialogHeader>Hochladen</DialogHeader>
             <DialogBody>
                 <p className=''>Ausgewählte Dateien:</p>
@@ -65,8 +75,8 @@ export default function UploadMediaDialog({open, openHandler}: UploadMediaDialog
 
             </DialogBody>
             <DialogFooter className='space-x-2'>
-                <Button variant='outlined' className='text-primary border-primary' onClick={handleClose}>Cancel</Button>
-                <UploadMediaButton file={file} onClick={handleClose} />
+                <Button variant='outlined' className='text-primary border-primary' onClick={handleCancel}>Cancel</Button>
+                <UploadMediaButton file={file} onClick={handleSaved} />
             </DialogFooter>
         </Dialog>
     )

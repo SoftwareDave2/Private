@@ -44,6 +44,7 @@ public class DisplayController {
         display.setWidth(width);
         display.setHeight(height);
         display.setOrientation(orientation);
+        //display.setFilename("/uploads/" + filename);
         display.setFilename(filename);
 
         // Set wakeTime to null if it's not provided
@@ -57,7 +58,9 @@ public class DisplayController {
 
     @CrossOrigin(origins = "*")
     @PostMapping(path = "/initiate")
-    public @ResponseBody ResponseEntity<Map<String, Object>> initiateDisplay(@RequestParam(required = false) String macAddress) {
+    public @ResponseBody ResponseEntity<Map<String, Object>> initiateDisplay(@RequestParam String macAddress,
+                                                                             @RequestParam int width,
+                                                                             @RequestParam int height) {
         Map<String, Object> response = new HashMap<>();
 
         if (macAddress == null || macAddress.isEmpty()) {
@@ -76,6 +79,10 @@ public class DisplayController {
         // If not, create and save a new display
         Display display = new Display();
         display.setMacAddress(macAddress);
+        //display.setFilename("src/frontend/public/uploads/initial.jpg");
+        display.setFilename("initial.jpg");
+        display.setWidth(width);
+        display.setHeight(height);
         display.setWakeTime(LocalDateTime.now().plusHours(1));
         displayRepository.save(display);
 
@@ -90,20 +97,25 @@ public class DisplayController {
 
 
     @CrossOrigin(origins = "*")
-    @DeleteMapping(path = "/delete/{id}")
-    public @ResponseBody String deleteDisplay(@PathVariable Integer id) {
-        // Check if the display exists
-        if (displayRepository.existsById(id)) {
-            displayRepository.deleteById(id);
-            return "Display with ID " + id + " deleted.";
-        } else {
-            return "Display with ID " + id + " not found.";
-        }
+    @DeleteMapping(path = "/delete/{mac}")
+    public @ResponseBody String deleteDisplay(@PathVariable String mac) {
+        // Check if the display exists using the MAC address
+        return displayRepository.findByMacAddress(Objects.requireNonNull(mac))
+                .map(display -> {
+                    displayRepository.delete(display);
+                    return "Display with MAC address " + mac + " deleted.";
+                })
+                .orElse("Display with MAC address " + mac + " not found.");
     }
+
 
     @CrossOrigin(origins = "*")
     @GetMapping(path = "/all")
     public @ResponseBody Iterable<Display> getAllDisplays() {
         return displayRepository.findAll();
     }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/get/{mac}")
+    public @ResponseBody Display getDisplayById(@PathVariable String mac) {return displayRepository.findByMacAddress(Objects.requireNonNull(mac)).get();}
 }
