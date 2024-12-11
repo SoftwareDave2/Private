@@ -4,27 +4,45 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+import {CalendarEntryDialog} from "@/components/CalendarEntryDialog";
+import {EventDetails} from "@/types/eventDetails";
+import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from "@material-tailwind/react";
 
-type EventDetails = {
-  title: string;
-  date: string;
-  start: string;
-  end: string;
-  allDay: boolean;
-  image: string | null; // Typ für das Bild (Base64 oder URL)
-};
+
+
+
+
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [openCalendarEntry, setOpenCalendarEntry] = useState<boolean>(false)
+  const [eventDetailsForEdit, setEventDetailsForEdit] = useState<EventDetails | null>(null)
+
+
+  const toggleOpenCalendarEntryHandler = () => setOpenCalendarEntry(!openCalendarEntry)
+
+  const closeCalendarEntryHandler = () => {
+    //toggleOpenCalendarEntryHandler()
+    setOpenCalendarEntry(false)
+    setTimeout(() => setEventDetailsForEdit(null), 500)      // Wait until dialog close animation is over.
+  }
+
+
+  const testcloseCalendarEntryHandler = () => {
+    //toggleOpenCalendarEntryHandler()
+    //setOpenCalendarEntry(false)
+    setTimeout(() => setEventDetailsForEdit(null), 500)      // Wait until dialog close animation is over.
+  }
+
   const [eventDetails, setEventDetails] = useState<EventDetails>({
     title: "",
     date: "",
     start: "",
     end: "",
     allDay: false,
-    image: null,
+    image: undefined,
   });
 
   const handleAddEvent = () => {
@@ -46,14 +64,20 @@ export default function Calendar() {
     closeModal(); // Modal schließen
   };
 
+
+
+
+
+
   const openModal = (date: string) => {
     setEventDetails({ ...eventDetails, date }); // Datum setzen
+    console.log(eventDetailsForEdit?.title) // test m
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setModalOpen(false);
-    setEventDetails({ title: "", date: "", start: "", end: "", allDay: false, image: null }); // Felder zurücksetzen
+    setEventDetails({ title: "", date: "", start: "", end: "", allDay: false, image: undefined }); // Felder zurücksetzen
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,6 +101,41 @@ export default function Calendar() {
     }
   };
 
+
+  const calendarEntryHandler = async () => {
+    // Fetch new display data from server.
+    try {
+      // const data = await fetch(backendApiUrl + '/display/all')
+      // const allDisplays = (await data.json()) as DisplayData[]
+      // const display = allDisplays.find(d => d.id === displayData.id)
+      // if (!display) {
+      //   console.error('Selected display not found!')
+      //   return
+      // }
+      const eventTest = {
+        title: "",
+        date: "",
+        start: "",
+        end: "",
+        allDay: false,
+        image: undefined,
+      }
+
+
+      setEventDetailsForEdit(eventTest)
+      //toggleOpenCalendarEntryHandler()
+      setOpenCalendarEntry(true)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const displayDataUpdated = () => {
+    handleAddEvent()
+    closeCalendarEntryHandler()
+    //onEventDetailsUpdated()
+  }
+
   return (
     <>
       <FullCalendar
@@ -86,7 +145,8 @@ export default function Calendar() {
           center: "title",
           right: "dayGridMonth,timeGridWeek,timeGridDay",
         }}
-        dateClick={(info) => openModal(info.dateStr)} // Modal öffnen bei Klick auf ein Datum
+        //dateClick={(info) => openModal(info.dateStr)} // Modal öffnen bei Klick auf ein Datum
+        dateClick={(info) => setOpenCalendarEntry(true)} // Modal öffnen bei Klick auf ein Datum
         ref={calendarRef}
         initialView="dayGridMonth"
         eventContent={(info) => (
@@ -99,6 +159,39 @@ export default function Calendar() {
         )}
       />
 
+
+      <Dialog open={openCalendarEntry} handler={toggleOpenCalendarEntryHandler}>
+        <DialogHeader>Display {eventDetails.title}</DialogHeader>
+        <DialogBody>
+          <div className={'flex gap-6'}>
+            <Button variant={"outlined"} className={'text-primary border-primary mt-4'} onClick={calendarEntryHandler}>CalendarEntry</Button>
+
+
+          </div>
+
+
+
+          {eventDetailsForEdit &&
+              <CalendarEntryDialog open={openCalendarEntry} eventDetails={eventDetailsForEdit}
+                                 //onClose={closeCalendarEntryHandler}
+                                  onClose={testcloseCalendarEntryHandler}
+                                 onDataUpdated={displayDataUpdated} />}
+        </DialogBody>
+        <DialogFooter className={'space-x-2'}>
+          <Button variant='outlined' className='text-primary border-primary' onClick={toggleOpenCalendarEntryHandler}>Cancel</Button>
+          <Button variant={'filled'} className={'bg-primary text-white'}>Standard Content</Button>
+          <Button variant={'filled'} className={'bg-primary text-white'}>Kalender öffnen</Button>
+        </DialogFooter>
+      </Dialog>
+
+
+
+
+
+
+
+
+
       {/* Modal */}
       {isModalOpen && (
         <div className="modal-backdrop">
@@ -108,58 +201,61 @@ export default function Calendar() {
               <div>
                 <label>Title:</label>
                 <input
-                  type="text"
-                  name="title"
-                  value={eventDetails.title}
-                  onChange={handleInputChange}
-                  placeholder="Event Title"
+                    type="text"
+                    name="title"
+                    value={eventDetails.title}
+                    onChange={handleInputChange}
+                    placeholder="Event Title"
                 />
               </div>
+
+
+
               <div>
                 <label>Date:</label>
                 <input
-                  type="date"
-                  name="date"
-                  value={eventDetails.date}
-                  onChange={handleInputChange}
+                    type="date"
+                    name="date"
+                    value={eventDetails.date}
+                    onChange={handleInputChange}
                 />
               </div>
               {!eventDetails.allDay && (
-                <>
-                  <div>
-                    <label>Start Time:</label>
-                    <input
-                      type="time"
-                      name="start"
-                      value={eventDetails.start}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div>
-                    <label>End Time:</label>
-                    <input
-                      type="time"
-                      name="end"
-                      value={eventDetails.end}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </>
+                  <>
+                    <div>
+                      <label>Start Time:</label>
+                      <input
+                          type="time"
+                          name="start"
+                          value={eventDetails.start}
+                          onChange={handleInputChange}
+                      />
+                    </div>
+                    <div>
+                      <label>End Time:</label>
+                      <input
+                          type="time"
+                          name="end"
+                          value={eventDetails.end}
+                          onChange={handleInputChange}
+                      />
+                    </div>
+                  </>
               )}
               <div>
                 <label>
                   <input
-                    type="checkbox"
-                    name="allDay"
-                    checked={eventDetails.allDay}
-                    onChange={handleInputChange}
+                      type="checkbox"
+                      name="allDay"
+                      checked={eventDetails.allDay}
+                      onChange={handleInputChange}
                   />
                   All Day Event
                 </label>
               </div>
               <div>
                 <label>Upload Image:</label>
-                <input type="file" accept="image/*" onChange={handleImageUpload} />
+                <input type="file" accept="image/*" onChange={handleImageUpload}/>
               </div>
             </form>
             <div className="modal-actions">
@@ -172,13 +268,13 @@ export default function Calendar() {
 
       {/* Styles */}
       <style jsx>{`
-          .modal-backdrop {
-              position: fixed;
-              top: 0;
-              left: 0;
-              width: 100%;
-              height: 100%;
-              background: rgba(0, 0, 0, 0.5);
+        .modal-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
               display: flex;
               align-items: center;
               justify-content: center;

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import ModalEditDisplay from '@/components/ModalEditDisplay';
-import {revalidatePath} from "next/cache";
 import ModalDeleteDisplay from "@/components/ModalDeleteDisplay";
-import PageHeader from "@/components/PageHeader"; // ModalEditDisplay importieren
+import PageHeader from "@/components/layout/PageHeader"; // ModalEditDisplay importieren
 
 type Display = {
     macAddress: string;
