@@ -386,3 +386,192 @@ DELETE /delete/moon.jpg
 - Ensure that the filename exists and is correctly specified in the request. If the file does not exist, the server will respond with a message indicating that the file was not found.
 - This operation does not return the deleted file or any other data beyond the success or failure message.
 
+Here is the documentation for the `EventController` endpoints added to your README file:
+
+---
+
+### **API Documentation: EventController**
+
+This API allows you to interact with the Event resource, enabling operations such as adding, updating, deleting, and retrieving events for specific displays.
+
+---
+
+#### **1. Add an Event**
+**POST** /event/add
+
+##### Description:
+Adds a new event to the database associated with a display.
+
+##### Request Parameters:
+- **title** (String, required): The title of the event.
+- **allDay** (Boolean, required): A flag indicating if the event is an all-day event.
+- **start** (LocalDateTime, required): The start date and time of the event.
+- **end** (LocalDateTime, required): The end date and time of the event.
+- **displayMac** (String, required): The Mac of the display associated with the event.
+- **image** (String, optional): A URL or file path to an image associated with the event.
+
+##### Request Example:
+
+```http
+POST /event/add
+Content-Type: application/x-www-form-urlencoded
+
+title=Team+Meeting&allDay=false&start=2024-12-15T09:00:00&end=2024-12-15T10:00:00&displayMac=00:00:00:00:01&image=meeting_image.jpg
+```
+
+##### Response:
+- **200 OK**: Event added successfully.
+- **Response Body**: "Event added successfully."
+- **400 Bad Request**: If the display ID is not found or if parameters are missing.
+- **Response Body**: "Display with ID 1 not found."
+
+##### Notes:
+- Ensures the display exists before adding the event.
+- The event will be associated with the display specified by `displayMac`.
+
+---
+
+#### **2. Get Events by Display**
+**GET** /event/all/{displayMac}
+
+##### Description:
+Retrieves all events associated with a specific display by its Mac.
+
+##### Path Parameter:
+- **displayMac** (String, required): The Mac of the display for which events are to be retrieved.
+
+##### Request Example:
+
+```http
+GET /event/all/00:00:00:00:01
+```
+
+##### Response:
+- **200 OK**: A list of events associated with the display.
+- **Response Body** (Example):
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Team Meeting",
+    "allDay": false,
+    "start": "2024-12-15T09:00:00",
+    "end": "2024-12-15T10:00:00",
+    "displayMac": "00:00:00:00:01",
+    "image": "meeting_image.jpg"
+  }
+]
+```
+
+##### Notes:
+- Returns all events related to the specified display ID.
+
+---
+
+#### **3. Update an Event**
+**PUT** /event/update/{id}
+
+##### Description:
+Updates an existing event.
+
+##### Path Parameter:
+- **id** (Integer, required): The ID of the event to update.
+
+##### Request Parameters:
+- **title** (String, required): The updated title of the event.
+- **allDay** (Boolean, required): The updated flag for an all-day event.
+- **start** (LocalDateTime, required): The updated start date and time of the event.
+- **end** (LocalDateTime, required): The updated end date and time of the event.
+- **image** (String, optional): The updated image URL or file path associated with the event.
+
+##### Request Example:
+
+```http
+PUT /event/update/1
+Content-Type: application/x-www-form-urlencoded
+
+title=Project+Review&allDay=true&start=2024-12-20T00:00:00&end=2024-12-20T23:59:59&image=review_image.jpg
+```
+
+##### Response:
+- **200 OK**: Event updated successfully.
+- **Response Body**: "Event updated successfully."
+- **400 Bad Request**: If the event ID is not found or parameters are missing.
+- **Response Body**: "Event with ID 1 not found."
+
+##### Notes:
+- If the event with the specified ID does not exist, a bad request response is returned.
+
+---
+
+#### **4. Delete an Event**
+**DELETE** /event/delete/{id}
+
+##### Description:
+Deletes an event from the database.
+
+##### Path Parameter:
+- **id** (Integer, required): The ID of the event to delete.
+
+##### Request Example:
+
+```http
+DELETE /event/delete/1
+```
+
+##### Response:
+- **200 OK**: Event deleted successfully.
+- **Response Body**: "Event deleted successfully."
+- **404 Not Found**: If the event with the specified ID does not exist.
+- **Response Body**: "Event with ID 1 not found."
+
+##### Notes:
+- The event is deleted only if it exists in the database. If the ID is not found, the system returns a "not found" message.
+
+---
+
+#### **5. Get All Events**
+**GET** /event/all
+
+##### Description:
+Retrieves all events in the database.
+
+##### Response:
+- **200 OK**: A list of all events in the database.
+- **Response Body** (Example):
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Team Meeting",
+    "allDay": false,
+    "start": "2024-12-15T09:00:00",
+    "end": "2024-12-15T10:00:00",
+    "displayMac": "00:00:00:00:01",
+    "image": "meeting_image.jpg"
+  },
+  {
+    "id": 2,
+    "title": "Project Review",
+    "allDay": true,
+    "start": "2024-12-20T00:00:00",
+    "end": "2024-12-20T23:59:59",
+    "displayMac": "00:00:00:00:01",
+    "image": "review_image.jpg"
+  }
+]
+```
+
+##### Notes:
+- This endpoint returns a JSON array of all event records in the database.
+
+---
+
+### Error Responses:
+- **400 Bad Request**: If any required parameter is missing or invalid in the request body (for POST and PUT requests).
+- **404 Not Found**: If the requested event by ID or display by Mac does not exist.
+- **500 Internal Server Error**: For unexpected errors during server processing.
+
+---
