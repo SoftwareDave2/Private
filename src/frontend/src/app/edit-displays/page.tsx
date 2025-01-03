@@ -17,12 +17,27 @@ type Display = {
     wakeTime: string;
 };
 
+
+
+
+type Event = {
+    id: string;
+    title: string;
+    allDay: string;
+    start: string;
+    end: string;
+    displayMac: string;
+};
+
 export default function MockDisplays() {
     const [displays, setDisplays] = useState<Display[]>([]); // State to store displays
     const [isModalEditOpen, setIsModalEditOpen] = useState(false);
     const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false);
 
     const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null); // State für das angeklickte Display
+
+    // test zur anzeige von events
+    const [events, setEvents] = useState<Event[]>([]); // State to store displays
 
 
     // Fetch data on mount using useEffect
@@ -33,7 +48,17 @@ export default function MockDisplays() {
             setDisplays(data); // Update the state with fetched data
         };
 
+        const fetchEvents = async () => {
+            const response = await fetch('http://localhost:8080/event/all');
+            const eventData = await response.json();
+            setEvents(eventData); // Update the state with fetched data
+        };
+
+
+
+
         fetchDisplays(); // Call the async function
+        fetchEvents();
     }, []); // Empty dependency array means it runs only once after the component mounts
 
     const openModalEditWithDisplay = (display: Display) => {
@@ -123,6 +148,37 @@ export default function MockDisplays() {
 
             </PageHeader>
             <div className="py-10">
+
+                {//test anzeige events
+                }
+                <ul className="space-y-4 p-4">
+                    {events.map((event: Event) => (
+                        <li
+                            key={event.id}
+                            className="p-4 bg-white shadow-md rounded-lg text-grey-700"
+                        >
+                            Id: {event.id} <br/>
+                            Title: {event.title} <br/>
+                            all day: {event.allDay} <br/>
+                            start: {event.start} <br/>
+                            end: {event.end} <br/>
+                            Mac Adresse: {event.displayMac} <br/>
+
+
+
+                        </li>
+                    ))}
+                </ul>
+
+
+
+
+
+
+
+
+
+
                 <ul className="space-y-4 p-4">
                     {displays.map((display: Display) => (
                         <li
@@ -159,10 +215,10 @@ export default function MockDisplays() {
                             </form>
 
                             <form className=" "
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    openModalDeleteWithDisplay(display);
-                                }}
+                                  onSubmit={(e) => {
+                                      e.preventDefault();
+                                      openModalDeleteWithDisplay(display);
+                                  }}
                             >
                                 <input
                                     name="macAddress"
@@ -179,12 +235,11 @@ export default function MockDisplays() {
                             </form>
 
 
-
-
-
                         </li>
                     ))}
                 </ul>
+
+
 
                 {/* ModalEditDisplay-Komponente, wird angezeigt wenn isModalEditOpen true ist */}
                 <ModalEditDisplay isOpen={isModalEditOpen} onClose={closeModalEdit}>
@@ -281,7 +336,8 @@ export default function MockDisplays() {
                     {selectedDisplay && (
                         <div>
                             <form action={removeDisplay} className="mb-4">
-                                <h1 className="text-xl font-bold mb-4">Willst du das Display {selectedDisplay.id} wirklich löschen?</h1>
+                                <h1 className="text-xl font-bold mb-4">Willst du das
+                                    Display {selectedDisplay.id} wirklich löschen?</h1>
 
                                 <input name="id" className="hidden" value={selectedDisplay.id}
                                        readOnly={true}/>

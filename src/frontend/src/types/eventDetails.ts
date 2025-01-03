@@ -1,8 +1,9 @@
 export type EventDetails = {
+    id: string;
     title: string;
     date: string;
     start: string;
     end: string;
     allDay: boolean;
-    image: string | undefined; // Typ für das Bild (Base64 oder URL)
+    image: string; // Typ für das Bild (Base64 oder URL)
 };

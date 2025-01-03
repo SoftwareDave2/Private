@@ -40,7 +40,10 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
     const imageChangeHandler = (image: string) =>
         setData(prevState => ({...prevState, image: image ?? ''}))
 
-    // neie variante ohen die einzelnen change handler
+
+
+
+    // neue variante ohen die einzelnen change handler
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
 
@@ -58,15 +61,37 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
         }
     };
 
+    const filenameChangeHandler = (filename: string) =>
+        setData(prevState => ({...prevState, image: filename}))
 
 
     const updateEvent = async (formdata: FormData) => {
+        // Hinweis: die console.log(...) befehle werden in der Console im browser ausgeführt -> bei Safari: Entwickler -> javaScript-Konsole einblenden
         console.log("test log aus update event")
 
+        const combinedStartDateTime = `${data.date}T${data.start}:00`;
+        const combinedEndDateTime = `${data.date}T${data.end}:00`;
+        console.log("combinedStartDateTime: "+ combinedStartDateTime)
+        console.log("Image Name: "+ data.image)
+        //console.log(formdata.get('allDay'))
+        var ganzenTag = false
+        if(formdata.get('allDay')){
+            ganzenTag = true;
+        }
+
+        // var imageData = formdata.get('image');
+        // var imageName = ""
+        // if(imageData!= undefined){
+        //     imageName = imageData.toString();
+        // }
+        // console.log("imageName"+imageName)
+
+
         try {
-            const response = await fetch(backendApiUrl + '/display/add', {
+            const response = await fetch(backendApiUrl + '/event/add', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            /*
                 body:
                     'title='+ data.title +
                     '&date=' + data.date +
@@ -75,6 +100,25 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                     '&allDay=' + formdata.get('allDay') +
                     '&Image=' + data.image,
 
+            */
+
+
+                /*
+                body:
+                    'title=' + "test Meeting "+
+                    '&allDay=' + "false" +
+                    '&start=' + "2024-12-15T09:00:00" +
+                    '&end=' + "2024-12-15T10:00:00" +
+                    '&displayMac=' + "00:00:00:00:01"
+                 */
+
+                body:
+                    'title=' + data.title +
+                    '&allDay=' + ganzenTag +
+                    '&start=' + combinedStartDateTime +
+                    '&end=' + combinedEndDateTime +
+                    '&displayMac=' + "00:00:00:00:01" +
+                    '&image=' + data.image
             })
             const responseText = await response.text()
             console.log(responseText)
@@ -95,89 +139,63 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             <DialogHeader>Display {data.title} Anpassen</DialogHeader>
             <form action={updateEvent}>
                 <DialogBody>
+                    <h2>Add Event</h2>
                     <div>
-                        <h2>Add Event</h2>
-                        <form>
-                            <div>
-                                <label htmlFor="title">Title:</label>
-                                <input
-                                    type="text"
-                                    name="title"
-                                    value={data.title}
-                                    onChange={handleInputChange}
-                                    placeholder="Event Title"
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="date">Date:</label>
-                                <input
-                                    type="date"
-                                    name="date"
-                                    value={data.date}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-
-                            {!data.allDay && (
-                                <>
-                                    <div>
-                                        <label htmlFor="start">Start Time:</label>
-                                        <input
-                                            type="time"
-                                            name="start"
-                                            value={data.start}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="end">End Time:</label>
-                                        <input
-                                            type="time"
-                                            name="end"
-                                            value={data.end}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            <div>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        name="allDay"
-                                        checked={data.allDay}
-                                        onChange={handleInputChange}
-                                    />
-                                    All Day Event
-                                </label>
-                            </div>
-                        </form>
+                        <label htmlFor="title">Title:</label>
+                        <input
+                            type="text"
+                            name="title"
+                            value={data.title}
+                            onChange={handleInputChange}
+                            placeholder="Event Title"
+                        />
                     </div>
+                    <div>
+                        <label htmlFor="date">Date:</label>
+                        <input
+                            type="date"
+                            name="date"
+                            value={data.date}
+                            onChange={handleInputChange}
+                        />
+                    </div>
+                    {!data.allDay && (
+                        <>
+                            <div>
+                                <label htmlFor="start">Start Time:</label>
+                                <input
+                                    type="time"
+                                    name="start"
+                                    value={data.start}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="end">End Time:</label>
+                                <input
+                                    type="time"
+                                    name="end"
+                                    value={data.end}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        </>
+                    )}
 
-
-                    {/**
-                     <div>
-                     <Input label={'Title'} value={data.title} readOnly={true}/>
-                     </div>
-                     <div className={'mt-5 flex gap-2'}>
-                     <Select label={'Titel'} value={data.title} name={'title'} onChange={titleChangeHandler}>
-                     <Option key={'Philips'} value={'Philips'}>Philips</Option>
-                     </Select>
-
-                     <Select label={'Date'} value={data.date} name={'date'} onChange={dateChangeHandler}>
-                     <Option value={'Tableaux'}>Tableaux</Option>
-                     </Select>
-                     </div>
-                     <div className={'mt-5 flex gap-2'}>
-                     <Select label={'start'} value={data.start} name={'start'} onChange={startChangeHandler}>
-                     <Option value={'vertical'}>vertical</Option>
-                     </Select>
-
-                     </div>
-
-                     **/}
+                    <div>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="allDay"
+                                checked={data.allDay}
+                                onChange={handleInputChange}
+                            />
+                            All Day Event
+                        </label>
+                    </div>
+                    <div className={'mt-5'}>
+                        <SelectImage selectedFilename={data.image} onSelect={filenameChangeHandler} />
+                    </div>
 
 
                 </DialogBody>
