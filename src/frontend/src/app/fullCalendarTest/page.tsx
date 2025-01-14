@@ -22,19 +22,24 @@ type Event = {
   image: object;
 };
 
-
-
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar | null>(null);
-  const [isModalOpen, setModalOpen] = useState(false);
   const [openCalendarEntry, setOpenCalendarEntry] = useState<boolean>(false)
   const [eventDetailsForEdit, setEventDetailsForEdit] = useState<EventDetails | null>(null)
+  const [eventDetails, setEventDetails] = useState<EventDetails>({
+    id: "",
+    title: "",
+    date: "",
+    start: "",
+    end: "",
+    allDay: false,
+    image: undefined,
+  });
 
 
   const toggleOpenCalendarEntryHandler = () => setOpenCalendarEntry(!openCalendarEntry)
 
-
-  // test zur anzeige von events
+  // gespeicherte Events aus dem Backend holen
   const [events, setEvents] = useState<Event[]>([]); // State to store displays
   // Fetch data on mount using useEffect
   useEffect(() => {
@@ -48,13 +53,18 @@ export default function Calendar() {
     fetchEvents();
   }, []); // Empty dependency array means it runs only once after the component mounts
 
-
-
-
-
-
-
-
+  // erzeugen der Einträge für den fullCalendar
+  const fullCalendarEvents = events.map((event) => ({
+    id: event.id,
+    title: event.title,
+    start: event.start,
+    end: event.end,
+    allDay: event.allDay === 'true',
+    extendedProps: {
+      display: event.display,
+      image: "uploads/"+event.image
+    }
+  }));
 
   const closeCalendarEntryHandler = () => {
     //toggleOpenCalendarEntryHandler()
@@ -69,84 +79,12 @@ export default function Calendar() {
     setTimeout(() => setEventDetailsForEdit(null), 500)      // Wait until dialog close animation is over.
   }
 
-  const [eventDetails, setEventDetails] = useState<EventDetails>({
-    id: "",
-    title: "",
-    date: "",
-    start: "",
-    end: "",
-    allDay: false,
-    image: undefined,
-  });
 
-  const handleAddEvent = () => {
-    const calendarApi = calendarRef.current?.getApi?.() || (calendarRef.current as any)?.getApi?.();
-    if (calendarApi) {
-      const newEvent = {
-        title: eventDetails.title,
-        start: eventDetails.allDay ? eventDetails.date : `${eventDetails.date}T${eventDetails.start}`,
-        end: eventDetails.allDay ? undefined : `${eventDetails.date}T${eventDetails.end}`,
-        allDay: eventDetails.allDay,
-        extendedProps: {
-          image: eventDetails.image, // Bild als zusätzliches Property speichern
-        },
-      };
-      calendarApi.addEvent(newEvent);
-    } else {
-      console.error("Calendar API not available");
-    }
-    closeModal(); // Modal schließen
-  };
-
-
-
-
-
-
-  const openModal = (date: string) => {
-    setEventDetails({ ...eventDetails, date }); // Datum setzen
-    console.log(eventDetailsForEdit?.title) // test m
-    setModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-    setEventDetails({id:"", title: "", date: "", start: "", end: "", allDay: false, image: undefined }); // Felder zurücksetzen
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setEventDetails({
-      ...eventDetails,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setEventDetails({
-          ...eventDetails,
-          image: event.target?.result as string, // Base64-String speichern
-        });
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  };
 
 
   const calendarEntryHandler = async () => {
-    // Fetch new display data from server.
     try {
-      // const data = await fetch(backendApiUrl + '/display/all')
-      // const allDisplays = (await data.json()) as DisplayData[]
-      // const display = allDisplays.find(d => d.id === displayData.id)
-      // if (!display) {
-      //   console.error('Selected display not found!')
-      //   return
-      // }
-      const eventTest = {
+      const newEvent = {
         id: "",
         title: "",
         date: "",
@@ -155,9 +93,7 @@ export default function Calendar() {
         allDay: false,
         image: undefined,
       }
-
-
-      setEventDetailsForEdit(eventTest)
+      setEventDetailsForEdit(newEvent)
       //toggleOpenCalendarEntryHandler()
       setOpenCalendarEntry(true)
     } catch (err) {
@@ -166,7 +102,6 @@ export default function Calendar() {
   }
 
   const displayDataUpdated = () => {
-    handleAddEvent()
     closeCalendarEntryHandler()
     //onEventDetailsUpdated()
   }
@@ -175,6 +110,8 @@ export default function Calendar() {
       <>
         <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
+            events={fullCalendarEvents}
+
             headerToolbar={{
               left: "prev,today,next",
               center: "title",
@@ -193,6 +130,15 @@ export default function Calendar() {
                   )}
                 </div>
             )}
+            eventClick={(clickInfo) => {
+              // Event-Klick-Handler
+              alert(`Event clicked: ${clickInfo.event.title}`+
+                  `\n Start: ${clickInfo.event.start}` +
+                  `\n End: ${clickInfo.event.end}` +
+                  `\n AllDay: ${clickInfo.event.allDay}` +
+                  `\n Display: ${clickInfo.event.extendedProps.display.id}`
+              );
+            }}
         />
 
         <ul className="space-y-4 p-4">
@@ -209,8 +155,6 @@ export default function Calendar() {
                 Mac Adresse: {(event.display.macAddress )} <br/>
                 DisplayId: {(event.display.id )} <br/>
                 Image: {event.image}
-
-
               </li>
           ))}
         </ul>
@@ -241,129 +185,6 @@ export default function Calendar() {
           </DialogFooter>
         </Dialog>
 
-
-        {/* Modal */}
-        {isModalOpen && (
-            <div className="modal-backdrop">
-              <div className="modal">
-                <h2>Add Event</h2>
-                <form>
-                  <div>
-                    <label>Title:</label>
-                    <input
-                        type="text"
-                        name="title"
-                        value={eventDetails.title}
-                        onChange={handleInputChange}
-                        placeholder="Event Title"
-                    />
-                  </div>
-
-
-                  <div>
-                    <label>Date:</label>
-                    <input
-                        type="date"
-                        name="date"
-                        value={eventDetails.date}
-                        onChange={handleInputChange}
-                    />
-                  </div>
-                  {!eventDetails.allDay && (
-                      <>
-                        <div>
-                          <label>Start Time:</label>
-                          <input
-                              type="time"
-                              name="start"
-                              value={eventDetails.start}
-                              onChange={handleInputChange}
-                          />
-                        </div>
-                        <div>
-                          <label>End Time:</label>
-                          <input
-                              type="time"
-                              name="end"
-                              value={eventDetails.end}
-                              onChange={handleInputChange}
-                          />
-                        </div>
-                      </>
-                  )}
-                  <div>
-                    <label>
-                      <input
-                          type="checkbox"
-                          name="allDay"
-                          checked={eventDetails.allDay}
-                          onChange={handleInputChange}
-                      />
-                      All Day Event
-                    </label>
-                  </div>
-                  <div>
-                    <label>Upload Image:</label>
-                    <input type="file" accept="image/*" onChange={handleImageUpload}/>
-                  </div>
-                </form>
-                <div className="modal-actions">
-                  <button onClick={handleAddEvent}>Save</button>
-                  <button onClick={closeModal}>Cancel</button>
-                </div>
-              </div>
-            </div>
-        )}
-
-        {/* Styles */}
-        <style jsx>{`
-          .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-          }
-
-          .modal {
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
-          }
-
-          .modal h2 {
-            margin-top: 0;
-          }
-
-          .modal-actions {
-            display: flex;
-            justify-content: space-between;
-          }
-
-          .modal-actions button {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-          }
-
-          .modal-actions button:first-of-type {
-            background-color: #007bff;
-            color: white;
-          }
-
-          .modal-actions button:last-of-type {
-            background-color: #dc3545;
-            color: white;
-          }
-        `}</style>
       </>
   );
 }
