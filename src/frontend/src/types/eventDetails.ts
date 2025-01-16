@@ -6,4 +6,5 @@ export type EventDetails = {
     end: string;
     allDay: boolean;
     image: string; // Typ für das Bild (Base64 oder URL)
+    macaddress: string
 };

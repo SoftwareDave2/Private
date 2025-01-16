@@ -5,12 +5,15 @@ import {
     DialogBody,
     DialogFooter,
     Input,
-    Checkbox
+    Checkbox,
+    Alert
 } from "@material-tailwind/react"
 
 import SelectImage from "@/components/edit-display/SelectImage";
 import React, {useState} from "react";
 import {EventDetails} from "@/types/eventDetails";
+import ExclamationIcon from "@/components/shared/ExclamationIcon";
+import CollisionDetectedAlert from "@/components/calendar/CollisionDetectedAlert";
 
 type CalendarEntryDialogProps = {
     open: boolean,
@@ -24,6 +27,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
     const backendApiUrl = 'http://localhost:8080'
 
     const [data, setData] = useState<EventDetails>(eventDetails)
+    const [collisionError, setCollisionError] = useState<boolean>(false)
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target
@@ -45,6 +49,8 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
 
     const updateEvent = async (formdata: FormData) => {
 
+        let isCollisionDetected = false
+
         let start = data.start.toString()
         let end = data.end.toString()
 
@@ -62,22 +68,23 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                     '&allDay=' + data.allDay +
                     '&start=' + start +
                     '&end=' + end +
-                    '&displayMac=' + "00:00:00:00:03" +
+                    '&displayMac=' + data.macaddress +
                     '&image=' + data.image
             })
             const responseText = await response.text()
+            isCollisionDetected = true        // Status code: 569
+            if (isCollisionDetected) {
+                setCollisionError(true)
+            }
             console.log(responseText)
 
         } catch (err) {
             console.error(err)
         }
 
-        //eventDetails.title= data.title
-        //eventDetails.date = data.date
-        //eventDetails.start = start
-        //eventDetails.end = end
-        //eventDetails.allDay = data.allDay
-        onDataUpdated()
+        if (!isCollisionDetected) {
+            onDataUpdated()
+        }
     }
 
     return (
@@ -85,6 +92,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             <DialogHeader>Kalendereintrag anpassen</DialogHeader>
             <form action={updateEvent}>
                 <DialogBody>
+                    {collisionError && <CollisionDetectedAlert />}
                     <div>
                         <Input label={'Titel'} name={'title'} value={data.title} onChange={handleInputChange}/>
                     </div>
@@ -94,6 +102,9 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                     <div className={'mt-5 flex gap-2'}>
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Start'} value={data.start} name={'start'} onChange={handleInputChange}/>
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Ende'} value={data.end} name={'end'} onChange={handleInputChange}/>
+                    </div>
+                    <div className={'mt-5'}>
+                        <Input label={'MAC Adresse'} name={'macaddress'} value={data.macaddress} placeholder={'00:00:00:00:03'} onChange={handleInputChange} />
                     </div>
                     <div className={'mt-5'}>
                         <SelectImage selectedFilename={data.image} onSelect={filenameChangeHandler}/>
