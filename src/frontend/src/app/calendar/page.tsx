@@ -5,11 +5,13 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import React, { useRef, useState } from "react";
-import {CalendarEntryDialog} from "@/components/CalendarEntryDialog";
+import {CalendarEntryDialog} from "@/components/calendar/CalendarEntryDialog";
 import {EventDetails} from "@/types/eventDetails";
 import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from "@material-tailwind/react";
 import {  useEffect } from 'react';
 import {DisplayData} from "@/types/displayData";
+import PageHeaderButton from "@/components/layout/PageHeaderButton";
+import PageHeader from "@/components/layout/PageHeader";
 
 
 type Event = {
@@ -26,6 +28,7 @@ export default function Calendar() {
     const calendarRef = useRef<FullCalendar | null>(null);
 
     const [openCalendarEntry, setOpenCalendarEntry] = useState<boolean>(false)
+    const [openCalendarEditEntry, setOpenCalendarEditEntry] = useState<boolean>(false)
     const [eventDetailsForEdit, setEventDetailsForEdit] = useState<EventDetails | null>(null)
     const [eventDetails, setEventDetails] = useState<EventDetails>({
         id: "",
@@ -67,21 +70,10 @@ export default function Calendar() {
         }
     }));
 
-    const closeCalendarEntryHandler = () => {
-        //toggleOpenCalendarEntryHandler()
-        setOpenCalendarEntry(false)
+    const closeCalendarEditEntryHandler = () => {
+        setOpenCalendarEditEntry(false)
         setTimeout(() => setEventDetailsForEdit(null), 500)      // Wait until dialog close animation is over.
     }
-
-
-    const testcloseCalendarEntryHandler = () => {
-        //toggleOpenCalendarEntryHandler()
-        //setOpenCalendarEntry(false)
-        setTimeout(() => setEventDetailsForEdit(null), 500)      // Wait until dialog close animation is over.
-    }
-
-
-
 
     const calendarEntryHandler = async () => {
         try {
@@ -96,29 +88,28 @@ export default function Calendar() {
             }
             setEventDetailsForEdit(newEvent)
             //toggleOpenCalendarEntryHandler()
-            setOpenCalendarEntry(true)
+            setOpenCalendarEditEntry(true)
         } catch (err) {
             console.error(err)
         }
     }
 
     const displayDataUpdated = () => {
-        closeCalendarEntryHandler()
+        closeCalendarEditEntryHandler()
         //onEventDetailsUpdated()
     }
 
     return (
         <>
+            <PageHeader title={'Kalender'} info={''}></PageHeader>
             <FullCalendar
                 plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
                 events={fullCalendarEvents}
-
                 headerToolbar={{
                     left: "prev,today,next",
                     center: "title",
                     right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
-                //dateClick={(info) => openModal(info.dateStr)} // Modal öffnen bei Klick auf ein Datum
                 dateClick={(info) => setOpenCalendarEntry(true)} // Modal öffnen bei Klick auf ein Datum
                 ref={calendarRef}
                 initialView="dayGridMonth"
@@ -173,9 +164,8 @@ export default function Calendar() {
 
 
                     {eventDetailsForEdit &&
-                        <CalendarEntryDialog open={openCalendarEntry} eventDetails={eventDetailsForEdit}
-                            //onClose={closeCalendarEntryHandler}
-                                             onClose={testcloseCalendarEntryHandler}
+                        <CalendarEntryDialog open={openCalendarEditEntry} eventDetails={eventDetailsForEdit}
+                                             onClose={closeCalendarEditEntryHandler}
                                              onDataUpdated={displayDataUpdated}/>}
                 </DialogBody>
                 <DialogFooter className={'space-x-2'}>

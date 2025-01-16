@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import React, { useRef, useState } from "react";
-import {CalendarEntryDialog} from "@/components/CalendarEntryDialog";
+import {CalendarEntryDialog} from "@/components/calendar/CalendarEntryDialog";
 import {EventDetails} from "@/types/eventDetails";
 import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from "@material-tailwind/react";
 import {  useEffect } from 'react';
