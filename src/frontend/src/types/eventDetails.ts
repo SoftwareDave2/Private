@@ -1,10 +1,9 @@
 export type EventDetails = {
-    id: string;
-    title: string;
-    date: string;
-    start: string;
-    end: string;
-    allDay: boolean;
-    image: string; // Typ für das Bild (Base64 oder URL)
-    macaddress: string
+    id: string
+    title: string
+    allDay: boolean
+    start: string
+    end: string
+    displayMac: string
+    image: string
 };

@@ -5,14 +5,12 @@ import {
     DialogBody,
     DialogFooter,
     Input,
-    Checkbox,
-    Alert
+    Checkbox
 } from "@material-tailwind/react"
 
 import SelectImage from "@/components/edit-display/SelectImage";
 import React, {useState} from "react";
 import {EventDetails} from "@/types/eventDetails";
-import ExclamationIcon from "@/components/shared/ExclamationIcon";
 import CollisionDetectedAlert from "@/components/calendar/CollisionDetectedAlert";
 
 type CalendarEntryDialogProps = {
@@ -34,7 +32,9 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
         if (type === 'checkbox') {
             setData({
                 ...data,
-                [name]: checked
+                [name]: checked,
+                ['start']: checked ? data.start.slice(0, -6) : (data.start.length > 0 ? data.start + "T12:00" : ""),
+                ['end']: checked ? data.end.slice(0, -6) : (data.end.length > 0 ? data.end + "T15:00" : "")
             })
         } else {
             setData({
@@ -50,7 +50,6 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
     const updateEvent = async (formdata: FormData) => {
 
         let isCollisionDetected = false
-
         let start = data.start.toString()
         let end = data.end.toString()
 
@@ -68,7 +67,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                     '&allDay=' + data.allDay +
                     '&start=' + start +
                     '&end=' + end +
-                    '&displayMac=' + data.macaddress +
+                    '&displayMac=' + data.displayMac +
                     '&image=' + data.image
             })
             const responseText = await response.text()
@@ -89,7 +88,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
 
     return (
         <Dialog open={open} handler={onClose}>
-            <DialogHeader>Kalendereintrag anpassen</DialogHeader>
+            <DialogHeader>Kalendereintrag {data.id.length > 0 ? "anpassen" : "erstellen"}</DialogHeader>
             <form action={updateEvent}>
                 <DialogBody>
                     {collisionError && <CollisionDetectedAlert />}
@@ -104,17 +103,23 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Ende'} value={data.end} name={'end'} onChange={handleInputChange}/>
                     </div>
                     <div className={'mt-5'}>
-                        <Input label={'MAC Adresse'} name={'macaddress'} value={data.macaddress} placeholder={'00:00:00:00:03'} onChange={handleInputChange} />
+                        <Input label={'MAC Adresse'} name={'displayMac'} value={data.displayMac} placeholder={'00:00:00:00:03'} onChange={handleInputChange} />
                     </div>
                     <div className={'mt-5'}>
                         <SelectImage selectedFilename={data.image} onSelect={filenameChangeHandler}/>
                     </div>
                 </DialogBody>
-                <DialogFooter className={'justify-end space-x-2'}>
-                    <Button type={'button'} variant='outlined' className='text-primary border-primary'
-                            onClick={onClose}>Cancel</Button>
-                    <Button type={'submit'} variant={'filled'}
-                            className={'bg-primary text-white'}>Speichern</Button>
+                <DialogFooter className={'justify-between'}>
+                    {data.id.length > 0 &&
+                        <Button type={'submit'} variant={'filled'}
+                                className={'bg-primary text-white'} onClick={onClose}>Delete</Button>}
+                    {data.id.length === 0 && <div></div>}
+                    <div className={'flex space-x-2'}>
+                        <Button type={'button'} variant='outlined' className='text-primary border-primary'
+                                onClick={onClose}>Cancel</Button>
+                        <Button type={'submit'} variant={'filled'}
+                                className={'bg-primary text-white'}>Speichern</Button>
+                    </div>
                 </DialogFooter>
             </form>
         </Dialog>
