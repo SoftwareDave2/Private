@@ -65,13 +65,16 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                 body:
                     'title=' + data.title +
                     '&allDay=' + data.allDay +
-                    '&start=' + start +
-                    '&end=' + end +
+                    '&startString=' + start +
+                    '&endString=' + end +
                     '&displayMac=' + data.displayMac +
                     '&image=' + data.image
             })
             const responseText = await response.text()
-            isCollisionDetected = true        // Status code: 569
+            const responseCode =  response.status
+            if (responseCode == 569){
+                isCollisionDetected = true
+            }      // Status code: 569
             if (isCollisionDetected) {
                 setCollisionError(true)
             }

@@ -45,8 +45,8 @@ Content-Type: application/x-www-form-urlencoded
 
 title=Meeting &
 allDay=false &
-start=2024-12-12T07:00:00 &
-end=2024-12-12T08:00:00 &
+startString=2024-12-12T07:00:00 &
+endString=2024-12-12T08:00:00 &
 displayMac=00:00:00:00:02 &
 image=moon.jpg
 
