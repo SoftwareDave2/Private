@@ -16,7 +16,7 @@ public class Event {
     private LocalDateTime end;
 
     @ManyToOne
-    @JoinColumn(name = "display_mad_address", nullable = false)
+    @JoinColumn(name = "display_mac_address", nullable = false)
     private Display display;
 
     private String image;
