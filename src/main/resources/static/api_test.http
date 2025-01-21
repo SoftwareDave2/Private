@@ -5,13 +5,13 @@ GET http://localhost:8080/display/all
 POST http://localhost:8080/display/add
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:99 &
+macAddress=00:00:00:00:02 &
 brand=Phillips &
 model=Tableux &
 width=1920 &
 height=1080 &
 orientation=vertical &
-filename=fruit.jpg
+filename=flora.jpg
 
 ### Example 3: Deleting a Display by MAC
 DELETE http://localhost:8080/display/delete/00:00:00:00:99
@@ -23,12 +23,42 @@ GET http://localhost:8080/image/download/moon.jpg
 POST http://localhost:8080/display/initiate
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:99 &
+macAddress=00:00:00:00:02 &
 width=1920 &
 height=1080
 
 ### Example 6: Get single Display based on MAC
-GET http://localhost:8080/display/get/00:00:00:00:20
+GET http://localhost:8080/display/get/00:00:00:00:01
 
 ### Example 7: Delete image based on Filename
 DELETE http://localhost:8080/image/delete/test_delete_image.jpg
+
+### Example 8: Get all Events
+GET http://localhost:8080/event/all
+
+### Example 9: Get all Events for a specific Display
+GET http://localhost:8080/event/all/00:00:00:00:02
+
+### Example 10: Add a new Event
+POST http://localhost:8080/event/add
+Content-Type: application/x-www-form-urlencoded
+
+title=Meeting &
+allDay=false &
+start=2024-12-12T07:00:00 &
+end=2024-12-12T08:00:00 &
+displayMac=00:00:00:00:02 &
+image=moon.jpg
+
+### Example 11: Update an Event
+PUT http://localhost:8080/event/update/1
+Content-Type: application/x-www-form-urlencoded
+
+title=Updated Meeting &
+allDay=false &
+start=2024-12-12T10:30:00 &
+end=2024-12-12T11:30:00 &
+image=flora.jpg
+
+### Example 12: Delete an Event by ID
+DELETE http://localhost:8080/event/delete/1
