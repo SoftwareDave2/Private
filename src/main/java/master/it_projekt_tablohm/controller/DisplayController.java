@@ -3,18 +3,17 @@ package master.it_projekt_tablohm.controller;
 import master.it_projekt_tablohm.models.Display;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 @RequestMapping(path = "/display")
@@ -117,5 +116,8 @@ public class DisplayController {
 
     @CrossOrigin(origins = "*")
     @GetMapping(path = "/get/{mac}")
-    public @ResponseBody Display getDisplayById(@PathVariable String mac) {return displayRepository.findByMacAddress(Objects.requireNonNull(mac)).get();}
+    public @ResponseBody Display getDisplayById(@PathVariable String mac) {
+        return displayRepository.findByMacAddress(Objects.requireNonNull(mac))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Display not found"));
+    }
 }
