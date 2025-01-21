@@ -16,6 +16,11 @@ export default function NavLinks() {
         {
             href: '/media',
             name: 'Mediathek'
+        },
+        {
+            href: '/edit-displays',
+            name: 'Edit'
+
         }
     ]
     const pathname = usePathname()
