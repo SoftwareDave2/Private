@@ -13,24 +13,27 @@ import {EventClickArg} from "@fullcalendar/core";
 
 
 export default function Calendar() {
-    const calendarRef = useRef<FullCalendar | null>(null);
-
+    const calendarRef = useRef<FullCalendar | null>(null)
     const hasFetched = useRef(false)
     const [events, setEvents] = useState<EventDetails[]>([])
     const [openCalendarEntry, setOpenCalendarEntry] = useState<boolean>(false)
     const [eventDetailsForEdit, setEventDetailsForEdit] = useState<EventDetails | null>(null)
 
     const updateEvents = async () => {
-        const response = await fetch('http://localhost:8080/event/all');
+        const response = await fetch('http://localhost:8080/event/all')
         const eventData = (await response.json()) as EventDetails[]
-        console.log(eventData);
-        setEvents(eventData);
+        console.log(eventData)
+        setEvents(eventData)
     } 
-    
-    const formatIsoDateString = (str: string, onlyDate: boolean) => {
-        // "T00:00:00" and ":000Z"
-        const sliceCharacters = onlyDate ? -14 : -5
-        return str.slice(0, sliceCharacters)
+
+    const formatDateToString = (date: Date, onlyDate: boolean) => {
+        const dateStr = date.toLocaleDateString('en-CA')    // returns 1970-01-01
+        const timeStr = date.toLocaleTimeString()       // returns 00:00:00
+        if (onlyDate) {
+            return dateStr      // Output: 1970-01-01
+        } else {
+            return dateStr + 'T' + timeStr      // Output: 1970-01-01T00:00:00
+        }
     }
 
     useEffect(() => {
@@ -48,19 +51,19 @@ export default function Calendar() {
     }
 
     const handleDateClicked = (info: DateClickArg) => {
-        const date = formatIsoDateString(info.date.toISOString(), info.allDay)
-        let start: string
-        let end: string
+        const dateStr = formatDateToString(info.date, info.allDay)
+
+        let start: string, end: string
 
         if (info.allDay) {
-            start = date
-            end = date
+            start = dateStr
+            end = dateStr
         } else {
-            start = date
+            start = dateStr
             // Set end date two hours later.
             const endDate = new Date(info.date)
             endDate.setHours(endDate.getHours() + 2)
-            end = endDate.toISOString().slice(0, -5)       // Remove ":000Z"
+            end = formatDateToString(endDate, false)
         }
 
         const event: EventDetails = {
@@ -78,11 +81,14 @@ export default function Calendar() {
     }
 
     const handleEventClicked = (evt: EventClickArg) => {
+        const start = evt.event.start ? formatDateToString(evt.event.start, evt.event.allDay) : ""
+        const end = evt.event.end ? formatDateToString(evt.event.end, evt.event.allDay) : start
+
         const event: EventDetails = {
             id: evt.event.id,
             title: evt.event.title,
-            start: evt.event.start ? formatIsoDateString(evt.event.start.toISOString(), evt.event.allDay) : "",
-            end: evt.event.end ? formatIsoDateString(evt.event.end.toISOString(), evt.event.allDay) : "",
+            start: start,
+            end: end,
             allDay: evt.event.allDay,
             image: evt.event.extendedProps.image.slice(8, 0),   // remove "uploads/"
             displayMac: evt.event.extendedProps.displayMac,
