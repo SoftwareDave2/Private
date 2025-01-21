@@ -30,28 +30,45 @@ public class EventController {
     public @ResponseBody ResponseEntity<String> addEvent(
             @RequestParam String title,
             @RequestParam Boolean allDay,
-            @RequestParam LocalDateTime start,
-            @RequestParam LocalDateTime end,
+            @RequestParam String startString,
+            @RequestParam String endString,
             @RequestParam String displayMac,
             @RequestParam(required = false) String image) {
 
+        if (!startString.contains("T")){
+            startString += "T00:00:00";
+        }
+        if (!endString.contains("T")){
+            endString += "T23:59:59";
+        }
+        LocalDateTime start = LocalDateTime.parse(startString);
+        LocalDateTime end = LocalDateTime.parse(endString);
         // Validate display existence
         Optional<Display> displayOpt = displayRepository.findByMacAddress(displayMac);
         if (!displayOpt.isPresent()) {
             return ResponseEntity.badRequest().body("Display with MAC " + displayMac + " not found.");
         }
 
+        // Check for collisions
+        List<Event> overlappingEvents = eventRepository.findOverlappingEvents(displayMac, start, end);
+        if (!overlappingEvents.isEmpty()) {
+            return ResponseEntity.status(569).body("Event time collides with an existing event.");
+        }
+
+        // Create and save new event
+        Display display = displayOpt.get();
         Event event = new Event();
         event.setTitle(title);
         event.setAllDay(allDay);
         event.setStart(start);
         event.setEnd(end);
-        event.setDisplay(displayOpt.get());
+        event.setDisplay(display);
         event.setImage(image);
 
         eventRepository.save(event);
         return ResponseEntity.ok("Event added successfully.");
     }
+
 
     @CrossOrigin(origins = "*")
     @GetMapping(path = "/all/{displayMac}")
