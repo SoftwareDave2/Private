@@ -85,14 +85,13 @@ export default function Calendar() {
     const handleEventClicked = (evt: EventClickArg) => {
         const start = evt.event.start ? formatDateToString(evt.event.start, evt.event.allDay) : ""
         const end = evt.event.end ? formatDateToString(evt.event.end, evt.event.allDay) : start
-
         const event: EventDetails = {
             id: evt.event.id,
             title: evt.event.title,
             start: start,
             end: end,
             allDay: evt.event.allDay,
-            image: evt.event.extendedProps.image.slice(8, 0),   // remove "uploads/"
+            image: evt.event.extendedProps.image.slice(8),   // remove "uploads/"
             display: {
                 macAddress: evt.event.extendedProps.displayMac,
             }
@@ -145,22 +144,6 @@ export default function Calendar() {
                 )}
                 eventClick={handleEventClicked}
             />
-
-            <ul className="space-y-4 p-4">
-                {events.map((event: EventDetails) => (
-                    <li
-                        key={event.id}
-                        className="p-4 bg-white shadow-md rounded-lg text-grey-700"
-                    >
-                        Id: {event.id} <br/>
-                        Title: {event.title} <br/>
-                        all day: {event.allDay.toString()} <br/>
-                        start: {event.start} <br/>
-                        end: {event.end} <br/>
-                        Mac Adresse: {(event.display.macAddress )} <br/>
-                    </li>
-                ))}
-            </ul>
 
             {eventDetailsForEdit &&
                 <CalendarEntryDialog open={openCalendarEntry} eventDetails={eventDetailsForEdit}

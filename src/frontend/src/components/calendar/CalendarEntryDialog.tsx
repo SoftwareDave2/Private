@@ -36,8 +36,8 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             setData({
                 ...data,
                 [name]: checked,
-                ['start']: checked ? data.start.slice(0, -6) : (data.start.length > 0 ? data.start + "T12:00" : ""),
-                ['end']: checked ? data.end.slice(0, -6) : (data.end.length > 0 ? data.end + "T15:00" : "")
+                ['start']: checked ? data.start.slice(0, -9) : (data.start.length > 0 ? data.start + "T12:00:00" : ""),
+                ['end']: checked ? data.end.slice(0, -9) : (data.end.length > 0 ? data.end + "T15:00:00" : "")
             })
         } else if (name === 'macAddress') {
             setData({
@@ -60,24 +60,26 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
     const updateEvent = async (formdata: FormData) => {
 
         let isCollisionDetected = false
-        let start = data.start.toString()
-        let end = data.end.toString()
+        let start = data.start
+        let end = data.end
 
-        if (!data.allDay) {
-            start += ':00'
-            end += ':00'
+        if (data.allDay) {
+            start += 'T00:00:00'
+            end += 'T00:00:00'
         }
 
+        const isUpdate = data.id.length > 0
+        const path = isUpdate ? ('/event/update/' + data.id) : '/event/add'
         try {
-            const response = await fetch(backendApiUrl + '/event/add', {
-                method: 'POST',
+            const response = await fetch(backendApiUrl + path, {
+                method: isUpdate ? 'PUT' : 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body:
                     'title=' + data.title +
                     '&allDay=' + data.allDay +
-                    '&startString=' + start +
-                    '&endString=' + end +
-                    '&displayMac=' + data.display.macAddress +
+                    '&start=' + start +
+                    '&end=' + end +
+                    (isUpdate ? '' : ('&displayMac=' + data.display.macAddress)) +
                     '&image=' + data.image
             })
             if (response.status == COLLISION_DETECTED_ERROR_CODE){

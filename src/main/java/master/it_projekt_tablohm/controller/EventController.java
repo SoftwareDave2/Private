@@ -30,19 +30,19 @@ public class EventController {
     public @ResponseBody ResponseEntity<String> addEvent(
             @RequestParam String title,
             @RequestParam Boolean allDay,
-            @RequestParam String startString,
-            @RequestParam String endString,
+            @RequestParam String start,
+            @RequestParam String end,
             @RequestParam String displayMac,
             @RequestParam(required = false) String image) {
 
-        if (!startString.contains("T")){
-            startString += "T00:00:00";
+        if (!start.contains("T")){
+            start += "T00:00:00";
         }
-        if (!endString.contains("T")){
-            endString += "T23:59:59";
+        if (!end.contains("T")){
+            end += "T23:59:59";
         }
-        LocalDateTime start = LocalDateTime.parse(startString);
-        LocalDateTime end = LocalDateTime.parse(endString);
+        LocalDateTime startDt = LocalDateTime.parse(start);
+        LocalDateTime endDt = LocalDateTime.parse(end);
         // Validate display existence
         Optional<Display> displayOpt = displayRepository.findByMacAddress(displayMac);
         if (!displayOpt.isPresent()) {
@@ -50,7 +50,7 @@ public class EventController {
         }
 
         // Check for collisions
-        List<Event> overlappingEvents = eventRepository.findOverlappingEvents(displayMac, start, end);
+        List<Event> overlappingEvents = eventRepository.findOverlappingEvents(displayMac, startDt, endDt);
         if (!overlappingEvents.isEmpty()) {
             return ResponseEntity.status(569).body("Event time collides with an existing event.");
         }
@@ -60,8 +60,8 @@ public class EventController {
         Event event = new Event();
         event.setTitle(title);
         event.setAllDay(allDay);
-        event.setStart(start);
-        event.setEnd(end);
+        event.setStart(startDt);
+        event.setEnd(endDt);
         event.setDisplay(display);
         event.setImage(image);
 
