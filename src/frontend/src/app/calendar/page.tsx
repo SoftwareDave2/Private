@@ -72,7 +72,9 @@ export default function Calendar() {
             start: start,
             end: end,
             allDay: info.allDay,
-            displayMac: "",
+            display: {
+                macAddress: ""
+            },
             image: "",
         }
 
@@ -91,7 +93,9 @@ export default function Calendar() {
             end: end,
             allDay: evt.event.allDay,
             image: evt.event.extendedProps.image.slice(8, 0),   // remove "uploads/"
-            displayMac: evt.event.extendedProps.displayMac,
+            display: {
+                macAddress: evt.event.extendedProps.displayMac,
+            }
         }
 
         setEventDetailsForEdit(event)
@@ -119,7 +123,7 @@ export default function Calendar() {
                     extendedProps: {
                         //display: event.display,
                         image: "uploads/" + evt.image,
-                        displayMac: evt.displayMac
+                        displayMac: evt.display.macAddress
                     }
                 }))}
                 headerToolbar={{
@@ -153,7 +157,7 @@ export default function Calendar() {
                         all day: {event.allDay.toString()} <br/>
                         start: {event.start} <br/>
                         end: {event.end} <br/>
-                        Mac Adresse: {(event.displayMac )} <br/>
+                        Mac Adresse: {(event.display.macAddress )} <br/>
                     </li>
                 ))}
             </ul>

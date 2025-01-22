@@ -4,6 +4,8 @@ export type EventDetails = {
     allDay: boolean
     start: string
     end: string
-    displayMac: string
     image: string
+    display: {
+        macAddress: string
+    }
 };

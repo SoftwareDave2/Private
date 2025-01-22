@@ -12,6 +12,7 @@ import SelectImage from "@/components/edit-display/SelectImage";
 import React, {useState} from "react";
 import {EventDetails} from "@/types/eventDetails";
 import CollisionDetectedAlert from "@/components/calendar/CollisionDetectedAlert";
+import {DeleteCalendarEventDialog} from "@/components/calendar/DeleteCalendarEventDialog";
 
 type CalendarEntryDialogProps = {
     open: boolean,
@@ -22,10 +23,12 @@ type CalendarEntryDialogProps = {
 
 export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}: CalendarEntryDialogProps) {
 
+    const COLLISION_DETECTED_ERROR_CODE = 569
     const backendApiUrl = 'http://localhost:8080'
 
     const [data, setData] = useState<EventDetails>(eventDetails)
     const [collisionError, setCollisionError] = useState<boolean>(false)
+    const [openDeleteEvent, setOpenDeleteEvent] = useState<boolean>(false)
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target
@@ -35,6 +38,13 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                 [name]: checked,
                 ['start']: checked ? data.start.slice(0, -6) : (data.start.length > 0 ? data.start + "T12:00" : ""),
                 ['end']: checked ? data.end.slice(0, -6) : (data.end.length > 0 ? data.end + "T15:00" : "")
+            })
+        } else if (name === 'macAddress') {
+            setData({
+                ...data,
+                ['display']: {
+                    [name]: value
+                }
             })
         } else {
             setData({
@@ -67,19 +77,15 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                     '&allDay=' + data.allDay +
                     '&startString=' + start +
                     '&endString=' + end +
-                    '&displayMac=' + data.displayMac +
+                    '&displayMac=' + data.display.macAddress +
                     '&image=' + data.image
             })
-            const responseText = await response.text()
-            const responseCode =  response.status
-            if (responseCode == 569){
+            if (response.status == COLLISION_DETECTED_ERROR_CODE){
                 isCollisionDetected = true
-            }      // Status code: 569
+            }
             if (isCollisionDetected) {
                 setCollisionError(true)
             }
-            console.log(responseText)
-
         } catch (err) {
             console.error(err)
         }
@@ -87,6 +93,15 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
         if (!isCollisionDetected) {
             onDataUpdated()
         }
+    }
+
+    const toggleOpenDeleteDialogHandler = () => {
+        setOpenDeleteEvent(!openDeleteEvent)
+    }
+
+    const eventDeletedHandler = () => {
+        toggleOpenDeleteDialogHandler()
+        onDataUpdated()
     }
 
     return (
@@ -106,7 +121,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Ende'} value={data.end} name={'end'} onChange={handleInputChange}/>
                     </div>
                     <div className={'mt-5'}>
-                        <Input label={'MAC Adresse'} name={'displayMac'} value={data.displayMac} placeholder={'00:00:00:00:03'} onChange={handleInputChange} />
+                        <Input label={'MAC Adresse'} name={'macAddress'} value={data.display.macAddress} placeholder={'00:00:00:00:03'} onChange={handleInputChange} />
                     </div>
                     <div className={'mt-5'}>
                         <SelectImage selectedFilename={data.image} onSelect={filenameChangeHandler}/>
@@ -114,8 +129,9 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                 </DialogBody>
                 <DialogFooter className={'justify-between'}>
                     {data.id.length > 0 &&
-                        <Button type={'submit'} variant={'filled'}
-                                className={'bg-primary text-white'} onClick={onClose}>Delete</Button>}
+                        <Button type={'button'} variant={'filled'}
+                                className={'bg-primary text-white'}
+                                onClick={toggleOpenDeleteDialogHandler}>Löschen</Button>}
                     {data.id.length === 0 && <div></div>}
                     <div className={'flex space-x-2'}>
                         <Button type={'button'} variant='outlined' className='text-primary border-primary'
@@ -125,6 +141,9 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                     </div>
                 </DialogFooter>
             </form>
+            <DeleteCalendarEventDialog open={openDeleteEvent} event={data}
+                                       onClose={toggleOpenDeleteDialogHandler}
+                                       onDeleted={eventDeletedHandler} />
         </Dialog>
     )
 }
