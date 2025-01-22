@@ -13,6 +13,7 @@ import React, {useState} from "react";
 import {EventDetails} from "@/types/eventDetails";
 import CollisionDetectedAlert from "@/components/calendar/CollisionDetectedAlert";
 import {DeleteCalendarEventDialog} from "@/components/calendar/DeleteCalendarEventDialog";
+import SaveEventErrorAlert from "@/components/calendar/SaveEventErrorAlert";
 
 type CalendarEntryDialogProps = {
     open: boolean,
@@ -27,6 +28,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
     const backendApiUrl = 'http://localhost:8080'
 
     const [data, setData] = useState<EventDetails>(eventDetails)
+    const [errors, setErrors] = useState<string[] | null>(null)
     const [collisionError, setCollisionError] = useState<boolean>(false)
     const [openDeleteEvent, setOpenDeleteEvent] = useState<boolean>(false)
 
@@ -57,9 +59,35 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
     const filenameChangeHandler = (filename: string) =>
         setData(prevState => ({...prevState, image: filename}))
 
+    const validateData = () => {
+        let errors = []
+        if (data.title.length < 3 || data.title.length > 30) {
+            errors.push("Der Titel muss mindestens 3 und maximal 30 Zeichen beinhalten")
+        }
+
+        const start = new Date(data.start)
+        const end = new Date(data.end)
+        if (end < start) {
+            errors.push("Das End-Datum muss nach dem Start-Datum liegen")
+        }
+
+        if (data.display.macAddress.length === 0) {
+            errors.push("Keine gültige MAC-Adresse eingegeben")
+        }
+
+        return errors
+    }
+
     const updateEvent = async (formdata: FormData) => {
 
-        let isCollisionDetected = false
+        const errors = validateData()
+        if (errors.length > 0) {
+            setErrors(errors)
+            return
+        } else {
+            setErrors(null)
+        }
+
         let start = data.start
         let end = data.end
 
@@ -82,18 +110,19 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                     (isUpdate ? '' : ('&displayMac=' + data.display.macAddress)) +
                     '&image=' + data.image
             })
-            if (response.status == COLLISION_DETECTED_ERROR_CODE){
-                isCollisionDetected = true
-            }
-            if (isCollisionDetected) {
-                setCollisionError(true)
+            if (response.status == 200) {
+                onDataUpdated()
+            } else {
+                if (response.status == COLLISION_DETECTED_ERROR_CODE){
+                    setCollisionError(true)
+                } else {
+                    const errorMsg = await response.text()
+                    setErrors([errorMsg])
+                }
             }
         } catch (err) {
             console.error(err)
-        }
-
-        if (!isCollisionDetected) {
-            onDataUpdated()
+            setErrors(["Error: " + err])
         }
     }
 
@@ -112,6 +141,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             <form action={updateEvent}>
                 <DialogBody>
                     {collisionError && <CollisionDetectedAlert />}
+                    {errors && <SaveEventErrorAlert errorMsg={errors} />}
                     <div>
                         <Input label={'Titel'} name={'title'} value={data.title} onChange={handleInputChange}/>
                     </div>
