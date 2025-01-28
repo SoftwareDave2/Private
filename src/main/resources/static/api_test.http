@@ -62,3 +62,9 @@ image=flora.jpg
 
 ### Example 12: Delete an Event by ID
 DELETE http://localhost:8080/event/delete/1
+
+### Example 13: Confirm image switch Endpoint
+POST http://localhost:8080/display/switch
+Content-Type: application/x-www-form-urlencoded
+
+macAddress=00:00:00:00:02

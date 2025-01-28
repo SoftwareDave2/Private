@@ -120,4 +120,18 @@ public class DisplayController {
         return displayRepository.findByMacAddress(Objects.requireNonNull(mac))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Display not found"));
     }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping(path = "/switch")
+    public @ResponseBody String initiateDisplay(@RequestParam String macAddress) {
+        LocalDateTime timeNow = LocalDateTime.now();
+
+        return displayRepository.findByMacAddress(Objects.requireNonNull(macAddress))
+                .map(display -> {
+                    display.setLastSwitch(timeNow);
+                    displayRepository.save(display);
+                    return "Image of Display with MAC address: " + macAddress + " switched at " + timeNow.toString() + ".";
+                })
+                .orElse("Display with MAC address " + macAddress + " not found.");
+    }
 }
