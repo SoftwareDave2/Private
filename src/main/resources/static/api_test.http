@@ -67,4 +67,5 @@ DELETE http://localhost:8080/event/delete/1
 POST http://localhost:8080/display/switch
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:02
+macAddress=00:00:00:00:02 &
+filename=flora.jpg

@@ -20,6 +20,8 @@ public class Display {
     private String orientation;
 
     private String filename;
+    private String filenameApp;
+
     private LocalDateTime lastSwitch;
 
     private LocalDateTime wakeTime;
@@ -86,6 +88,14 @@ public class Display {
 
     public void setFilename(String image_filename) {
         this.filename = image_filename;
+    }
+
+    public String getFilenameApp() {
+        return filenameApp;
+    }
+
+    public void setFilenameApp(String filenameApp) {
+        this.filenameApp = filenameApp;
     }
 
     public LocalDateTime getLastSwitch() {
