@@ -120,4 +120,10 @@ public class DisplayController {
         return displayRepository.findByMacAddress(Objects.requireNonNull(mac))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Display not found"));
     }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/brands")
+    public @ResponseBody List<String> getDistinctBrands() {
+        return displayRepository.findDistinctBrands();
+    }
 }
