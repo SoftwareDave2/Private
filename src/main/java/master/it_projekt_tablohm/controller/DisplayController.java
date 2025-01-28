@@ -122,6 +122,21 @@ public class DisplayController {
     }
 
     @CrossOrigin(origins = "*")
+    @PostMapping(path = "/switch")
+    public @ResponseBody String initiateDisplay(@RequestParam String macAddress, @RequestParam String filename) {
+        LocalDateTime timeNow = LocalDateTime.now();
+
+        return displayRepository.findByMacAddress(Objects.requireNonNull(macAddress))
+                .map(display -> {
+                    display.setFilenameApp(filename);
+                    display.setLastSwitch(timeNow);
+                    displayRepository.save(display);
+                    return "Image of Display with MAC address: " + macAddress + " switched to " + filename + " at " + timeNow.toString() + ".";
+                })
+                .orElse("Display with MAC address " + macAddress + " not found.");
+    }
+
+    @CrossOrigin(origins = "*")
     @GetMapping(path = "/brands")
     public @ResponseBody List<String> getDistinctBrands() {
         return displayRepository.findDistinctBrands();
