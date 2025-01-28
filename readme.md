@@ -390,6 +390,38 @@ Here is the documentation for the `EventController` endpoints added to your READ
 
 ---
 
+#### **9. Get Distinct Display Brands**
+**GET** `/display/brands`
+
+##### Description:
+Retrieves a list of all unique display brands stored in the database. If multiple displays share the same brand, the brand is only returned once.
+
+##### Request Parameters:
+- **None**
+
+##### Request Example:
+```http
+GET /display/brands
+```
+
+##### Response:
+- **200 OK**: The request was successful, and a list of unique brands is returned.
+- **Response Body**: A JSON array of distinct brands.
+    - Example:
+      ```json
+      [
+        "Phillips",
+        "Samsung",
+        "LG"
+      ]
+      ```
+
+##### Notes:
+- The endpoint filters out duplicate brands to return only unique values.
+- If no displays are present in the database, an empty list (`[]`) will be returned.
+
+--- 
+
 ### **API Documentation: EventController**
 
 This API allows you to interact with the Event resource, enabling operations such as adding, updating, deleting, and retrieving events for specific displays.
