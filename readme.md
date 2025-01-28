@@ -390,6 +390,39 @@ Here is the documentation for the `EventController` endpoints added to your READ
 
 ---
 
+#### **2. Switch Display**
+**POST** `/switch`
+
+##### Description:
+Updates the `lastSwitch` timestamp of an existing display in the database based on its MAC address.
+
+##### Request Parameters:
+- **macAddress** (String, required): The MAC address of the display to be switched.
+
+##### Request Example:
+```http
+POST /switch
+Content-Type: application/x-www-form-urlencoded
+
+macAddress=00:1B:44:11:3A:B7
+```
+
+##### Response:
+- **200 OK**: The display's `lastSwitch` timestamp was updated successfully.
+- **Response Body**: A message confirming the update.
+    - Example: `"Image of Display with MAC address: 00:1B:44:11:3A:B7 switched at 2025-01-28T10:45:00."`
+
+- **404 NOT FOUND**: If no display is found with the provided MAC address.
+- **Response Body**: A message indicating that the display was not found.
+    - Example: `"Display with MAC address 00:1B:44:11:3A:B7 not found."`
+
+##### Notes:
+- The endpoint ensures that only existing displays in the database are updated.
+- The `lastSwitch` timestamp will be updated to the current server time.
+- This endpoint does not create new displays; it only updates existing ones.
+
+--- 
+
 ### **API Documentation: EventController**
 
 This API allows you to interact with the Event resource, enabling operations such as adding, updating, deleting, and retrieving events for specific displays.
