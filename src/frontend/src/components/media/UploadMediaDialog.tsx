@@ -7,8 +7,8 @@ import UploadMediaButton from "@/components/media/UploadMediaButton";
 
 type UploadMediaDialogProps = {
     open: open,
-    cancelHandler: () => void,
-    savedHandler: () => void,
+    onCancel: () => void,
+    onSaved: () => void,
 }
 
 type ImageDimensions = {
@@ -16,7 +16,7 @@ type ImageDimensions = {
     height: Number,
 }
 
-export default function UploadMediaDialog({open, cancelHandler, savedHandler}: UploadMediaDialogProps) {
+export default function UploadMediaDialog({open, onCancel, onSaved}: UploadMediaDialogProps) {
 
     const [file, setFile] = useState<File | null>(null)
     const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null)
@@ -46,16 +46,16 @@ export default function UploadMediaDialog({open, cancelHandler, savedHandler}: U
 
     const handleCancel = () => {
         resetFiles()
-        cancelHandler()
+        onCancel()
     }
 
     const handleSaved = () => {
         resetFiles()
-        savedHandler()
+        onSaved()
     }
 
     return (
-        <Dialog open={open} handler={cancelHandler}>
+        <Dialog open={open} handler={onCancel}>
             <DialogHeader>Hochladen</DialogHeader>
             <DialogBody>
                 <p className=''>Ausgewählte Dateien:</p>
