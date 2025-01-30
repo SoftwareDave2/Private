@@ -51,7 +51,8 @@ export default function Calendar() {
     }
 
     const handleDateClicked = (info: DateClickArg) => {
-        const dateStr = formatDateToString(info.date, info.allDay)
+        //const dateStr = formatDateToString(info.date, info.allDay)
+        let dateStr = formatDatetimeLocal(info.date , info.allDay)
 
         let start: string, end: string
 
@@ -82,9 +83,47 @@ export default function Calendar() {
         setOpenCalendarEntry(true)
     }
 
+
+
+
+
+
+
+    const formatDatetimeLocal = (date: Date, allday: boolean) => {
+
+
+        // Extrahiere Jahr, Monat, Tag, Stunde und Minute im richtigen Format
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Monat muss 2-stellig sein
+        const day = String(date.getDate()).padStart(2, '0'); // Tag muss 2-stellig sein
+        const hours = String(date.getHours()).padStart(2, '0'); // Stunden 2-stellig
+        const minutes = String(date.getMinutes()).padStart(2, '0'); // Minuten 2-stellig
+
+        if(allday == false){
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        } else {
+            return `${year}-${month}-${day}`;
+        }
+    };
+
+
+
+
+
     const handleEventClicked = (evt: EventClickArg) => {
-        const start = evt.event.start ? formatDateToString(evt.event.start, evt.event.allDay) : ""
-        const end = evt.event.end ? formatDateToString(evt.event.end, evt.event.allDay) : start
+        //const start = evt.event.start ? formatDateToString(evt.event.start, evt.event.allDay) : ""
+        //const end = evt.event.end ? formatDateToString(evt.event.end, evt.event.allDay) : start
+        let start = formatDatetimeLocal(evt.event.start ? evt.event.start : new Date(), evt.event.allDay)
+        let end
+        if (evt.event.end){
+            end = formatDatetimeLocal(evt.event.end, evt.event.allDay)
+        } else {
+            end = start
+        }
+        //let end = formatDatetimeLocal(evt.event.end ? evt.event.end : start, evt.event.allDay)
+        console.log("start: "+ start)
+        console.log("start_test: "+ start)
+        console.log("end: " + end)
         const event: EventDetails = {
             id: evt.event.id,
             title: evt.event.title,

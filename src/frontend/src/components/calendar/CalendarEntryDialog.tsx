@@ -56,6 +56,8 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
         }
     }
 
+
+
     const filenameChangeHandler = (filename: string) =>
         setData(prevState => ({...prevState, image: filename}))
 
