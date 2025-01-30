@@ -25,6 +25,12 @@ export default function Media() {
         handleDialogOpen()
     }
 
+    const handleImageDeleted = (filename: string) => {
+        updateImages()
+            .then(() => console.log('Images updated!'))
+            .catch(err => console.error('Error updating images', err))
+    }
+
     const updateImages = async () => {
         const response = await fetch(backendApiUrl + '/image/download/all')
         const filenames = (await response.json()) as string[]
@@ -46,9 +52,9 @@ export default function Media() {
                 <PageHeaderButton onClick={handleDialogOpen}>Hochladen</PageHeaderButton>
             </PageHeader>
 
-            <MediaContentItems images={images} />
+            <MediaContentItems images={images} onImageDeleted={handleImageDeleted} />
 
-            <UploadMediaDialog open={dialogOpen} cancelHandler={handleDialogOpen} savedHandler={handleImageUpload} />
+            <UploadMediaDialog open={dialogOpen} onCancel={handleDialogOpen} onSaved={handleImageUpload} />
         </main>
     )
 }

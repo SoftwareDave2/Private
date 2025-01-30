@@ -29,8 +29,8 @@ export function DeleteDisplayDialog({open, displayData, onClose, onDisplayDelete
     }
 
     return (
-        <Dialog open={open} size={'xs'}>
-            <DialogHeader>Display {displayData.id} Wirklich löschen?</DialogHeader>
+        <Dialog open={open} size={'xs'} handler={onClose}>
+            <DialogHeader>Display {displayData.id} löschen?</DialogHeader>
             <DialogBody>
                 <p>Möchten Sie das Display <strong>Display {displayData.id}</strong> wirklich löschen?</p>
             </DialogBody>
