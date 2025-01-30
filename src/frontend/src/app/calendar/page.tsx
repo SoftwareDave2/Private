@@ -12,6 +12,18 @@ import PageHeader from "@/components/layout/PageHeader";
 import {EventClickArg} from "@fullcalendar/core";
 
 
+type Display = {
+    macAddress: string;
+    id: number;
+    brand: string;
+    model: string;
+    width: number;
+    height: number;
+    orientation: string;
+    filename: string;
+    wakeTime: string;
+};
+
 export default function Calendar() {
     const calendarRef = useRef<FullCalendar | null>(null)
     const hasFetched = useRef(false)
@@ -19,11 +31,25 @@ export default function Calendar() {
     const [openCalendarEntry, setOpenCalendarEntry] = useState<boolean>(false)
     const [eventDetailsForEdit, setEventDetailsForEdit] = useState<EventDetails | null>(null)
 
+    const [displays, setDisplays] = useState<Display[]>([]);
+    const [selectedMACs, setSelectedMACs] = useState<string[]>([]);
+
     const updateEvents = async () => {
-        const response = await fetch('http://localhost:8080/event/all')
-        const eventData = (await response.json()) as EventDetails[]
-        console.log(eventData)
-        setEvents(eventData)
+
+        // Lade die ausgewählten MAC-Adressen direkt aus dem localStorage
+        const savedSelections = JSON.parse(localStorage.getItem("selectedMACs") || "[]");
+        console.log("Aktuelle ausgewählte MAC-Adressen:", savedSelections);
+
+        const response = await fetch('http://localhost:8080/event/all');
+        const eventData = (await response.json()) as EventDetails[];
+
+        // Events filtern basierend auf den ausgewählten MAC-Adressen
+        const filteredEvents = eventData.filter(event => savedSelections.includes(event.display.macAddress));
+
+        console.log("Gefilterte Events:", filteredEvents);
+        setEvents(filteredEvents);
+
+
     } 
 
     const formatDateToString = (date: Date, onlyDate: boolean) => {
@@ -37,6 +63,18 @@ export default function Calendar() {
     }
 
     useEffect(() => {
+
+
+        const fetchDisplays = async () => {
+            const response = await fetch('http://localhost:8080/display/all');
+            const data = await response.json();
+            setDisplays(data); // Update the state with fetched data
+            const savedSelections = JSON.parse(localStorage.getItem("selectedMACs") || "[]");
+            setSelectedMACs(savedSelections);
+        };
+
+        fetchDisplays();
+
         if (hasFetched.current) return
         hasFetched.current = true
 
@@ -44,6 +82,42 @@ export default function Calendar() {
             .then(() => console.log('Events updated.'))
             .catch(err => console.error(err))
     }, []);
+
+    // Gefilterte Displays (nur aktivierte MACs)
+    const filteredDisplays = displays.filter(display => selectedMACs.includes(display.macAddress));
+
+    // Toggle Checkbox
+    const handleCheckboxChange = (mac: string) => {
+        let updatedSelections;
+        if (selectedMACs.includes(mac)) {
+            updatedSelections = selectedMACs.filter(item => item !== mac);
+        } else {
+            updatedSelections = [...selectedMACs, mac];
+        }
+
+        setSelectedMACs(updatedSelections);
+        localStorage.setItem("selectedMACs", JSON.stringify(updatedSelections));
+        // Kalendereinträge aktualisieren
+        updateEvents();
+    };
+
+    // Alle Displays auswählen/abwählen
+    const handleSelectAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const isChecked = event.target.checked;
+        const allMACs = displays.map(display => display.macAddress);
+
+        if (isChecked) {
+            setSelectedMACs(allMACs);
+        } else {
+            setSelectedMACs([]);
+        }
+
+        localStorage.setItem("selectedMACs", JSON.stringify(isChecked ? allMACs : []));
+        // Kalendereinträge aktualisieren
+        updateEvents();
+    };
+
+
 
     const closeCalendarEditEntryHandler = () => {
         setOpenCalendarEntry(false)
@@ -85,10 +159,6 @@ export default function Calendar() {
 
 
 
-
-
-
-
     const formatDatetimeLocal = (date: Date, allday: boolean) => {
 
 
@@ -105,8 +175,6 @@ export default function Calendar() {
             return `${year}-${month}-${day}`;
         }
     };
-
-
 
 
 
@@ -150,44 +218,89 @@ export default function Calendar() {
     return (
         <>
             <PageHeader title={'Kalender'} info={''}></PageHeader>
-            <FullCalendar
-                plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
-                events={events.map(evt => ({
-                    id: evt.id,
-                    title: evt.title,
-                    start: evt.start,
-                    end: evt.end,
-                    allDay: evt.allDay,
-                    extendedProps: {
-                        //display: event.display,
-                        image: "uploads/" + evt.image,
-                        displayMac: evt.display.macAddress
-                    }
-                }))}
-                headerToolbar={{
-                    left: "prev,today,next",
-                    center: "title",
-                    right: "dayGridMonth,timeGridWeek,timeGridDay",
-                }}
-                dateClick={handleDateClicked}
-                ref={calendarRef}
-                initialView="dayGridMonth"
-                eventContent={(info) => (
+            <div style={{ display: 'flex' }}>
+                {/* Left Column for Display Checkboxes */}
+                <div style={{width: '300px', paddingRight: '20px'}}>
+                    <h2 style={{fontSize: '24px', fontWeight: 'bold'}}>Display Filter</h2>
                     <div>
-                        <b>{info.event.title}</b>
-                        {info.event.extendedProps.image && (
-                            <img src={info.event.extendedProps.image} alt="Event"
-                                 style={{maxWidth: "50px", marginTop: "5px"}}/>
-                        )}
+                        {/* Checkbox zum Auswählen/Auszuwählen aller Displays */}
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={selectedMACs.length === displays.length} // Wenn alle Displays ausgewählt sind
+                                onChange={handleSelectAllChange}
+                                style={{marginRight: '10px'}} // Abstand zwischen Checkbox und Text
+                            />
+                            Alle auswählen/abwählen
+                        </label>
                     </div>
-                )}
-                eventClick={handleEventClicked}
-            />
+                    <div style={{ borderBottom: '1px solid #ccc', margin: '10px 0' }}></div> {/* Trennstrich */}
+
+                    <ul>
+                        {displays.map(display => (
+                            <li key={display.id}>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedMACs.includes(display.macAddress)}
+                                        onChange={() => handleCheckboxChange(display.macAddress)}
+                                        style={{marginRight: '10px'}} // Abstand zwischen Checkbox und Text
+                                    />
+                                    {"Display Id: " + display.id} ({"Mac: " + display.macAddress})
+                                </label>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <h2>Gefilterte Displays</h2>
+                    <ul>
+                        {filteredDisplays.map(display => (
+                            <li key={display.id}>{display.id} ({display.macAddress})</li>
+                        ))}
+                    </ul>
+                </div>
+
+                {/* Right Column for Calendar */}
+                <div style={{ flex: 1 }}>
+                    <FullCalendar
+                        plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
+                        events={events.map(evt => ({
+                            id: evt.id,
+                            title: evt.title,
+                            start: evt.start,
+                            end: evt.end,
+                            allDay: evt.allDay,
+                            extendedProps: {
+                                image: "uploads/" + evt.image,
+                                displayMac: evt.display.macAddress
+                            }
+                        }))}
+                        headerToolbar={{
+                            left: "prev,today,next",
+                            center: "title",
+                            right: "dayGridMonth,timeGridWeek,timeGridDay",
+                        }}
+                        dateClick={handleDateClicked}
+                        ref={calendarRef}
+                        initialView="dayGridMonth"
+                        eventContent={(info) => (
+                            <div>
+                                <b>{info.event.title}</b>
+                                {info.event.extendedProps.image && (
+                                    <img src={info.event.extendedProps.image} alt="Event"
+                                         style={{maxWidth: "50px", marginTop: "5px"}}/>
+                                )}
+                            </div>
+                        )}
+                        eventClick={handleEventClicked}
+                    />
+                </div>
+            </div>
 
             {eventDetailsForEdit &&
                 <CalendarEntryDialog open={openCalendarEntry} eventDetails={eventDetailsForEdit}
                                      onClose={closeCalendarEditEntryHandler}
-                                     onDataUpdated={handleDisplayDataUpdated}/>}
+                                     onDataUpdated={handleDisplayDataUpdated} />}
         </>
     );
 }
