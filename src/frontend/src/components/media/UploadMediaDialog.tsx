@@ -4,6 +4,7 @@ import { Button, Dialog, DialogHeader, DialogBody, DialogFooter } from "@materia
 import {open} from "@material-tailwind/react/types/components/dialog";
 import {useState} from 'react'
 import UploadMediaButton from "@/components/media/UploadMediaButton";
+import InvalidFileAlert from "@/components/media/InvalidFileAlert";
 
 type UploadMediaDialogProps = {
     open: open,
@@ -20,10 +21,20 @@ export default function UploadMediaDialog({open, onCancel, onSaved}: UploadMedia
 
     const [file, setFile] = useState<File | null>(null)
     const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null)
+    const [uploadError, setUploadError] = useState(false)
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setUploadError(false)
+        setFile(null)
+
         if (e.target.files) {
             const newFile: File = e.target.files[0]
+            const fileSize = (newFile.size / (1024 * 1024))
+            if (fileSize > 2) {
+                setUploadError(true)
+                return
+            }
+
             setFile(newFile)
 
             let img = new Image()
@@ -35,6 +46,7 @@ export default function UploadMediaDialog({open, onCancel, onSaved}: UploadMedia
                 })
                 window.URL.revokeObjectURL(imgUrl)
             }
+
             img.src = imgUrl
         }
     }
@@ -42,6 +54,7 @@ export default function UploadMediaDialog({open, onCancel, onSaved}: UploadMedia
     const resetFiles = () => {
         setFile(null)
         setImageDimensions(null)
+        setUploadError(false)
     }
 
     const handleCancel = () => {
@@ -51,13 +64,18 @@ export default function UploadMediaDialog({open, onCancel, onSaved}: UploadMedia
 
     const handleSaved = () => {
         resetFiles()
-        onSaved()
+        if (file) {
+            onSaved()
+        } else {
+            onCancel()
+        }
     }
 
     return (
         <Dialog open={open} handler={onCancel}>
             <DialogHeader>Hochladen</DialogHeader>
             <DialogBody>
+                {uploadError && <InvalidFileAlert />}
                 <p className=''>Ausgewählte Dateien:</p>
                 {file && imageDimensions && (
                     <div className='ms-2 flex gap-4'>
