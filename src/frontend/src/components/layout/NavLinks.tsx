@@ -18,8 +18,8 @@ export default function NavLinks() {
             name: 'Mediathek'
         },
         {
-            href: '/edit-displays',
-            name: 'Edit'
+            href: '/config',
+            name: 'Config'
 
         }
     ]
