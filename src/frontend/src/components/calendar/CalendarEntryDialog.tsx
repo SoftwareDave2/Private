@@ -14,6 +14,9 @@ import {EventDetails} from "@/types/eventDetails";
 import CollisionDetectedAlert from "@/components/calendar/CollisionDetectedAlert";
 import {DeleteCalendarEventDialog} from "@/components/calendar/DeleteCalendarEventDialog";
 import SaveEventErrorAlert from "@/components/calendar/SaveEventErrorAlert";
+import {DisplayInputCard} from "@/components/calendar/DisplayInputCard";
+import AddIcon from "@/components/shared/AddIcon";
+import DisplayInputCards from "@/components/calendar/DisplayInputCards";
 
 type CalendarEntryDialogProps = {
     open: boolean,
@@ -55,11 +58,6 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             })
         }
     }
-
-
-
-    const filenameChangeHandler = (filename: string) =>
-        setData(prevState => ({...prevState, image: filename}))
 
     const validateData = () => {
         let errors = []
@@ -141,7 +139,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
         <Dialog open={open} handler={onClose}>
             <DialogHeader>Kalendereintrag {data.id.length > 0 ? "anpassen" : "erstellen"}</DialogHeader>
             <form action={updateEvent}>
-                <DialogBody>
+                <DialogBody className={'max-h-[75vh] overflow-y-auto'}>
                     {collisionError && <CollisionDetectedAlert />}
                     {errors && <SaveEventErrorAlert errorMsg={errors} />}
                     <div>
@@ -154,12 +152,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Start'} value={data.start} name={'start'} onChange={handleInputChange}/>
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Ende'} value={data.end} name={'end'} onChange={handleInputChange}/>
                     </div>
-                    <div className={'mt-5'}>
-                        <Input label={'MAC Adresse'} name={'macAddress'} value={data.display.macAddress} placeholder={'00:00:00:00:03'} onChange={handleInputChange} />
-                    </div>
-                    <div className={'mt-5'}>
-                        <SelectImage selectedFilename={data.image} onSelect={filenameChangeHandler}/>
-                    </div>
+                    <DisplayInputCards displayDetails={data.displays} />
                 </DialogBody>
                 <DialogFooter className={'justify-between'}>
                     {data.id.length > 0 &&

@@ -13,8 +13,8 @@ export default function SaveEventErrorAlert({errorMsg}: SaveEventErrorAlertProps
                 Ein Fehler beim Speichern des Events ist aufgetreten!
             </Typography>
             <ul className={'ms-3 list-disc list-inside'}>
-                {errorMsg.map(m =>
-                    <li className={'font-light text-sm'}>{m}</li>
+                {errorMsg.map((m, i) =>
+                    <li key={i} className={'font-light text-sm'}>{m}</li>
                 )}
             </ul>
         </Alert>

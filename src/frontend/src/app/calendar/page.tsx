@@ -150,6 +150,7 @@ export default function Calendar() {
             display: {
                 macAddress: ""
             },
+            displays: [],
             image: "",
         }
 
@@ -201,7 +202,8 @@ export default function Calendar() {
             image: evt.event.extendedProps.image.slice(8),   // remove "uploads/"
             display: {
                 macAddress: evt.event.extendedProps.displayMac,
-            }
+            },
+            displays: []
         }
 
         setEventDetailsForEdit(event)

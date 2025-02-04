@@ -9,4 +9,10 @@ export type EventDetails = {
     display: {
         macAddress: string
     }
+    displays: EventDisplayDetails[]
 };
+
+export type EventDisplayDetails = {
+    macAddress: string
+    image: string
+}
