@@ -8,14 +8,11 @@ import {
     Checkbox
 } from "@material-tailwind/react"
 
-import SelectImage from "@/components/edit-display/SelectImage";
 import React, {useState} from "react";
-import {EventDetails} from "@/types/eventDetails";
+import {EventDetails, EventDisplayDetails} from "@/types/eventDetails";
 import CollisionDetectedAlert from "@/components/calendar/CollisionDetectedAlert";
 import {DeleteCalendarEventDialog} from "@/components/calendar/DeleteCalendarEventDialog";
 import SaveEventErrorAlert from "@/components/calendar/SaveEventErrorAlert";
-import {DisplayInputCard} from "@/components/calendar/DisplayInputCard";
-import AddIcon from "@/components/shared/AddIcon";
 import DisplayInputCards from "@/components/calendar/DisplayInputCards";
 
 type CalendarEntryDialogProps = {
@@ -44,19 +41,19 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                 ['start']: checked ? data.start.slice(0, -9) : (data.start.length > 0 ? data.start + "T12:00:00" : ""),
                 ['end']: checked ? data.end.slice(0, -9) : (data.end.length > 0 ? data.end + "T15:00:00" : "")
             })
-        } else if (name === 'macAddress') {
-            setData({
-                ...data,
-                ['display']: {
-                    [name]: value
-                }
-            })
         } else {
             setData({
                 ...data,
                 [name]: value
             })
         }
+    }
+
+    const setDisplaysHandler = (displays: EventDisplayDetails[]) => {
+        setData(d => ({
+            ...d,
+            displays: displays
+        }))
     }
 
     const validateData = () => {
@@ -71,8 +68,18 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             errors.push("Das End-Datum muss nach dem Start-Datum liegen")
         }
 
-        if (data.display.macAddress.length === 0) {
-            errors.push("Keine gültige MAC-Adresse eingegeben")
+        if (data.displays.length === 0 || data.displays[0].macAddress.length === 0) {
+            errors.push("Es muss mindestens ein Display ausgewählt werden")
+        } else {
+            let invalidDisplayConfig = false
+            data.displays.forEach(d => {
+                if (d.macAddress.length === 0 || d.image.length === 0) {
+                    invalidDisplayConfig = true
+                }
+            })
+            if (invalidDisplayConfig) {
+                errors.push("Die Konfiguration der Displays ist unvollständig.")
+            }
         }
 
         return errors
@@ -96,6 +103,10 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             end += 'T00:00:00'
         }
 
+        // TODO: Save displays with images?
+        const firstMacAddress = data.displays[0].macAddress
+        const firstImage = data.displays[0].image
+
         const isUpdate = data.id.length > 0
         const path = isUpdate ? ('/event/update/' + data.id) : '/event/add'
         try {
@@ -107,8 +118,8 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                     '&allDay=' + data.allDay +
                     '&start=' + start +
                     '&end=' + end +
-                    (isUpdate ? '' : ('&displayMac=' + data.display.macAddress)) +
-                    '&image=' + data.image
+                    '&displayMac=' + firstMacAddress +
+                    '&image=' + firstImage
             })
             if (response.status == 200) {
                 onDataUpdated()
@@ -152,7 +163,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Start'} value={data.start} name={'start'} onChange={handleInputChange}/>
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Ende'} value={data.end} name={'end'} onChange={handleInputChange}/>
                     </div>
-                    <DisplayInputCards displayDetails={data.displays} />
+                    <DisplayInputCards displays={data.displays} onSetDisplays={setDisplaysHandler} />
                 </DialogBody>
                 <DialogFooter className={'justify-between'}>
                     {data.id.length > 0 &&

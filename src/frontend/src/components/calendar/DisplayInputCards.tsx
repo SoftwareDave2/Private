@@ -6,14 +6,14 @@ import {DisplayInputCard} from "@/components/calendar/DisplayInputCard";
 import {DisplayData} from "@/types/displayData";
 
 type DisplayInputCards = {
-    displayDetails: EventDisplayDetails[]
+    displays: EventDisplayDetails[]
+    onSetDisplays: (displays: EventDisplayDetails[]) => void
 }
 
-export default function DisplayInputCards({displayDetails}: DisplayInputCards) {
+export default function DisplayInputCards({displays, onSetDisplays}: DisplayInputCards) {
 
     const backendApiUrl = 'http://localhost:8080'
 
-    const [displays, setDisplays] = useState<EventDisplayDetails[]>(displayDetails)
     const [allDisplays, setAllDisplays] = useState<DisplayData[]>([])
     const hasFetched = useRef(false)
 
@@ -26,6 +26,10 @@ export default function DisplayInputCards({displayDetails}: DisplayInputCards) {
             .catch(err => console.error(err))
     }, [])
 
+    const usedDisplays = () => displays
+        .filter(d => d.macAddress.length > 0)
+        .map(d => d.macAddress)
+
     const allowAddDisplay = () => {
         const emptyDisplays = displays.filter(d => d.macAddress.length === 0).length
         return emptyDisplays == 0
@@ -37,7 +41,7 @@ export default function DisplayInputCards({displayDetails}: DisplayInputCards) {
     }
 
     const addDisplayHandler = () => {
-        setDisplays([...displays, { macAddress:  "", image: "" }])
+        onSetDisplays([...displays, { macAddress:  "", image: "" }])
     }
 
     const displayChangedHandler = (prevMacAddress: string, newMacAddress: string) => {
@@ -45,24 +49,25 @@ export default function DisplayInputCards({displayDetails}: DisplayInputCards) {
             prevMacAddress = ""
         }
 
-        setDisplays(displays.map(d =>
+        onSetDisplays(displays.map(d =>
             d.macAddress === prevMacAddress
                 ? {...d, macAddress: newMacAddress} : d))
     }
 
     const imageChangedHandler = (macAddress: string, image: string) => {
-        setDisplays(displays.map(d =>
+        onSetDisplays(displays.map(d =>
             d.macAddress === macAddress
-            ? {...d, image: image} : d))
+                ? {...d, image: image} : d))
     }
 
     return (
         <>
             <div className={'mt-5'}>
                 {displays.map((d, index) =>
-                    <DisplayInputCard key={index} availableDisplays={allDisplays}
+                    <DisplayInputCard key={index} allDisplays={allDisplays}
+                                      usedDisplays={usedDisplays()}
                                       macAddress={d.macAddress} image={d.image}
-                                      onMacAddressChanged={(macAddress) => displayChangedHandler(d.macAddress, macAddress)}
+                                      onDisplayChanged={(macAddress) => displayChangedHandler(d.macAddress, macAddress)}
                                       onImageChanged={(image) => imageChangedHandler(d.macAddress, image)} />
                 )}
             </div>

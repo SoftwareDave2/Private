@@ -43,6 +43,14 @@ export default function Calendar() {
         const response = await fetch('http://localhost:8080/event/all');
         const eventData = (await response.json()) as EventDetails[];
 
+        // TODO: Workaroud until multiple displays can be saved for events.
+        eventData.forEach(d => {
+            d.displays = [{
+                macAddress: d.display.macAddress,
+                image: d.image
+            }]
+        })
+
         // Events filtern basierend auf den ausgewählten MAC-Adressen
         const filteredEvents = eventData.filter(event => savedSelections.includes(event.display.macAddress));
 
@@ -203,7 +211,10 @@ export default function Calendar() {
             display: {
                 macAddress: evt.event.extendedProps.displayMac,
             },
-            displays: []
+            displays: [{
+                macAddress: evt.event.extendedProps.displayMac,
+                image: evt.event.extendedProps.image.slice(8),   // remove "uploads/"
+            }]
         }
 
         setEventDetailsForEdit(event)
