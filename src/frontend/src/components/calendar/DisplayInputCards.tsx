@@ -60,6 +60,12 @@ export default function DisplayInputCards({displays, onSetDisplays}: DisplayInpu
                 ? {...d, image: image} : d))
     }
 
+    const removedHandler = (macAddress: string) => {
+        console.log('removedHandler')
+        onSetDisplays(displays.filter(d =>
+            d.macAddress !== macAddress))
+    }
+
     return (
         <>
             <div className={'mt-5'}>
@@ -68,7 +74,8 @@ export default function DisplayInputCards({displays, onSetDisplays}: DisplayInpu
                                       usedDisplays={usedDisplays()}
                                       macAddress={d.macAddress} image={d.image}
                                       onDisplayChanged={(macAddress) => displayChangedHandler(d.macAddress, macAddress)}
-                                      onImageChanged={(image) => imageChangedHandler(d.macAddress, image)} />
+                                      onImageChanged={(image) => imageChangedHandler(d.macAddress, image)}
+                                      onRemoved={() => removedHandler(d.macAddress)} />
                 )}
             </div>
             <div className={'mt-3'}>
