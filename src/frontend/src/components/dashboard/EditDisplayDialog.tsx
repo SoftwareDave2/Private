@@ -84,9 +84,6 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
 
 
 
-
-
-
     const updateDisplay = async (formdata: FormData) => {
         try {
             const response = await fetch(backendApiUrl + '/display/add', {
@@ -132,8 +129,10 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                         <div className="w-full">
                             <label
                                 htmlFor="brandInput"
-                                className="block text-sm font-medium text-gray-700 mb-1"
-                            >Displaymarke</label>
+                                className="block text-sm font-medium text-blue-gray-400 mb-1"
+                            >
+                                Displaymarke
+                            </label>
                             <input
                                 id="brandInput"
                                 type="text"
@@ -143,7 +142,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                                 onFocus={handleBrandFocus}
                                 onBlur={handleBrandBlur}
                                 list="brandSuggestions"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2"
+                                className="mt-1 block w-full rounded-md border border-blue-gray-200 shadow-sm focus:border-black font-medium focus:ring-black sm:text-sm p-2 text-gray-700"
                             />
                         </div>
                         <datalist id="brandSuggestions">
@@ -152,7 +151,9 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                             ))}
                         </datalist>
                         <div className="w-full">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Displaymodell</label>
+                            <label className="block text-sm font-medium text-blue-gray-400 mb-1">
+                                Displaymodell
+                            </label>
                             <Select value={data.model} name={'model'} onChange={modelChangeHandler}>
                                 <Option value={'Tableaux'}>Tableaux</Option>
                             </Select>
