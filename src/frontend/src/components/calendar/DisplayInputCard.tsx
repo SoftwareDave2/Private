@@ -23,6 +23,15 @@ export function DisplayInputCard(
         }
     }
 
+    const getDisplay = () => {
+        const displays = allDisplays
+            .filter(d => d.macAddress === macAddress)
+        return displays.length > 0 ? displays[0] : null
+    }
+
+    const displayWidth = () => getDisplay()?.width
+    const displayHeight = () => getDisplay()?.height
+
     return (
         <Card className={'border border-blue-gray-200 shadow-sm mt-4'}>
             <CardBody className={'p-4 pe-7 flex justify-between relative'}>
@@ -39,13 +48,17 @@ export function DisplayInputCard(
                             {allDisplays.map((d, index) =>
                                 <Option key={index} value={d.macAddress}
                                         disabled={usedDisplays.includes(d.macAddress) && d.macAddress != macAddress}>
-                                    Display {d.id}
+                                    Display {d.id} <span className={'text-gray-600'}>({d.width}x{d.height})</span>
                                 </Option>
                             )}
                         </Select>}
                 </div>
                 {macAddress.length > 0 &&
-                    <SelectImage selectedFilename={image} onSelect={onImageChanged}/>}
+                    <SelectImage selectedFilename={image}
+                                 width={displayWidth()}
+                                 height={displayHeight()}
+                                 onSelect={onImageChanged}
+                                 onUnselect={() => onImageChanged("")} />}
             </CardBody>
         </Card>
     )
