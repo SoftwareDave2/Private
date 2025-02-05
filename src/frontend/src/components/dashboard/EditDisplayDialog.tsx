@@ -10,7 +10,7 @@ import {
 } from "@material-tailwind/react"
 import {DisplayData} from "@/types/displayData";
 import SelectImage from "@/components/edit-display/SelectImage";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {DeleteDisplayDialog} from "@/components/dashboard/DeleteDisplayDialog";
 
 type EditDisplayDialogProps = {
@@ -47,8 +47,8 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
 
 
     const toggleOpenDeleteDisplayHandler = () => setOpenDeleteDisplay(!openDeleteDisplay)
-    const brandChangeHandler = (brand: string | undefined) =>
-        setData(prevState => ({...prevState, brand: brand ?? ''}))
+    // const brandChangeHandler = (brand: string | undefined) =>
+    //     setData(prevState => ({...prevState, brand: brand ?? ''}))
     const modelChangeHandler = (model: string | undefined) =>
         setData(prevState => ({...prevState, model: model ?? ''}))
     const orientationChangeHandler = (orientation: string | undefined) =>
