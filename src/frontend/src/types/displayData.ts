@@ -7,4 +7,5 @@ export type DisplayData = {
     height: number,
     orientation: string,
     filename: string,
+    wakeTime: string,
 }
