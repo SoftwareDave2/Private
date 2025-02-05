@@ -69,8 +69,27 @@ export default function DisplayInfoDialog({open, displayData, onClose, onDisplay
             </DialogBody>
             <DialogFooter className={'space-x-2'}>
                 <Button variant='outlined' className='text-primary border-primary' onClick={onClose}>Cancel</Button>
-                <Button variant={'filled'} className={'bg-primary text-white'}>Standard Content</Button>
-                <Button variant={'filled'} className={'bg-primary text-white'}>Kalender öffnen</Button>
+                {/*<Button variant={'filled'} className={'bg-primary text-white'}>Standard Content</Button>*/}
+                {/*<Button variant={'filled'} className={'bg-primary text-white'}>Kalender öffnen</Button>*/}
+                <Button
+                    variant={'filled'}
+                    className={'bg-primary text-white'}
+                    onClick={() => {
+                        const macAddress = displayData.macAddress;
+
+
+                        // Vorherige Auswahl löschen, damit nur eine MAC-Adresse gespeichert ist
+                        localStorage.removeItem("selectedMACs");
+
+                        // Neue MAC-Adresse speichern
+                        localStorage.setItem("selectedMACs", JSON.stringify([macAddress]));
+
+                        // Zur Kalenderseite navigieren
+                        window.location.href = "http://localhost:3000/calendar";
+                    }}
+                >
+                    Kalender öffnen
+                </Button>
             </DialogFooter>
         </Dialog>
     )
