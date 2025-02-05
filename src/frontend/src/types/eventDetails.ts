@@ -5,6 +5,7 @@ export type EventDetails = {
     start: string
     end: string
     image: string
+    rrule?: string;
     display: {
         macAddress: string
     }
