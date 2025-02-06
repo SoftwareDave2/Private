@@ -62,7 +62,7 @@ Content-Type: application/json
 
 
 ### Example 11: Update an Event
-PUT http://localhost:8080/event/update/b031b9f0-0791-4260-a819-bcea272f5ae3
+PUT http://localhost:8080/event/update/1
 Content-Type: application/json
 
 {
@@ -70,20 +70,20 @@ Content-Type: application/json
   "allDay": false,
   "start": "2024-12-12T10:30:00",
   "end": "2024-12-12T11:30:00",
-  "displays": [
+  "displayImages": [
     {
-      "macAddress": "00:00:00:00:04",
+      "displayMac": "00:00:00:00:04",
       "image": "updated_screen1.jpg"
     },
     {
-      "macAddress": "00:00:00:00:05",
+      "displayMac": "00:00:00:00:05",
       "image": "updated_screen2.jpg"
     }
   ]
 }
 
 ### Example 12: Delete an Event by ID
-DELETE http://localhost:8080/event/delete/1
+DELETE http://localhost:8080/event/delete/2
 
 ### Example 13: Confirm image switch Endpoint
 POST http://localhost:8080/display/switch

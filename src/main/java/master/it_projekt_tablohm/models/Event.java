@@ -1,8 +1,9 @@
 package master.it_projekt_tablohm.models;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Event {
@@ -14,76 +15,28 @@ public class Event {
     private Boolean allDay;
     private LocalDateTime start;
     private LocalDateTime end;
-    private String image;
 
-    @ManyToOne
-    private Display display;
+    @ElementCollection
+    @CollectionTable(name = "event_display_images", joinColumns = @JoinColumn(name = "event_id"))
+    private List<DisplayImage> displayImages = new ArrayList<>();
 
-    private String groupId;  // New field to group related events
 
     // Getters and Setters
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public Integer getId() {
-        return id;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    public Boolean getAllDay() { return allDay; }
+    public void setAllDay(Boolean allDay) { this.allDay = allDay; }
 
-    public String getTitle() {
-        return title;
-    }
+    public LocalDateTime getStart() { return start; }
+    public void setStart(LocalDateTime start) { this.start = start; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public LocalDateTime getEnd() { return end; }
+    public void setEnd(LocalDateTime end) { this.end = end; }
 
-    public Boolean getAllDay() {
-        return allDay;
-    }
-
-    public void setAllDay(Boolean allDay) {
-        this.allDay = allDay;
-    }
-
-    public LocalDateTime getStart() {
-        return start;
-    }
-
-    public void setStart(LocalDateTime start) {
-        this.start = start;
-    }
-
-    public LocalDateTime getEnd() {
-        return end;
-    }
-
-    public void setEnd(LocalDateTime end) {
-        this.end = end;
-    }
-
-    public Display getDisplay() {
-        return display;
-    }
-
-    public void setDisplay(Display display) {
-        this.display = display;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-    }
+    public List<DisplayImage> getDisplayImages() { return displayImages; }
+    public void setDisplayImages(List<DisplayImage> displayImages) { this.displayImages = displayImages; }
 }

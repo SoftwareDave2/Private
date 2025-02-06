@@ -9,18 +9,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface EventRepository extends JpaRepository<Event, Integer> {  // Corrected ID type to Integer
-    List<Event> findByDisplayMacAddress(String displayMac);  // This method still works as expected
-    Optional<Event> findById(Integer eventId);  // Will work for events with Integer ID
-    List<Event> findByGroupId(String groupId);
+public interface EventRepository extends JpaRepository<Event, Integer> {
+    Optional<Event> findById(Integer eventId);
 
-    @Query("SELECT e FROM Event e WHERE e.display.macAddress = :macAddress AND " +
-            "((:start < e.end AND :end > e.start) OR " +
-            " (:start <= e.start AND :end >= e.end) OR " +
-            " (:start >= e.start AND :start < e.end) OR " +
-            " (:end > e.start AND :end <= e.end))")
+    // Find events that contain a specific display MAC address
+    @Query("SELECT e FROM Event e JOIN e.displayImages d WHERE d.displayMac = :macAddress")
+    List<Event> findByDisplayMacAddress(@Param("macAddress") String macAddress);
+
+
+    // Find overlapping events for a specific display MAC address
+    @Query("SELECT e FROM Event e JOIN e.displayImages d WHERE d.displayMac = :macAddress " +
+            "AND ((:start < e.end AND :end > e.start) OR " +
+            "(:start <= e.start AND :end >= e.end) OR " +
+            "(:start >= e.start AND :start < e.end) OR " +
+            "(:end > e.start AND :end <= e.end))")
     List<Event> findOverlappingEvents(@Param("macAddress") String macAddress,
                                       @Param("start") LocalDateTime start,
                                       @Param("end") LocalDateTime end);
-
 }
+
