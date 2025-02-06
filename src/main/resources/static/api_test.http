@@ -5,7 +5,7 @@ GET http://localhost:8080/display/all
 POST http://localhost:8080/display/add
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:03 &
+macAddress=00:00:00:00:05 &
 brand=Phillips &
 model=Tableux &
 width=1920 &
@@ -23,7 +23,7 @@ GET http://localhost:8080/image/download/moon.jpg
 POST http://localhost:8080/display/initiate
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:06 &
+macAddress=00:00:00:00:05 &
 width=1920 &
 height=1080
 
@@ -72,3 +72,10 @@ filename=flora.jpg
 
 ### Example 14: Get already registered Brands
 GET http://localhost:8080/display/brands
+
+### Example 15: Post Battery percentage of Display
+POST http://localhost:8080/display/postBattery
+Content-Type: application/x-www-form-urlencoded
+
+macAddress=00:00:00:00:05 &
+batteryPercentage=89

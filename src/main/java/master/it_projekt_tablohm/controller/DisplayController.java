@@ -141,4 +141,19 @@ public class DisplayController {
     public @ResponseBody List<String> getDistinctBrands() {
         return displayRepository.findDistinctBrands();
     }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping(path = "/postBattery")
+    public @ResponseBody String postBattery(@RequestParam String macAddress, @RequestParam Integer batteryPercentage) {
+        LocalDateTime timeNow = LocalDateTime.now();
+
+        return displayRepository.findByMacAddress(Objects.requireNonNull(macAddress))
+                .map(display -> {
+                    display.setBattery_percentage(batteryPercentage);
+                    display.setTimeOfBattery(timeNow);
+                    displayRepository.save(display);
+                    return "Battery percentage of Display with MAC address: " + macAddress + " saved at " + timeNow.toString() + ".";
+                })
+                .orElse("Display with MAC address " + macAddress + " not found.");
+    }
 }

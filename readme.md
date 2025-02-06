@@ -458,11 +458,46 @@ GET /display/brands
 
 --- 
 
+#### **11. Update Display Battery Percentage**
+**POST** `/postBattery`
+
+##### **Description:**
+Updates the battery percentage of a display identified by its MAC address. If the display exists, the battery percentage and timestamp are updated; otherwise, a message indicating that the display was not found is returned.
+
+##### **Request Parameters:**
+- **macAddress** (String, required) – The MAC address of the display.
+- **batteryPercentage** (Integer, required) – The battery percentage to update.
+
+##### **Request Example:**
+```http
+POST /postBattery?macAddress=00:1A:2B:3C:4D:5E&batteryPercentage=85
+```  
+
+##### **Response:**
+- **200 OK**: The request was successful.
+- **Response Body**: A string message indicating whether the update was successful or if the display was not found.
+
+    - **Example (Successful Update):**
+      ```json
+      "Battery percentage of Display with MAC address: 00:1A:2B:3C:4D:5E saved at 2025-02-06T12:34:56.789."
+      ```  
+
+    - **Example (Display Not Found):**
+      ```json
+      "Display with MAC address 00:1A:2B:3C:4D:5E not found."
+      ```  
+
+##### **Notes:**
+- The request updates both the battery percentage and the timestamp when the update was made.
+- If the MAC address does not match any existing display, no changes are made, and an error message is returned.
+
+---
+
 ### **API Documentation: EventController**
 
 This API allows you to interact with the Event resource, enabling operations such as adding, updating, deleting, and retrieving events for specific displays.
 
----
+
 
 #### **1. Add an Event**
 **POST** /event/add
