@@ -493,189 +493,112 @@ POST /postBattery?macAddress=00:1A:2B:3C:4D:5E&batteryPercentage=85
 
 ---
 
-### **API Documentation: EventController**
+## **API Documentation: EventController**
 
-This API allows you to interact with the Event resource, enabling operations such as adding, updating, deleting, and retrieving events for specific displays.
+### **1. Add an Event**
+**POST** `/event/add`
 
+#### **Description:**
+Adds a new event associated with multiple displays.
 
-
-#### **1. Add an Event**
-**POST** /event/add
-
-##### Description:
-Adds a new event to the database associated with a display.
-
-##### Request Parameters:
-- **title** (String, required): The title of the event.
-- **allDay** (Boolean, required): A flag indicating if the event is an all-day event.
-- **start** (LocalDateTime, required): The start date and time of the event.
-- **end** (LocalDateTime, required): The end date and time of the event.
-- **displayMac** (String, required): The Mac of the display associated with the event.
-- **image** (String, optional): A URL or file path to an image associated with the event.
-
-##### Request Example:
-
-```http
-POST /event/add
-Content-Type: application/x-www-form-urlencoded
-
-title=Team+Meeting&allDay=false&start=2024-12-15T09:00:00&end=2024-12-15T10:00:00&displayMac=00:00:00:00:01&image=meeting_image.jpg
+#### **Request Body:**
+```json
+{
+  "title": "Meeting",
+  "allDay": false,
+  "start": "2024-12-12T08:00:00",
+  "end": "2024-12-12T09:00:00",
+  "displayImages": [
+    { "displayMac": "00:00:00:00:04", "image": "screen1.jpg" },
+    { "displayMac": "00:00:00:00:05", "image": "screen2.jpg" }
+  ]
+}
 ```
-
-##### Response:
-- **200 OK**: Event added successfully.
-- **Response Body**: "Event added successfully."
-- **400 Bad Request**: If the display ID is not found or if parameters are missing.
-- **Response Body**: "Display with ID 1 not found."
-
-##### Notes:
-- Ensures the display exists before adding the event.
-- The event will be associated with the display specified by `displayMac`.
+#### **Responses:**
+- **200 OK**: Event saved successfully.
+- **400 Bad Request**: If displays don't exist or an event overlaps with another event.
 
 ---
 
-#### **2. Get Events by Display**
-**GET** /event/all/{displayMac}
+### **2. Get Events by Display**
+**GET** `/event/all/{displayMac}`
 
-##### Description:
-Retrieves all events associated with a specific display by its Mac.
+#### **Description:**
+Retrieves all events associated with a specific display.
 
-##### Path Parameter:
-- **displayMac** (String, required): The Mac of the display for which events are to be retrieved.
-
-##### Request Example:
-
-```http
-GET /event/all/00:00:00:00:01
-```
-
-##### Response:
-- **200 OK**: A list of events associated with the display.
-- **Response Body** (Example):
-
+#### **Response Example:**
 ```json
 [
   {
     "id": 1,
-    "title": "Team Meeting",
+    "title": "Meeting",
     "allDay": false,
-    "start": "2024-12-15T09:00:00",
-    "end": "2024-12-15T10:00:00",
-    "displayMac": "00:00:00:00:01",
-    "image": "meeting_image.jpg"
+    "start": "2024-12-12T08:00:00",
+    "end": "2024-12-12T09:00:00",
+    "displayImages": [
+      { "displayMac": "00:00:00:00:04", "image": "screen1.jpg" }
+    ]
   }
 ]
 ```
 
-##### Notes:
-- Returns all events related to the specified display ID.
-
 ---
 
-#### **3. Update an Event**
-**PUT** /event/update/{id}
+### **3. Update an Event**
+**PUT** `/event/update/{id}`
 
-##### Description:
-Updates an existing event.
+#### **Description:**
+Updates an event, including display images.
 
-##### Path Parameter:
-- **id** (Integer, required): The ID of the event to update.
-
-##### Request Parameters:
-- **title** (String, required): The updated title of the event.
-- **allDay** (Boolean, required): The updated flag for an all-day event.
-- **start** (LocalDateTime, required): The updated start date and time of the event.
-- **end** (LocalDateTime, required): The updated end date and time of the event.
-- **image** (String, optional): The updated image URL or file path associated with the event.
-
-##### Request Example:
-
-```http
-PUT /event/update/1
-Content-Type: application/x-www-form-urlencoded
-
-title=Project+Review&allDay=true&start=2024-12-20T00:00:00&end=2024-12-20T23:59:59&image=review_image.jpg
+#### **Request Example:**
+```json
+{
+  "title": "Updated Meeting",
+  "allDay": false,
+  "start": "2024-12-12T10:30:00",
+  "end": "2024-12-12T11:30:00",
+  "displayImages": [
+    { "displayMac": "00:00:00:00:04", "image": "updated_screen1.jpg" },
+    { "displayMac": "00:00:00:00:05", "image": "updated_screen2.jpg" }
+  ]
+}
 ```
-
-##### Response:
+#### **Responses:**
 - **200 OK**: Event updated successfully.
-- **Response Body**: "Event updated successfully."
-- **400 Bad Request**: If the event ID is not found or parameters are missing.
-- **Response Body**: "Event with ID 1 not found."
-
-##### Notes:
-- If the event with the specified ID does not exist, a bad request response is returned.
+- **404 Not Found**: If event ID is not found.
 
 ---
 
-#### **4. Delete an Event**
-**DELETE** /event/delete/{id}
+### **4. Delete an Event**
+**DELETE** `/event/delete/{id}`
 
-##### Description:
-Deletes an event from the database.
+#### **Description:**
+Deletes an event by its ID.
 
-##### Path Parameter:
-- **id** (Integer, required): The ID of the event to delete.
-
-##### Request Example:
-
-```http
-DELETE /event/delete/1
-```
-
-##### Response:
-- **200 OK**: Event deleted successfully.
-- **Response Body**: "Event deleted successfully."
-- **404 Not Found**: If the event with the specified ID does not exist.
-- **Response Body**: "Event with ID 1 not found."
-
-##### Notes:
-- The event is deleted only if it exists in the database. If the ID is not found, the system returns a "not found" message.
+#### **Response:**
+- **200 OK**: Event deleted.
+- **404 Not Found**: If the event does not exist.
 
 ---
 
-#### **5. Get All Events**
-**GET** /event/all
+### **5. Get All Events**
+**GET** `/event/all`
 
-##### Description:
-Retrieves all events in the database.
-
-##### Response:
-- **200 OK**: A list of all events in the database.
-- **Response Body** (Example):
-
+#### **Response Example:**
 ```json
 [
   {
     "id": 1,
-    "title": "Team Meeting",
+    "title": "Meeting",
     "allDay": false,
-    "start": "2024-12-15T09:00:00",
-    "end": "2024-12-15T10:00:00",
-    "displayMac": "00:00:00:00:01",
-    "image": "meeting_image.jpg"
-  },
-  {
-    "id": 2,
-    "title": "Project Review",
-    "allDay": true,
-    "start": "2024-12-20T00:00:00",
-    "end": "2024-12-20T23:59:59",
-    "displayMac": "00:00:00:00:01",
-    "image": "review_image.jpg"
+    "start": "2024-12-12T08:00:00",
+    "end": "2024-12-12T09:00:00",
+    "displayImages": [
+      { "displayMac": "00:00:00:00:04", "image": "screen1.jpg" }
+    ]
   }
 ]
 ```
-
-##### Notes:
-- This endpoint returns a JSON array of all event records in the database.
-
----
-
-### Error Responses:
-- **400 Bad Request**: If any required parameter is missing or invalid in the request body (for POST and PUT requests).
-- **404 Not Found**: If the requested event by ID or display by Mac does not exist.
-- **500 Internal Server Error**: For unexpected errors during server processing.
 
 ---
 

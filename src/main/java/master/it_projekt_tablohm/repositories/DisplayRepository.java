@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface DisplayRepository extends CrudRepository<Display, Integer> {
 
     Optional<Display> findByMacAddress(String macAddress);
-
+    List<Display> findByMacAddressIn(List<String> macAddresses);
     @Query("SELECT DISTINCT d.brand FROM Display d")
     List<String> findDistinctBrands();
 }
