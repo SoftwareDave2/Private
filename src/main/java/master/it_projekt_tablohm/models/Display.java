@@ -19,6 +19,9 @@ public class Display {
     private Integer height;
     private String orientation;
 
+    private Integer battery_percentage;
+    private LocalDateTime timeOfBattery;
+
     private String filename;
     private String filenameApp;
 
@@ -80,6 +83,22 @@ public class Display {
 
     public void setOrientation(String orientation) {
         this.orientation = orientation;
+    }
+
+    public Integer getBattery_percentage() {
+        return battery_percentage;
+    }
+
+    public void setBattery_percentage(Integer battery_percentage) {
+        this.battery_percentage = battery_percentage;
+    }
+
+    public LocalDateTime getTimeOfBattery() {
+        return timeOfBattery;
+    }
+
+    public void setTimeOfBattery(LocalDateTime timeOfBattery) {
+        this.timeOfBattery = timeOfBattery;
     }
 
     public String getFilename() {
