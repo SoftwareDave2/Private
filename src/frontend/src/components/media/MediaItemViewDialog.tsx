@@ -31,25 +31,24 @@ export default function MediaItemViewDialog({open, filename, onClose, onDeleted}
     }
 
     return (
-        <>
-            <Dialog open={open} size={'xl'} handler={onClose} className={'!w-auto !min-w-min'}>
-                <DialogHeader>{filename} {width && height && <span className={'ms-2 text-gray-600'}>({width}x{height})</span>}</DialogHeader>
-                <DialogBody>
-                    <div className={styles.img}>
-                        <Image filename={filename} className={'rounded-sm w-full h-full object-contain'}
-                               onImageLoaded={loadedHandler} />
-                    </div>
-                    <ConfirmDeleteImageDialog open={showConfirmDeleteDialog} filename={filename}
-                                              onClose={toggleShowConfirmDeleteDialog} onDeleted={deletedHandler} />
-                </DialogBody>
-                <DialogFooter className={'justify-between'}>
-                    <Button variant={'filled'} className={'bg-primary text-white'}
-                            onClick={toggleShowConfirmDeleteDialog}>Löschen</Button>
-                    <Button variant={'outlined'} className={'text-primary border-primary'}
-                            onClick={onClose}>Close</Button>
-                </DialogFooter>
-            </Dialog>
-
-        </>
+        <Dialog open={open} size={'xl'} handler={onClose} className={'!w-auto !min-w-min'}>
+            <DialogHeader>
+                {filename} {width && height && <span className={'ms-2 text-gray-600'}> ({width}x{height})</span>}
+            </DialogHeader>
+            <DialogBody>
+                <div className={styles.img}>
+                    <Image filename={filename} className={'rounded-sm w-full h-full object-contain'}
+                           onImageLoaded={loadedHandler} />
+                </div>
+                <ConfirmDeleteImageDialog open={showConfirmDeleteDialog} filename={filename}
+                                          onClose={toggleShowConfirmDeleteDialog} onDeleted={deletedHandler} />
+            </DialogBody>
+            <DialogFooter className={'justify-between'}>
+                <Button variant={'filled'} className={'bg-primary text-white'}
+                        onClick={toggleShowConfirmDeleteDialog}>Löschen</Button>
+                <Button variant={'outlined'} className={'text-primary border-primary'}
+                        onClick={onClose}>Close</Button>
+            </DialogFooter>
+        </Dialog>
     )
 }

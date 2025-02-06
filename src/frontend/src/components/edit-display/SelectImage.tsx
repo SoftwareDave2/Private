@@ -40,7 +40,8 @@ export default function SelectImage({selectedFilename, width, height, onSelect, 
         if (selectedFilename) {
             const selectedImgWidth = imageWidth() ?? 0
             const selectedImgHeight = imageHeight() ?? 0
-            if (!isResolutionMatch(selectedImgWidth, selectedImgHeight)) {
+            if (selectedImgWidth > 0 && selectedImgHeight > 0 &&
+                !isResolutionMatch(selectedImgWidth, selectedImgHeight)) {
                 onUnselect()
             }
         }

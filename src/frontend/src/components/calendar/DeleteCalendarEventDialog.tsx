@@ -33,8 +33,8 @@ export function DeleteCalendarEventDialog({open, event, onClose, onDeleted}: Del
                 <p>Möchten Sie den Kalendereintrag <strong>{event.title}</strong> wirklich löschen?</p>
             </DialogBody>
             <DialogFooter className={'justify-between'}>
-                <Button variant={'filled'} className={'bg-primary text-white'} onClick={deleteHandler}>Event Löschen</Button>
                 <Button variant='outlined' className='text-primary border-primary' onClick={onClose}>Cancel</Button>
+                <Button variant={'filled'} className={'bg-primary text-white'} onClick={deleteHandler}>Event Löschen</Button>
             </DialogFooter>
         </Dialog>
     )

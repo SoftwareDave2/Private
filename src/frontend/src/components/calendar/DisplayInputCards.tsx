@@ -61,7 +61,6 @@ export default function DisplayInputCards({displays, onSetDisplays}: DisplayInpu
     }
 
     const removedHandler = (macAddress: string) => {
-        console.log('removedHandler')
         onSetDisplays(displays.filter(d =>
             d.macAddress !== macAddress))
     }
