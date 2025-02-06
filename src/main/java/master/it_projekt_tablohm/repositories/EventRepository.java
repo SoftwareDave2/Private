@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface EventRepository extends JpaRepository<Event, Integer> {  // Corrected ID type to Integer
     List<Event> findByDisplayMacAddress(String displayMac);  // This method still works as expected
     Optional<Event> findById(Integer eventId);  // Will work for events with Integer ID
+    List<Event> findByGroupId(String groupId);
 
     @Query("SELECT e FROM Event e WHERE e.display.macAddress = :macAddress AND " +
             "((:start < e.end AND :end > e.start) OR " +

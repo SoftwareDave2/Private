@@ -7,19 +7,19 @@ import java.time.LocalDateTime;
 @Entity
 public class Event {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String title;
     private Boolean allDay;
     private LocalDateTime start;
     private LocalDateTime end;
+    private String image;
 
     @ManyToOne
-    @JoinColumn(name = "display_mac_address", nullable = false)
     private Display display;
 
-    private String image;
+    private String groupId;  // New field to group related events
 
     // Getters and Setters
 
@@ -77,5 +77,13 @@ public class Event {
 
     public void setImage(String image) {
         this.image = image;
+    }
+
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
     }
 }

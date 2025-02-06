@@ -5,7 +5,7 @@ GET http://localhost:8080/display/all
 POST http://localhost:8080/display/add
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:05 &
+macAddress=00:00:00:00:06 &
 brand=Phillips &
 model=Tableux &
 width=1920 &
@@ -23,7 +23,7 @@ GET http://localhost:8080/image/download/moon.jpg
 POST http://localhost:8080/display/initiate
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:05 &
+macAddress=00:00:00:00:06 &
 width=1920 &
 height=1080
 
@@ -37,28 +37,50 @@ DELETE http://localhost:8080/image/delete/test_delete_image.jpg
 GET http://localhost:8080/event/all
 
 ### Example 9: Get all Events for a specific Display
-GET http://localhost:8080/event/all/00:00:00:00:02
+GET http://localhost:8080/event/all/00:00:00:00:04
 
 ### Example 10: Add a new Event
 POST http://localhost:8080/event/add
-Content-Type: application/x-www-form-urlencoded
+Content-Type: application/json
 
-title=Meeting &
-allDay=false &
-startString=2024-12-12T07:00:00 &
-endString=2024-12-12T08:00:00 &
-displayMac=00:00:00:00:02 &
-image=moon.jpg
+{
+  "title": "Meeting",
+  "allDay": false,
+  "start": "2024-12-12T08:00:00",
+  "end": "2024-12-12T09:00:00",
+  "displayImages": [
+    {
+      "displayMac": "00:00:00:00:04",
+      "image": "screen1.jpg"
+    },
+    {
+      "displayMac": "00:00:00:00:05",
+      "image": "screen2.jpg"
+    }
+  ]
+}
+
 
 ### Example 11: Update an Event
-PUT http://localhost:8080/event/update/1
-Content-Type: application/x-www-form-urlencoded
+PUT http://localhost:8080/event/update/b031b9f0-0791-4260-a819-bcea272f5ae3
+Content-Type: application/json
 
-title=Updated Meeting &
-allDay=false &
-start=2024-12-12T10:30:00 &
-end=2024-12-12T11:30:00 &
-image=flora.jpg
+{
+  "title": "Updated Meeting",
+  "allDay": false,
+  "start": "2024-12-12T10:30:00",
+  "end": "2024-12-12T11:30:00",
+  "displays": [
+    {
+      "macAddress": "00:00:00:00:04",
+      "image": "updated_screen1.jpg"
+    },
+    {
+      "macAddress": "00:00:00:00:05",
+      "image": "updated_screen2.jpg"
+    }
+  ]
+}
 
 ### Example 12: Delete an Event by ID
 DELETE http://localhost:8080/event/delete/1
