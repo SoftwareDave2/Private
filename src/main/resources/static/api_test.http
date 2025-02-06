@@ -79,3 +79,18 @@ Content-Type: application/x-www-form-urlencoded
 
 macAddress=00:00:00:00:05 &
 batteryPercentage=89
+
+### Example 16: Create a new configuration
+POST http://localhost:8080/config/post
+Content-Type: application/json
+
+{
+  "wakeIntervalDay": 30,
+  "wakeIntervalNight": 90,
+  "leadTime": 10,
+  "followUpTime": 5,
+  "deleteAfterDays": 30
+}
+
+### Example 17: Get the current configuration
+GET http://localhost:8080/config/get

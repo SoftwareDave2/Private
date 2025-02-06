@@ -678,3 +678,76 @@ Retrieves all events in the database.
 - **500 Internal Server Error**: For unexpected errors during server processing.
 
 ---
+
+## **ConfigController - README**
+
+#### **Overview**
+The `ConfigController` handles configuration settings for the application. It ensures that only **one configuration object exists** at any time. The controller provides endpoints to **retrieve** and **update** configuration settings.
+
+---
+
+### **Endpoints**
+
+#### **1. Retrieve Configuration**
+**GET** `/config/get`
+- Returns the existing configuration.
+- If no configuration exists, returns **404 Not Found**.
+
+**Example Request:**
+```http
+GET http://localhost:8080/config/get
+```
+
+**Example Response (200 OK):**
+```json
+{
+  "wakeIntervalDay": 30,
+  "wakeIntervalNight": 60,
+  "leadTime": 10,
+  "followUpTime": 5,
+  "deleteAfterDays": 30
+}
+```
+
+**Example Response (404 Not Found):**
+```json
+{
+  "error": "Not Found"
+}
+```
+
+---
+
+#### **2. Create or Update Configuration**
+**POST** `/config/post`
+- If no configuration exists, creates a new one.
+- If a configuration exists, updates the existing one.
+
+**Example Request:**
+```http
+POST http://localhost:8080/config/post
+Content-Type: application/json
+
+{
+  "wakeIntervalDay": 45,
+  "wakeIntervalNight": 90,
+  "leadTime": 15,
+  "followUpTime": 10,
+  "deleteAfterDays": 30
+}
+```
+
+**Example Response (200 OK - Created/Updated):**
+```json
+{
+  "wakeIntervalDay": 45,
+  "wakeIntervalNight": 90,
+  "leadTime": 15,
+  "followUpTime": 10,
+  "deleteAfterDays": 30
+}
+```
+
+---
+
+
