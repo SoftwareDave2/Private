@@ -94,6 +94,13 @@ public class DisplayController {
     }
 
 
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/currentTime")
+    public @ResponseBody ResponseEntity<Map<String, Object>> currentTime() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("currentTime", LocalDateTime.now().toString());
+        return ResponseEntity.ok(response);
+    }
 
     @CrossOrigin(origins = "*")
     @DeleteMapping(path = "/delete/{mac}")
