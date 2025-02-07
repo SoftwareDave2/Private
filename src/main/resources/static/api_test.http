@@ -23,7 +23,7 @@ GET http://localhost:8080/image/download/moon.jpg
 POST http://localhost:8080/display/initiate
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:06 &
+macAddress=00:00:00:00:03 &
 width=1920 &
 height=1080
 

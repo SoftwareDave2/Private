@@ -27,11 +27,11 @@ export default function DisplayInputCards({displays, onSetDisplays}: DisplayInpu
     }, [])
 
     const usedDisplays = () => displays
-        .filter(d => d.macAddress.length > 0)
-        .map(d => d.macAddress)
+        .filter(d => d.displayMac.length > 0)
+        .map(d => d.displayMac)
 
     const allowAddDisplay = () => {
-        const emptyDisplays = displays.filter(d => d.macAddress.length === 0).length
+        const emptyDisplays = displays.filter(d => d.displayMac.length === 0).length
         return emptyDisplays == 0
     }
 
@@ -40,9 +40,8 @@ export default function DisplayInputCards({displays, onSetDisplays}: DisplayInpu
         setAllDisplays((await response.json()) as DisplayData[])
     }
 
-    const addDisplayHandler = () => {
-        onSetDisplays([...displays, { macAddress:  "", image: "" }])
-    }
+    const addDisplayHandler = () =>
+        onSetDisplays([...displays, { displayMac:  "", image: "" }])
 
     const displayChangedHandler = (prevMacAddress: string, newMacAddress: string) => {
         if (!prevMacAddress) {
@@ -50,20 +49,18 @@ export default function DisplayInputCards({displays, onSetDisplays}: DisplayInpu
         }
 
         onSetDisplays(displays.map(d =>
-            d.macAddress === prevMacAddress
-                ? {...d, macAddress: newMacAddress} : d))
+            d.displayMac === prevMacAddress
+                ? {...d, displayMac: newMacAddress} : d))
     }
 
-    const imageChangedHandler = (macAddress: string, image: string) => {
+    const imageChangedHandler = (macAddress: string, image: string) =>
         onSetDisplays(displays.map(d =>
-            d.macAddress === macAddress
+            d.displayMac === macAddress
                 ? {...d, image: image} : d))
-    }
 
-    const removedHandler = (macAddress: string) => {
+    const removedHandler = (macAddress: string) =>
         onSetDisplays(displays.filter(d =>
-            d.macAddress !== macAddress))
-    }
+            d.displayMac !== macAddress))
 
     return (
         <>
@@ -71,10 +68,10 @@ export default function DisplayInputCards({displays, onSetDisplays}: DisplayInpu
                 {displays.map((d, index) =>
                     <DisplayInputCard key={index} allDisplays={allDisplays}
                                       usedDisplays={usedDisplays()}
-                                      macAddress={d.macAddress} image={d.image}
-                                      onDisplayChanged={(macAddress) => displayChangedHandler(d.macAddress, macAddress)}
-                                      onImageChanged={(image) => imageChangedHandler(d.macAddress, image)}
-                                      onRemoved={() => removedHandler(d.macAddress)} />
+                                      macAddress={d.displayMac} image={d.image}
+                                      onDisplayChanged={(macAddress) => displayChangedHandler(d.displayMac, macAddress)}
+                                      onImageChanged={(image) => imageChangedHandler(d.displayMac, image)}
+                                      onRemoved={() => removedHandler(d.displayMac)} />
                 )}
             </div>
             <div className={'mt-3'}>

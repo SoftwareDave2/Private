@@ -39,17 +39,10 @@ export default function Calendar() {
         const response = await fetch(backendApiUrl + '/event/all')
         const eventData = (await response.json()) as EventDetails[]
 
-        // TODO: Workaroud until multiple displays can be saved for events.
-        eventData.forEach(d => {
-            d.displays = [{
-                macAddress: d.display.macAddress,
-                image: d.image
-            }]
-        })
-
         const savedSelections = getSelectedDisplaysFromStorage()
         const filteredEvents = eventData.filter(event =>
-            savedSelections.includes(event.display.macAddress))
+            event.displayImages.some(displayImage =>
+                savedSelections.includes(displayImage.displayMac)))
         setEvents(filteredEvents)
     }
 
@@ -97,16 +90,12 @@ export default function Calendar() {
         }
 
         const event: EventDetails = {
-            id: "",
+            id: 0,
             title: "",
             start: start,
             end: end,
             allDay: info.allDay,
-            display: {
-                macAddress: ""
-            },
-            displays: [],
-            image: "",
+            displayImages: [],
         }
 
         setEventDetailsForEdit(event)
@@ -119,32 +108,37 @@ export default function Calendar() {
         const day = String(date.getDate()).padStart(2, '0'); // Tag muss 2-stellig sein
         const hours = String(date.getHours()).padStart(2, '0'); // Stunden 2-stellig
         const minutes = String(date.getMinutes()).padStart(2, '0'); // Minuten 2-stellig
+        const seconds = String(date.getSeconds()).padStart(2, '0') // Seconds
 
         return allday
             ? `${year}-${month}-${day}`
-            : `${year}-${month}-${day}T${hours}:${minutes}`
+            : `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
     };
 
     const handleEventClicked = (evt: EventClickArg) => {
-        const start = formatDatetimeLocal(evt.event.start ? evt.event.start : new Date(), evt.event.allDay)
+        // Find event.
+        const id = parseInt(evt.event.id)
+        const eventElements = events.filter(e => e.id === id)
+        if (eventElements.length === 0) {
+            console.log('Event with id not found', id)
+            return
+        }
+        const eventElem = eventElements[0]
+
+        // Update start and end date format.
+        const start = formatDatetimeLocal(evt.event.start ? evt.event.start : new Date(), eventElem.allDay)
         const end = evt.event.end
-            ? formatDatetimeLocal(evt.event.end, evt.event.allDay)
+            ? formatDatetimeLocal(evt.event.end, eventElem.allDay)
             : start
 
+        // Create event element.
         const event: EventDetails = {
-            id: evt.event.id,
-            title: evt.event.title,
+            id: eventElem.id,
+            title: eventElem.title,
             start: start,
             end: end,
-            allDay: evt.event.allDay,
-            image: evt.event.extendedProps.image.slice(8),   // remove "uploads/"
-            display: {
-                macAddress: evt.event.extendedProps.displayMac,
-            },
-            displays: [{
-                macAddress: evt.event.extendedProps.displayMac,
-                image: evt.event.extendedProps.image.slice(8),   // remove "uploads/"
-            }]
+            allDay: eventElem.allDay,
+            displayImages: eventElem.displayImages,
         }
 
         setEventDetailsForEdit(event)
@@ -173,8 +167,7 @@ export default function Calendar() {
                             end: evt.end,
                             allDay: evt.allDay,
                             extendedProps: {
-                                image: "uploads/" + evt.image,
-                                displayMac: evt.display.macAddress
+                                image: "uploads/" + (evt.displayImages.length > 0 ? evt.displayImages[0].image : "")
                             }
                         }))}
                         headerToolbar={{

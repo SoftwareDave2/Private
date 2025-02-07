@@ -23,6 +23,7 @@ public class EventController {
         this.displayRepository = displayRepository;
     }
 
+    @CrossOrigin(origins = "*")
     @PostMapping("/add")
     public ResponseEntity<?> addEvent(@RequestBody Event eventRequest) {
         if (eventRequest.getDisplayImages() == null || eventRequest.getDisplayImages().isEmpty()) {
@@ -60,7 +61,7 @@ public class EventController {
         return ResponseEntity.ok("Event saved successfully.");
     }
 
-
+    @CrossOrigin(origins = "*")
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable Integer id, @RequestBody Event eventRequest) {
         Optional<Event> optionalEvent = eventRepository.findById(id);
@@ -84,7 +85,7 @@ public class EventController {
         return ResponseEntity.ok("Event updated successfully.");
     }
 
-
+    @CrossOrigin(origins = "*")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable Integer id) {
         if (!eventRepository.existsById(id)) {
@@ -100,6 +101,7 @@ public class EventController {
         return eventRepository.findAll();
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/all/{macAddress}")
     public ResponseEntity<List<Event>> getEventsForDisplay(@PathVariable String macAddress) {
         List<Event> events = eventRepository.findByDisplayMacAddress(macAddress);

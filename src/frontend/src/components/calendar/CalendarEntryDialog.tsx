@@ -42,19 +42,12 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                 ['end']: checked ? data.end.slice(0, -9) : (data.end.length > 0 ? data.end + "T15:00:00" : "")
             })
         } else {
-            setData({
-                ...data,
-                [name]: value
-            })
+            setData({...data, [name]: value})
         }
     }
 
-    const setDisplaysHandler = (displays: EventDisplayDetails[]) => {
-        setData(d => ({
-            ...d,
-            displays: displays
-        }))
-    }
+    const setDisplaysHandler = (displays: EventDisplayDetails[]) =>
+        setData(d => ({...d, displayImages: displays}))
 
     const validateData = () => {
         let errors = []
@@ -68,12 +61,12 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             errors.push("Das End-Datum muss nach dem Start-Datum liegen")
         }
 
-        if (data.displays.length === 0 || data.displays[0].macAddress.length === 0) {
+        if (data.displayImages.length === 0 || data.displayImages[0].displayMac.length === 0) {
             errors.push("Es muss mindestens ein Display ausgewählt werden")
         } else {
             let invalidDisplayConfig = false
-            data.displays.forEach(d => {
-                if (d.macAddress.length === 0 || d.image.length === 0) {
+            data.displayImages.forEach(d => {
+                if (d.displayMac.length === 0 || d.image.length === 0) {
                     invalidDisplayConfig = true
                 }
             })
@@ -95,31 +88,24 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
             setErrors(null)
         }
 
-        let start = data.start
-        let end = data.end
-
-        if (data.allDay) {
-            start += 'T00:00:00'
-            end += 'T00:00:00'
+        const event: EventDetails = {
+            id: data.id,
+            title: data.title,
+            start: data.allDay ? (data.start + 'T00:00:00') : data.start,
+            //start: data.start,
+            end: data.allDay ? (data.end + 'T00:00:00') : data.end,
+            //end: data.end,
+            allDay: data.allDay,
+            displayImages: data.displayImages,
         }
 
-        // TODO: Save displays with images?
-        const firstMacAddress = data.displays[0].macAddress
-        const firstImage = data.displays[0].image
-
-        const isUpdate = data.id.length > 0
+        const isUpdate = data.id > 0
         const path = isUpdate ? ('/event/update/' + data.id) : '/event/add'
         try {
             const response = await fetch(backendApiUrl + path, {
                 method: isUpdate ? 'PUT' : 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body:
-                    'title=' + data.title +
-                    '&allDay=' + data.allDay +
-                    '&start=' + start +
-                    '&end=' + end +
-                    '&displayMac=' + firstMacAddress +
-                    '&image=' + firstImage
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(event)
             })
             if (response.status == 200) {
                 onDataUpdated()
@@ -148,7 +134,7 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
 
     return (
         <Dialog open={open} handler={onClose}>
-            <DialogHeader>Kalendereintrag {data.id.length > 0 ? "anpassen" : "erstellen"}</DialogHeader>
+            <DialogHeader>Kalendereintrag {data.id > 0 ? "anpassen" : "erstellen"}</DialogHeader>
             <form action={updateEvent}>
                 <DialogBody className={'max-h-[75vh] overflow-y-auto'}>
                     {collisionError && <CollisionDetectedAlert />}
@@ -163,14 +149,14 @@ export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Start'} value={data.start} name={'start'} onChange={handleInputChange}/>
                         <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Ende'} value={data.end} name={'end'} onChange={handleInputChange}/>
                     </div>
-                    <DisplayInputCards displays={data.displays} onSetDisplays={setDisplaysHandler} />
+                    <DisplayInputCards displays={data.displayImages} onSetDisplays={setDisplaysHandler} />
                 </DialogBody>
                 <DialogFooter className={'justify-between'}>
-                    {data.id.length > 0 &&
+                    {data.id > 0 &&
                         <Button type={'button'} variant={'filled'}
                                 className={'bg-primary text-white'}
                                 onClick={toggleOpenDeleteDialogHandler}>Löschen</Button>}
-                    {data.id.length === 0 && <div></div>}
+                    {data.id === 0 && <div></div>}
                     <div className={'flex space-x-2'}>
                         <Button type={'button'} variant='outlined' className='text-primary border-primary'
                                 onClick={onClose}>Cancel</Button>

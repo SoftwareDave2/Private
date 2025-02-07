@@ -1,18 +1,14 @@
 export type EventDetails = {
-    id: string
+    id: number
     title: string
     allDay: boolean
     start: string
     end: string
-    image: string
     rrule?: string;
-    display: {
-        macAddress: string
-    }
-    displays: EventDisplayDetails[]
+    displayImages: EventDisplayDetails[]
 };
 
 export type EventDisplayDetails = {
-    macAddress: string
+    displayMac: string
     image: string
 }
