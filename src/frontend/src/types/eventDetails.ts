@@ -6,6 +6,12 @@ export type EventDetails = {
     end: string
     rrule?: string;
     displayImages: EventDisplayDetails[]
+    recurrenceType?: "keine" | "täglich" | "wöchentlich",
+    recurrenceStartDate?: string,
+    recurrenceEndDate?: string,
+    recurrenceStartTime?: string,
+    recurrenceEndTime?: string,
+    recurrenceWeekdays?: number[]
 };
 
 export type EventDisplayDetails = {
