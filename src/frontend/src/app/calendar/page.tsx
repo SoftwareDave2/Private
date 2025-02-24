@@ -44,11 +44,27 @@ export default function Calendar() {
             recurrenceWeekdays: [1, 5], // 0 = Montag, 1 = Dienstag, usw. Hier: Dienstag, Donnerstag, Samstag
             rrule: "" // Falls gewünscht, kann hier ein fertiger rrule-String eingetragen werden.
         };
-        setEvents([dummyEvent]);
+        const dummyEvent2: EventDetails = {
+            id: 998,
+            title: "Dummy Wiederkehrender Termin2",
+            // Diese Felder werden nicht genutzt, wenn recurrenceType ≠ "keine" gesetzt ist.
+            start: "2025-03-01T09:00:00",
+            end: "2025-03-01T10:00:00",
+            allDay: false,
+            displayImages: [{ displayMac: "00:00:00:00:01", image: "beach.jpg" }],
+            recurrenceType: "wöchentlich", // Mögliche Werte: "keine", "täglich", "wöchentlich"
+            recurrenceStartDate: "2025-02-01",
+            recurrenceEndDate: "2025-02-28",
+            recurrenceStartTime: "09:00",
+            recurrenceEndTime: "10:00",
+            recurrenceWeekdays: [1, 5], // 0 = Montag, 1 = Dienstag, usw. Hier: Dienstag, Donnerstag, Samstag
+            rrule: "" // Falls gewünscht, kann hier ein fertiger rrule-String eingetragen werden.
+        };
+        setEvents([dummyEvent, dummyEvent2]);
 
         const savedSelections = getSelectedDisplaysFromStorage();
         setSelectedMACs(savedSelections);
-        //
+
         // updateEvents()
         //     .then(() => console.log('Events updated.'))
         //     .catch(err => console.error(err));
