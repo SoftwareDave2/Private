@@ -16,6 +16,9 @@ public class Event {
     private LocalDateTime start;
     private LocalDateTime end;
 
+    private String groupId;
+
+
     @ElementCollection
     @CollectionTable(name = "event_display_images", joinColumns = @JoinColumn(name = "event_id"))
     private List<DisplayImage> displayImages = new ArrayList<>();
@@ -36,6 +39,9 @@ public class Event {
 
     public LocalDateTime getEnd() { return end; }
     public void setEnd(LocalDateTime end) { this.end = end; }
+
+    public String getGroupId() { return groupId; }
+    public void setGroupId(String groupId) { this.groupId = groupId; }
 
     public List<DisplayImage> getDisplayImages() { return displayImages; }
     public void setDisplayImages(List<DisplayImage> displayImages) { this.displayImages = displayImages; }

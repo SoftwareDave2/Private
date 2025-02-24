@@ -83,7 +83,7 @@ Content-Type: application/json
 }
 
 ### Example 12: Delete an Event by ID
-DELETE http://localhost:8080/event/delete/2
+DELETE http://localhost:8080/event/delete/6
 
 ### Example 13: Confirm image switch Endpoint
 POST http://localhost:8080/display/switch
@@ -116,3 +116,16 @@ Content-Type: application/json
 
 ### Example 17: Get the current configuration
 GET http://localhost:8080/config/get
+
+### Test RRule
+POST http://localhost:8080/recevent/add
+Content-Type: application/json
+
+{
+  "start": "2025-12-12T08:00:00",
+  "end": "2025-12-12T09:00:00",
+  "rrule": "FREQ=DAILY;COUNT=5"
+}
+
+### Delete Recurrent Event
+DELETE http://localhost:8080/recevent/delete/6959cbd2-2b20-4cfa-bbbc-4888e58cc13c

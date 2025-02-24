@@ -5,6 +5,10 @@ import master.it_projekt_tablohm.models.Event;
 import master.it_projekt_tablohm.models.DisplayImage;
 import master.it_projekt_tablohm.repositories.EventRepository;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
+import org.dmfs.rfc5545.DateTime;
+import org.dmfs.rfc5545.recur.InvalidRecurrenceRuleException;
+import org.dmfs.rfc5545.recur.RecurrenceRule;
+import org.dmfs.rfc5545.recur.RecurrenceRuleIterator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +25,31 @@ public class EventController {
     public EventController(EventRepository eventRepository, DisplayRepository displayRepository) {
         this.eventRepository = eventRepository;
         this.displayRepository = displayRepository;
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping("/test")
+    public ResponseEntity<DateTime[]> testRRule() throws InvalidRecurrenceRuleException {
+        RecurrenceRule rule = new RecurrenceRule("FREQ=YEARLY;BYMONTHDAY=23;BYMONTH=5");
+
+        DateTime start = new DateTime(1982, 4 /* 0-based month numbers! */,23);
+
+        RecurrenceRuleIterator it = rule.iterator(start);
+
+        int maxInstances = 100; // limit instances for rules that recur forever
+
+        DateTime[] events = new DateTime[maxInstances];
+        int counter = 0;
+        while (it.hasNext() && (!rule.isInfinite() || maxInstances-- > 0))
+        {
+
+            DateTime nextInstance = it.nextDateTime();
+            // do something with nextInstance
+            events[counter] = nextInstance;
+            counter++;
+
+        }
+        return ResponseEntity.ok(events);
     }
 
     @CrossOrigin(origins = "*")
@@ -48,6 +77,8 @@ public class EventController {
                 return ResponseEntity.badRequest().body("Event overlaps with an existing event on display: " + macAddress);
             }
         }
+
+        // Here i have to check if rrule is set
 
         // Save the event
         Event event = new Event();
