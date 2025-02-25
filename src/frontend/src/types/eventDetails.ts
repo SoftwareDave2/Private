@@ -1,5 +1,6 @@
 export type EventDetails = {
     id: number
+    groupId: string
     title: string
     allDay: boolean
     start: string

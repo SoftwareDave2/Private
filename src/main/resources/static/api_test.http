@@ -128,11 +128,11 @@ Content-Type: application/json
   "displayImages": [
     {
       "displayMac": "00:00:00:00:04",
-      "image": "updated_screen1.jpg"
+      "image": "beach.jpg"
     },
     {
       "displayMac": "00:00:00:00:05",
-      "image": "updated_screen2.jpg"
+      "image": "beach.jpg"
     }
   ]
 }

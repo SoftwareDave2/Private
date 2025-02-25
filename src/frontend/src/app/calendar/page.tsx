@@ -3,247 +3,175 @@
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
-import rrulePlugin from "@fullcalendar/rrule";
-import React, { useRef, useState, useEffect } from "react";
-import { CalendarEntryDialog } from "@/components/calendar/CalendarEntryDialog";
-import { EventDetails } from "@/types/eventDetails";
+import interactionPlugin, {DateClickArg} from "@fullcalendar/interaction";
+import React, { useRef, useState } from "react";
+import {CalendarEntryDialog} from "@/components/calendar/CalendarEntryDialog";
+import {EventDetails} from "@/types/eventDetails";
+import {  useEffect } from 'react';
 import PageHeader from "@/components/layout/PageHeader";
-import { EventClickArg } from "@fullcalendar/core";
+import {EventClickArg} from "@fullcalendar/core";
 import DisplayFilters from "@/components/calendar/DisplayFilters";
 
 export default function Calendar() {
 
-    const backendApiUrl = 'http://localhost:8080';
+    const backendApiUrl = 'http://localhost:8080'
 
-    const calendarRef = useRef<FullCalendar | null>(null);
-    const hasFetched = useRef(false);
-    const [events, setEvents] = useState<EventDetails[]>([]);
-    const [openCalendarEntry, setOpenCalendarEntry] = useState<boolean>(false);
-    const [eventDetailsForEdit, setEventDetailsForEdit] = useState<EventDetails | null>(null);
+    const calendarRef = useRef<FullCalendar | null>(null)
+    const hasFetched = useRef(false)
+    const [events, setEvents] = useState<EventDetails[]>([])
+    const [openCalendarEntry, setOpenCalendarEntry] = useState<boolean>(false)
+    const [eventDetailsForEdit, setEventDetailsForEdit] = useState<EventDetails | null>(null)
     const [selectedMACs, setSelectedMACs] = useState<string[]>([]);
 
     useEffect(() => {
-        if (hasFetched.current) return;
-        hasFetched.current = true;
+        if (hasFetched.current) return
+        hasFetched.current = true
 
+        const savedSelections = getSelectedDisplaysFromStorage()
+        setSelectedMACs(savedSelections)
 
-        const dummyEvent: EventDetails = {
-            id: 999,
-            title: "Dummy Wiederkehrender Termin",
-            // Diese Felder werden nicht genutzt, wenn recurrenceType ≠ "keine" gesetzt ist.
-            start: "2025-03-01T09:00:00",
-            end: "2025-03-01T10:00:00",
-            allDay: false,
-            displayImages: [{ displayMac: "00:00:00:00:01", image: "beach.jpg" }],
-            recurrenceType: "wöchentlich", // Mögliche Werte: "keine", "täglich", "wöchentlich"
-            recurrenceStartDate: "2025-02-01",
-            recurrenceEndDate: "2025-02-28",
-            recurrenceStartTime: "09:00",
-            recurrenceEndTime: "10:00",
-            recurrenceWeekdays: [1, 5], // 0 = Montag, 1 = Dienstag, usw. Hier: Dienstag, Donnerstag, Samstag
-            rrule: "" // Falls gewünscht, kann hier ein fertiger rrule-String eingetragen werden.
-        };
-        const dummyEvent2: EventDetails = {
-            id: 998,
-            title: "Dummy Wiederkehrender Termin2",
-            // Diese Felder werden nicht genutzt, wenn recurrenceType ≠ "keine" gesetzt ist.
-            start: "2025-03-01T09:00:00",
-            end: "2025-03-01T10:00:00",
-            allDay: false,
-            displayImages: [{ displayMac: "00:00:00:00:01", image: "beach.jpg" }],
-            recurrenceType: "wöchentlich", // Mögliche Werte: "keine", "täglich", "wöchentlich"
-            recurrenceStartDate: "2025-02-01",
-            recurrenceEndDate: "2025-02-28",
-            recurrenceStartTime: "09:00",
-            recurrenceEndTime: "10:00",
-            recurrenceWeekdays: [1, 5], // 0 = Montag, 1 = Dienstag, usw. Hier: Dienstag, Donnerstag, Samstag
-            rrule: "" // Falls gewünscht, kann hier ein fertiger rrule-String eingetragen werden.
-        };
-        setEvents([dummyEvent, dummyEvent2]);
-
-        const savedSelections = getSelectedDisplaysFromStorage();
-        setSelectedMACs(savedSelections);
-
-        // updateEvents()
-        //     .then(() => console.log('Events updated.'))
-        //     .catch(err => console.error(err));
-    }, []);
+        updateEvents()
+            .then(() => console.log('Events updated.'))
+            .catch(err => console.error(err))
+    }, [])
 
     const updateEvents = async () => {
-        const response = await fetch(backendApiUrl + '/event/all');
-        const eventData = (await response.json()) as EventDetails[];
+        const response = await fetch(backendApiUrl + '/event/all')
+        const eventData = (await response.json()) as EventDetails[]
 
-        const savedSelections = getSelectedDisplaysFromStorage();
+        const savedSelections = getSelectedDisplaysFromStorage()
         const filteredEvents = eventData.filter(event =>
             event.displayImages.some(displayImage =>
-                savedSelections.includes(displayImage.displayMac)));
-        setEvents(filteredEvents);
-    };
+                savedSelections.includes(displayImage.displayMac)))
+        setEvents(filteredEvents)
+    }
 
     const getSelectedDisplaysFromStorage = () =>
-        JSON.parse(localStorage.getItem("selectedMACs") || "[]");
+        JSON.parse(localStorage.getItem("selectedMACs") || "[]")
 
     const setSelectedDisplaysOnStorage = (macs: string[]) => {
-        localStorage.setItem("selectedMACs", JSON.stringify(macs));
-    };
+        localStorage.setItem("selectedMACs", JSON.stringify(macs))
+    }
 
     const formatDateToString = (date: Date, onlyDate: boolean) => {
-        const dateStr = date.toLocaleDateString('en-CA');    // z.B. "2025-02-24"
-        const timeStr = date.toLocaleTimeString();             // z.B. "14:30:00"
-        return onlyDate ? dateStr : dateStr + 'T' + timeStr;
-    };
+        const dateStr = date.toLocaleDateString('en-CA')    // returns 1970-01-01
+        const timeStr = date.toLocaleTimeString()       // returns 00:00:00
+        if (onlyDate) {
+            return dateStr      // Output: 1970-01-01
+        } else {
+            return dateStr + 'T' + timeStr      // Output: 1970-01-01T00:00:00
+        }
+    }
 
     const selectedMacsChanged = async (newSelectedMacs: string[]) => {
-        setSelectedMACs(newSelectedMacs);
-        setSelectedDisplaysOnStorage(newSelectedMacs);
-        await updateEvents();
-    };
+        setSelectedMACs(newSelectedMacs)
+        setSelectedDisplaysOnStorage(newSelectedMacs)
+        await updateEvents()
+    }
 
     const closeCalendarEditEntryHandler = () => {
-        setOpenCalendarEntry(false);
-        setTimeout(() => setEventDetailsForEdit(null), 500); // Warten bis die Dialoganimation beendet ist
-    };
+        setOpenCalendarEntry(false)
+        setTimeout(() => setEventDetailsForEdit(null), 500)      // Wait until dialog close animation is over.
+    }
 
     const handleDateClicked = (info: DateClickArg) => {
-        const dateStr = formatDatetimeLocal(info.date, info.allDay);
-        let start: string, end: string;
+        const dateStr = formatDatetimeLocal(info.date , info.allDay)
+        let start: string, end: string
 
         if (info.allDay) {
-            start = dateStr;
-            end = dateStr;
+            start = dateStr
+            end = dateStr
         } else {
-            start = dateStr;
-            const endDate = new Date(info.date);
-            endDate.setHours(endDate.getHours() + 2);
-            end = formatDateToString(endDate, false);
+            start = dateStr
+            // Set end date two hours later.
+            const endDate = new Date(info.date)
+            endDate.setHours(endDate.getHours() + 2)
+            end = formatDateToString(endDate, false)
         }
 
-        // Neuer Termin – standardmäßig kein wiederholender Termin
         const event: EventDetails = {
             id: 0,
+            groupId: "",
             title: "",
             start: start,
             end: end,
             allDay: info.allDay,
             displayImages: [],
-            recurrenceType: "keine"
-        };
+        }
 
-        setEventDetailsForEdit(event);
-        setOpenCalendarEntry(true);
-    };
+        setEventDetailsForEdit(event)
+        setOpenCalendarEntry(true)
+    }
 
     const formatDatetimeLocal = (date: Date, allday: boolean) => {
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Monat muss 2-stellig sein
+        const day = String(date.getDate()).padStart(2, '0'); // Tag muss 2-stellig sein
+        const hours = String(date.getHours()).padStart(2, '0'); // Stunden 2-stellig
+        const minutes = String(date.getMinutes()).padStart(2, '0'); // Minuten 2-stellig
+        const seconds = String(date.getSeconds()).padStart(2, '0') // Seconds
 
         return allday
             ? `${year}-${month}-${day}`
-            : `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+            : `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
     };
 
     const handleEventClicked = (evt: EventClickArg) => {
-        const id = parseInt(evt.event.id);
-        const eventElements = events.filter(e => e.id === id);
+        // Find event.
+        const id = parseInt(evt.event.id)
+        const eventElements = events.filter(e => e.id === id)
         if (eventElements.length === 0) {
-            console.log('Event with id not found', id);
-            return;
+            console.log('Event with id not found', id)
+            return
         }
-        const eventElem = eventElements[0];
+        const eventElem = eventElements[0]
 
-        // Für wiederkehrende Events könnte evt.event.start nicht den gewünschten Wert liefern.
-        // Daher verwenden wir die im Event gespeicherten Daten.
+        // Update start and end date format.
+        const start = formatDatetimeLocal(evt.event.start ? evt.event.start : new Date(), eventElem.allDay)
+        const end = evt.event.end
+            ? formatDatetimeLocal(evt.event.end, eventElem.allDay)
+            : start
+
+        // Create event element.
         const event: EventDetails = {
+            groupId: eventElem.groupId,
             id: eventElem.id,
             title: eventElem.title,
-            start: eventElem.start,
-            end: eventElem.end,
+            start: start,
+            end: end,
             allDay: eventElem.allDay,
             displayImages: eventElem.displayImages,
-            recurrenceType: eventElem.recurrenceType || "keine",
-            recurrenceStartDate: eventElem.recurrenceStartDate,
-            recurrenceEndDate: eventElem.recurrenceEndDate,
-            recurrenceStartTime: eventElem.recurrenceStartTime,
-            recurrenceEndTime: eventElem.recurrenceEndTime,
-            recurrenceWeekdays: eventElem.recurrenceWeekdays,
-            rrule: eventElem.rrule
-        };
+        }
 
-        setEventDetailsForEdit(event);
-        setOpenCalendarEntry(true);
-    };
+        setEventDetailsForEdit(event)
+        setOpenCalendarEntry(true)
+    }
 
     const handleDisplayDataUpdated = () => {
         updateEvents()
             .then(() => console.log('Events successfully updated!'))
-            .catch(err => console.error(err));
-        closeCalendarEditEntryHandler();
-    };
+            .catch(err => console.error(err))
+        closeCalendarEditEntryHandler()
+    }
 
     return (
         <>
-            <PageHeader title={'Kalender'} info={''} />
+            <PageHeader title={'Kalender'} info={''}></PageHeader>
             <div className={'flex gap-7'}>
                 <DisplayFilters selectedMacs={selectedMACs} onSelectedMacsChanged={selectedMacsChanged} />
                 <div className={'flex-1'}>
                     <FullCalendar
-                        plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin, rrulePlugin]}
-                        events={events.map(evt => {
-                            if (evt.recurrenceType && evt.recurrenceType !== "keine") {
-                                // Für wiederkehrende Events: entweder vorhandene rrule nutzen oder dynamisch erstellen.
-                                let rruleObj;
-                                if (evt.rrule) {
-                                    rruleObj = evt.rrule;
-                                } else {
-                                    const dtstart = evt.recurrenceStartDate + 'T' + evt.recurrenceStartTime;
-                                    const until = evt.recurrenceEndDate + 'T' + evt.recurrenceEndTime;
-                                    const freq = evt.recurrenceType === 'täglich' ? 'daily' : 'weekly';
-                                    let byweekday;
-                                    if (evt.recurrenceType === 'wöchentlich' && evt.recurrenceWeekdays && evt.recurrenceWeekdays.length > 0) {
-                                        const weekdayMap = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
-                                        byweekday = evt.recurrenceWeekdays.map(day => weekdayMap[day]);
-                                    }
-                                    rruleObj = {
-                                        freq: freq,
-                                        dtstart: dtstart,
-                                        until: until,
-                                        ...(byweekday ? { byweekday } : {})
-                                    };
-                                }
-                                // Dauer berechnen: Differenz zwischen recurrenceStartTime und recurrenceEndTime
-                                const durationMs = new Date('1970-01-01T' + evt.recurrenceEndTime).getTime() -
-                                    new Date('1970-01-01T' + evt.recurrenceStartTime).getTime();
-                                const hours = Math.floor(durationMs / (1000 * 60 * 60));
-                                const minutes = Math.floor((durationMs - hours * 1000 * 60 * 60) / (1000 * 60));
-                                const duration = `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
-                                return {
-                                    id: evt.id,
-                                    title: evt.title,
-                                    allDay: evt.allDay,
-                                    rrule: rruleObj,
-                                    duration: duration,
-                                    extendedProps: {
-                                        image: "uploads/" + (evt.displayImages.length > 0 ? evt.displayImages[0].image : "")
-                                    }
-                                };
-                            } else {
-                                return {
-                                    id: evt.id,
-                                    title: evt.title,
-                                    start: evt.start,
-                                    end: evt.end,
-                                    allDay: evt.allDay,
-                                    extendedProps: {
-                                        image: "uploads/" + (evt.displayImages.length > 0 ? evt.displayImages[0].image : "")
-                                    }
-                                };
+                        plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
+                        events={events.map(evt => ({
+                            id: evt.id,
+                            title: evt.title,
+                            start: evt.start,
+                            end: evt.end,
+                            allDay: evt.allDay,
+                            extendedProps: {
+                                image: "uploads/" + (evt.displayImages.length > 0 ? evt.displayImages[0].image : "")
                             }
-                        })}
+                        }))}
                         headerToolbar={{
                             left: "prev,today,next",
                             center: "title",
@@ -257,7 +185,7 @@ export default function Calendar() {
                                 <b>{info.event.title}</b>
                                 {info.event.extendedProps.image && (
                                     <img src={info.event.extendedProps.image} alt="Event"
-                                         style={{ maxWidth: "50px", marginTop: "5px" }} />
+                                         style={{maxWidth: "50px", marginTop: "5px"}}/>
                                 )}
                             </div>
                         )}
@@ -267,8 +195,7 @@ export default function Calendar() {
             </div>
 
             {eventDetailsForEdit &&
-                <CalendarEntryDialog open={openCalendarEntry}
-                                     eventDetails={eventDetailsForEdit}
+                <CalendarEntryDialog open={openCalendarEntry} eventDetails={eventDetailsForEdit}
                                      onClose={closeCalendarEditEntryHandler}
                                      onDataUpdated={handleDisplayDataUpdated} />}
         </>
