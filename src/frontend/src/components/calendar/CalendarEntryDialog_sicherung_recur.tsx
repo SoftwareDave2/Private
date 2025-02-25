@@ -27,13 +27,16 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
     const COLLISION_DETECTED_ERROR_CODE = 569;
     const backendApiUrl = 'http://localhost:8080';
 
+    // Heutiges Datum im Format "YYYY-MM-DD"
+    const today = new Date().toISOString().split("T")[0];
+
     // Initial State: Defaultwerte für Wiederholungsfelder setzen, falls nicht vorhanden.
     const [data, setData] = useState<EventDetails>({
         ...eventDetails,
         recurrenceType: eventDetails.recurrenceType || "keine",
         recurrenceWeekdays: eventDetails.recurrenceWeekdays || [],
-        recurrenceStartDate: eventDetails.recurrenceStartDate || eventDetails.start,
-        recurrenceEndDate: eventDetails.recurrenceEndDate || eventDetails.end,
+        recurrenceStartDate: eventDetails.recurrenceStartDate || today,
+        recurrenceEndDate: eventDetails.recurrenceEndDate || today,
         recurrenceStartTime: eventDetails.recurrenceStartTime || "08:00",
         recurrenceEndTime: eventDetails.recurrenceEndTime || "09:30",
     });
@@ -48,8 +51,8 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                 ...data,
                 [name]: checked,
                 // Beispielhafte Anpassung der start/end Felder, falls benötigt
-                ['start']: checked ? data.start.slice(0, -9) : (data.start.length > 0 ? data.start + "T08:00:00" : ""),
-                ['end']: checked ? data.end.slice(0, -9) : (data.end.length > 0 ? data.end + "T09:30:00" : "")
+                ['start']: checked ? data.start.slice(0, -9) : (data.start.length > 0 ? data.start + "T12:00:00" : ""),
+                ['end']: checked ? data.end.slice(0, -9) : (data.end.length > 0 ? data.end + "T15:00:00" : "")
             });
         } else {
             setData({ ...data, [name]: value });
@@ -127,125 +130,58 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
     };
 
     const updateEvent = async (formdata: FormData) => {
-        const validationErrors = validateData();
-        if (validationErrors.length > 0) {
-            setErrors(validationErrors);
+        const errors = validateData();
+        if (errors.length > 0) {
+            setErrors(errors);
             return;
         } else {
             setErrors(null);
         }
 
-        if (data.recurrenceType === "keine") {
-            // Normaler (nicht-wiederkehrender) Termin – bisherige Logik
-            const event: EventDetails = {
-                id: data.id,
-                title: data.title,
-                start: data.allDay ? (data.start + 'T00:00:00') : data.start,
-                end: data.allDay ? (data.end + 'T00:00:00') : data.end,
-                allDay: data.allDay,
-                displayImages: data.displayImages,
-                rrule: data.rrule,
-                recurrenceType: data.recurrenceType,
-                recurrenceStartDate: data.recurrenceStartDate,
-                recurrenceEndDate: data.recurrenceEndDate,
-                recurrenceStartTime: data.recurrenceStartTime,
-                recurrenceEndTime: data.recurrenceEndTime,
-                recurrenceWeekdays: data.recurrenceWeekdays
-            };
+        // Event-Objekt erstellen – hier werden auch die neuen Wiederholungsfelder mit übertragen.
+        const event: EventDetails = {
+            id: data.id,
+            title: data.title,
+            start: data.allDay ? (data.start + 'T00:00:00') : data.start,
+            end: data.allDay ? (data.end + 'T00:00:00') : data.end,
+            allDay: data.allDay,
+            displayImages: data.displayImages,
+            rrule: data.rrule,
+            recurrenceType: data.recurrenceType,
+            recurrenceStartDate: data.recurrenceStartDate,
+            recurrenceEndDate: data.recurrenceEndDate,
+            recurrenceStartTime: data.recurrenceStartTime,
+            recurrenceEndTime: data.recurrenceEndTime,
+            recurrenceWeekdays: data.recurrenceWeekdays
+        };
 
-            console.log(event)
+        console.log(event)
 
-            const isUpdate = data.id > 0;
-            const path = isUpdate ? ('/event/update/' + data.id) : '/event/add';
-            try {
-                const response = await fetch(backendApiUrl + path, {
-                    method: isUpdate ? 'PUT' : 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(event)
-                });
-                if (response.status === 200) {
-                    onDataUpdated();
+
+
+
+        const isUpdate = data.id > 0;
+        const path = isUpdate ? ('/event/update/' + data.id) : '/event/add';
+        try {
+            const response = await fetch(backendApiUrl + path, {
+                method: isUpdate ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(event)
+            });
+            if (response.status === 200) {
+                onDataUpdated();
+            } else {
+                if (response.status === COLLISION_DETECTED_ERROR_CODE) {
+                    setCollisionError(true);
                 } else {
-                    if (response.status === COLLISION_DETECTED_ERROR_CODE) {
-                        setCollisionError(true);
-                    } else {
-                        const errorMsg = await response.text();
-                        setErrors([errorMsg]);
-                    }
+                    const errorMsg = await response.text();
+                    setErrors([errorMsg]);
                 }
-            } catch (err) {
-                console.error(err);
-                setErrors(["Error: " + err]);
             }
-            // ...
-        } else {
-            // Wiederkehrender Termin – neuer Endpunkt und neues Request-Format
-
-            // Für den Payload:
-            // Die Felder 'start' und 'end' bleiben als lokale Zeiten, weil das Backend
-            // diese als LocalDateTime erwartet.
-            const floatingStart = data.recurrenceStartDate + 'T' + data.recurrenceStartTime + ':00';
-            const floatingEnd   = data.recurrenceStartDate + 'T' + data.recurrenceEndTime + ':00';
-
-            // Für die RRULE müssen wir einen UNTIL-Wert erzeugen, der absolut ist.
-            // Dazu rechnen wir den lokalen Endzeitpunkt in ein absolutes Datum um.
-            const localUntil = new Date(data.recurrenceEndDate + 'T' + data.recurrenceEndTime);
-            // Beispiel: Wenn data.recurrenceEndDate = "2025-02-27" und data.recurrenceEndTime = "09:30"
-            // und das System hat Zeitzone CET (UTC+01:00),
-            // dann liefert localUntil.toISOString() etwa "2025-02-27T08:30:00.000Z".
-            // Wir formatieren das nun ins RFC5545 basic Format (ohne Bindestriche, Doppelpunkte, Millisekunden):
-            const isoUntil = localUntil.toISOString(); // z. B. "2025-02-27T08:30:00.000Z"
-            const absoluteUntil = isoUntil.replace(/[-:]/g, "").split('.')[0] + "Z";
-            // Das liefert dann z. B. "20250227T083000Z"
-
-            // Nun erzeugen wir den RRULE-String – er enthält den UNTIL-Wert als absoluten Zeitpunkt.
-            let rrule = "";
-            if (data.recurrenceType === "täglich") {
-                rrule = "FREQ=DAILY;UNTIL=" + absoluteUntil;
-            } else if (data.recurrenceType === "wöchentlich") {
-                const weekdayMap: { [key: number]: string } = {
-                    0: "MO", 1: "TU", 2: "WE", 3: "TH", 4: "FR", 5: "SA", 6: "SU"
-                };
-                const byday = data.recurrenceWeekdays && data.recurrenceWeekdays.length > 0
-                    ? data.recurrenceWeekdays.map(day => weekdayMap[day]).join(",")
-                    : "";
-                rrule = "FREQ=WEEKLY;BYDAY=" + byday + ";UNTIL=" + absoluteUntil;
-            }
-
-            const recurringEventPayload = {
-                start: floatingStart, // z. B. "2025-02-25T08:00:00"
-                end: floatingEnd,     // z. B. "2025-02-25T09:30:00"
-                rrule: rrule,         // z. B. "FREQ=DAILY;UNTIL=20250227T083000Z"
-                displayImages: data.displayImages
-            };
-
-            console.log(recurringEventPayload);
-
-            try {
-                const response = await fetch(backendApiUrl + '/recevent/add', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(recurringEventPayload)
-                });
-                if (response.status === 200) {
-                    onDataUpdated();
-                } else {
-                    if (response.status === COLLISION_DETECTED_ERROR_CODE) {
-                        setCollisionError(true);
-                    } else {
-                        const errorMsg = await response.text();
-                        setErrors([errorMsg]);
-                    }
-                }
-            } catch (err) {
-                console.error(err);
-                setErrors(["Error: " + err]);
-            }
+        } catch (err) {
+            console.error(err);
+            setErrors(["Error: " + err]);
         }
-
-
-
-
     };
 
     const toggleOpenDeleteDialogHandler = () => {
@@ -264,33 +200,25 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                 <DialogBody className={'max-h-[75vh] overflow-y-auto'}>
                     {collisionError && <CollisionDetectedAlert />}
                     {errors && <SaveEventErrorAlert errorMsg={errors} />}
-                        {data.groupId != "" && data.groupId != null &&
-                                <label className="block text-sm font-medium text-gray-700 mb-4">Hinweis: Dieser Termin gehört zu einer Gruppe!</label>
-                        }
                     <div>
-                        <Input label={'Titel'} name={'title'} value={data.title} onChange={handleInputChange}/>
+                        <Input label={'Titel'} name={'title'} value={data.title} onChange={handleInputChange} />
                     </div>
-                    {data.id == 0 &&
-                        <div className={'mt-5'}>
-                            <label className="block text-sm font-medium text-gray-700">Wiederholung</label>
-                            <select name="recurrenceType" value={data.recurrenceType} onChange={handleRecurrenceChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <div className={'mt-5'}>
+                        <label className="block text-sm font-medium text-gray-700">Wiederholung</label>
+                        <select name="recurrenceType" value={data.recurrenceType} onChange={handleRecurrenceChange}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="keine">keine</option>
-                                <option value="täglich">täglich</option>
-                                <option value="wöchentlich">wöchentlich</option>
-                            </select>
-                        </div>
-                    }
-
+                            <option value="täglich">täglich</option>
+                            <option value="wöchentlich">wöchentlich</option>
+                        </select>
+                    </div>
                     {data.recurrenceType === "keine" ? (
                         <>
                             <div className={'mt-5'}>
-                                <Checkbox label={'Ganztägig'} name={'allDay'} checked={data.allDay}
-                                          onChange={handleInputChange}/>
+                                <Checkbox label={'Ganztägig'} name={'allDay'} checked={data.allDay} onChange={handleInputChange} />
                             </div>
                             <div className={'mt-5 flex gap-2'}>
-                                <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Start'} value={data.start}
-                                       name={'start'} onChange={handleInputChange}/>
+                                <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Start'} value={data.start} name={'start'} onChange={handleInputChange} />
                                 <Input type={data.allDay ? 'date' : 'datetime-local'} label={'Ende'} value={data.end} name={'end'} onChange={handleInputChange} />
                             </div>
                         </>
@@ -327,8 +255,6 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                         <Button type={'button'} variant={'filled'}
                                 className={'bg-primary text-white'}
                                 onClick={toggleOpenDeleteDialogHandler}>Löschen</Button>}
-
-
                     {data.id === 0 && <div></div>}
                     <div className={'flex space-x-2'}>
                         <Button type={'button'} variant='outlined' className='text-primary border-primary'

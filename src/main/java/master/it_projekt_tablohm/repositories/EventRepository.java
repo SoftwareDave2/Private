@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Integer> {
     Optional<Event> findById(Integer eventId);
-
+    List<Event> findByGroupId(String groupId);
     // Find events that contain a specific display MAC address
     @Query("SELECT e FROM Event e JOIN e.displayImages d WHERE d.displayMac = :macAddress")
     List<Event> findByDisplayMacAddress(@Param("macAddress") String macAddress);

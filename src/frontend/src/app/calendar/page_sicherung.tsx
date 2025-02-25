@@ -91,7 +91,6 @@ export default function Calendar() {
 
         const event: EventDetails = {
             id: 0,
-            groupId: "",
             title: "",
             start: start,
             end: end,
@@ -134,7 +133,6 @@ export default function Calendar() {
 
         // Create event element.
         const event: EventDetails = {
-            groupId: eventElem.groupId,
             id: eventElem.id,
             title: eventElem.title,
             start: start,

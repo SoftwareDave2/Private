@@ -26,6 +26,22 @@ export function DeleteCalendarEventDialog({open, event, onClose, onDeleted}: Del
         }
     }
 
+
+
+    const deleteAllHandler = async () => {
+        try {
+            const response = await fetch(backendApiUrl + '/recevent/delete/' + event.groupId, {
+                method: 'DELETE' }
+            )
+            const responseText = await response.text()
+            console.log(responseText)
+            onDeleted()
+        } catch (err) {
+            console.error(err)
+            onClose()
+        }
+    }
+
     return (
         <Dialog open={open} handler={onClose} size={'xs'}>
             <DialogHeader>Event {event.title} löschen?</DialogHeader>
@@ -35,6 +51,11 @@ export function DeleteCalendarEventDialog({open, event, onClose, onDeleted}: Del
             <DialogFooter className={'justify-between'}>
                 <Button variant='outlined' className='text-primary border-primary' onClick={onClose}>Cancel</Button>
                 <Button variant={'filled'} className={'bg-primary text-white'} onClick={deleteHandler}>Event Löschen</Button>
+                {(event.id > 0) && (event.groupId !="") &&
+
+                    <Button type={'button'} variant={'filled'}
+                            className={'bg-primary text-white'}
+                            onClick={deleteAllHandler}>Alle Löschen</Button>}
             </DialogFooter>
         </Dialog>
     )
