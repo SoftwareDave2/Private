@@ -51,7 +51,7 @@ export function DeleteCalendarEventDialog({open, event, onClose, onDeleted}: Del
             <DialogFooter className={'justify-between'}>
                 <Button variant='outlined' className='text-primary border-primary' onClick={onClose}>Cancel</Button>
                 <Button variant={'filled'} className={'bg-primary text-white'} onClick={deleteHandler}>Event Löschen</Button>
-                {(event.id > 0) && (event.groupId !="") &&
+                {(event.id > 0) && (event.groupId != "" && event.groupId != null) &&
 
                     <Button type={'button'} variant={'filled'}
                             className={'bg-primary text-white'}
