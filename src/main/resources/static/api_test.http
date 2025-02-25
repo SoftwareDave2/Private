@@ -83,7 +83,7 @@ Content-Type: application/json
 }
 
 ### Example 12: Delete an Event by ID
-DELETE http://localhost:8080/event/delete/6
+DELETE http://localhost:8080/event/delete/18
 
 ### Example 13: Confirm image switch Endpoint
 POST http://localhost:8080/display/switch
@@ -124,8 +124,18 @@ Content-Type: application/json
 {
   "start": "2025-12-12T08:00:00",
   "end": "2025-12-12T09:00:00",
-  "rrule": "FREQ=DAILY;COUNT=5"
+  "rrule": "FREQ=DAILY;COUNT=5",
+  "displayImages": [
+    {
+      "displayMac": "00:00:00:00:04",
+      "image": "updated_screen1.jpg"
+    },
+    {
+      "displayMac": "00:00:00:00:05",
+      "image": "updated_screen2.jpg"
+    }
+  ]
 }
 
 ### Delete Recurrent Event
-DELETE http://localhost:8080/recevent/delete/6959cbd2-2b20-4cfa-bbbc-4888e58cc13c
+DELETE http://localhost:8080/recevent/delete/9b01c00e-f43c-4a1d-ac77-18530e5c7f2d

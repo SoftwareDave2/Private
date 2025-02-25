@@ -1,11 +1,10 @@
 package master.it_projekt_tablohm.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class RecEvent {
@@ -17,6 +16,10 @@ public class RecEvent {
     private LocalDateTime end;
     private String rrule;
     private String groupId; // Used to track events generated from this recurrence rule
+
+    @ElementCollection
+    @CollectionTable(name = "recevent_display_images", joinColumns = @JoinColumn(name = "recevent_id"))
+    private List<DisplayImage> displayImages = new ArrayList<>();
 
     // Getters and Setters
     public Integer getId() { return id; }
@@ -33,4 +36,12 @@ public class RecEvent {
 
     public String getGroupId() { return groupId; }
     public void setGroupId(String groupId) { this.groupId = groupId; }
+
+    public List<DisplayImage> getDisplayImages() {
+        return displayImages;
+    }
+
+    public void setDisplayImages(List<DisplayImage> displayImages) {
+        this.displayImages = displayImages;
+    }
 }

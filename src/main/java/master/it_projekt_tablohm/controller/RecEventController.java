@@ -1,5 +1,6 @@
 package master.it_projekt_tablohm.controller;
 
+import jakarta.transaction.Transactional;
 import master.it_projekt_tablohm.dto.RecEventDTO;
 import master.it_projekt_tablohm.models.Event;
 import master.it_projekt_tablohm.models.RecEvent;
@@ -60,6 +61,7 @@ public class RecEventController {
         return ResponseEntity.ok(response);
     }
 
+    @Transactional
     @DeleteMapping("/delete/{groupId}")
     public ResponseEntity<?> deleteRecEvent(@PathVariable String groupId) {
         List<Event> eventsToDelete = eventRepository.findByGroupId(groupId);
@@ -106,6 +108,9 @@ public class RecEventController {
                 event.setStart(nextEventStart);
                 event.setEnd(nextEventEnd);
                 event.setGroupId(recEvent.getGroupId()); // Ensure group ID is assigned
+                event.setDisplayImages(new ArrayList<>(recEvent.getDisplayImages()));
+
+
 
                 eventList.add(event);
             }

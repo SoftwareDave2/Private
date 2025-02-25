@@ -673,4 +673,57 @@ Content-Type: application/json
 
 ---
 
+## Recurring Event Scheduling with RRULE
+
+### Request Format
+To schedule a recurring event, send a `POST` request to:
+
+```
+POST http://localhost:8080/recevent/add
+Content-Type: application/json
+```
+
+**Example Request:**
+```json
+{
+  "start": "2025-12-12T08:00:00",
+  "end": "2025-12-12T09:00:00",
+  "rrule": "FREQ=WEEKLY;BYDAY=MO;COUNT=4",
+  "displayImages": [
+    {
+      "displayMac": "00:00:00:00:04",
+      "image": "screen1.jpg"
+    },
+    {
+      "displayMac": "00:00:00:00:05",
+      "image": "screen2.jpg"
+    }
+  ]
+}
+```
+
+### How RRULE Works
+- **`start` & `end`**: Define the base date and time for the event.
+- **`rrule`**: Defines the recurrence pattern.
+    - `FREQ=WEEKLY` → Repeats every week.
+    - `BYDAY=MO` → Occurs only on Mondays.
+    - `COUNT=4` → Repeats 4 times.
+
+### Important Behavior
+- The **RRULE determines the first valid occurrence**, regardless of the `start` date.
+- If `start` is set to a different day than `BYDAY`, the event will **shift to the next valid recurrence day**.
+    - Example: If `start` is a Thursday but `BYDAY=MO`, the first event will occur on the **next Monday**.
+- If no `BYDAY` is provided, the event repeats based on the exact `start` date.
+
+### Examples
+| `start` Date | `rrule` | First Occurrence | Recurrence Pattern |
+|-------------|--------|-----------------|--------------------|
+| `"2025-03-06T08:00:00"` (Thu) | `FREQ=WEEKLY;BYDAY=MO;COUNT=4` | Mon, March 10 | Every Monday for 4 weeks |
+| `"2025-03-03T08:00:00"` (Mon) | `FREQ=WEEKLY;BYDAY=MO;COUNT=4` | Mon, March 3 | Every Monday for 4 weeks |
+| `"2025-03-06T08:00:00"` (Thu) | `FREQ=WEEKLY;COUNT=4` | Thu, March 6 | Every Thursday for 4 weeks |
+
+For more details on RRULE formatting, refer to [RFC 5545](https://tools.ietf.org/html/rfc5545#section-3.8.5.3).
+
+---
+
 
