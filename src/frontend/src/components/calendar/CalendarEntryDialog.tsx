@@ -213,6 +213,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
             }
 
             const recurringEventPayload = {
+                title: data.title,
                 start: floatingStart, // z. B. "2025-02-25T08:00:00"
                 end: floatingEnd,     // z. B. "2025-02-25T09:30:00"
                 rrule: rrule,         // z. B. "FREQ=DAILY;UNTIL=20250227T083000Z"

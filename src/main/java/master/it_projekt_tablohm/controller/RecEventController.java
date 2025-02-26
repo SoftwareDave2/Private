@@ -55,7 +55,7 @@ public class RecEventController {
         List<RecEvent> recEvents = recEventRepository.findAll();
 
         List<RecEventDTO> response = recEvents.stream().map(event ->
-                new RecEventDTO(event.getGroupId(), event.getStart(), event.getRrule())
+                new RecEventDTO(event.getTitle(), event.getGroupId(), event.getStart(), event.getRrule())
         ).toList();
 
         return ResponseEntity.ok(response);
@@ -83,6 +83,7 @@ public class RecEventController {
             // Convert LocalDateTime to RFC5545 DateTime (lib-recur uses timestamps)
             long startMillis = recEvent.getStart().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             DateTime start = new DateTime(startMillis);
+            String title = recEvent.getTitle();
 
             // Parse RRULE and generate event occurrences
             RecurrenceRule rule = new RecurrenceRule(recEvent.getRrule());
@@ -103,7 +104,7 @@ public class RecEventController {
 
                 // Create Event object
                 Event event = new Event();
-                event.setTitle("Generated Event");
+                event.setTitle(title);
                 event.setAllDay(false);
                 event.setStart(nextEventStart);
                 event.setEnd(nextEventEnd);

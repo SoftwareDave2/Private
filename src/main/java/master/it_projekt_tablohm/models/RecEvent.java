@@ -12,6 +12,7 @@ public class RecEvent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    private String title;
     private LocalDateTime start;
     private LocalDateTime end;
     private String rrule;
@@ -24,6 +25,14 @@ public class RecEvent {
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String eventTitle) {
+        this.title = eventTitle;
+    }
 
     public LocalDateTime getStart() { return start; }
     public void setStart(LocalDateTime start) { this.start = start; }
