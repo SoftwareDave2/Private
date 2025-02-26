@@ -22,6 +22,7 @@ public class Display {
     private Integer battery_percentage;
     private LocalDateTime timeOfBattery;
 
+    private boolean doSwitch;
     private String filename;
     private String filenameApp;
 
@@ -131,5 +132,13 @@ public class Display {
 
     public void setWakeTime(LocalDateTime wakeTime) {
         this.wakeTime = wakeTime;
+    }
+
+    public boolean isDoSwitch() {
+        return doSwitch;
+    }
+
+    public void setDoSwitch(boolean doSwitch) {
+        this.doSwitch = doSwitch;
     }
 }
