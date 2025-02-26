@@ -1,7 +1,12 @@
 package master.it_projekt_tablohm.controller;
 
+import master.it_projekt_tablohm.models.Config;
 import master.it_projekt_tablohm.models.Display;
+import master.it_projekt_tablohm.models.DisplayImage;
+import master.it_projekt_tablohm.models.Event;
+import master.it_projekt_tablohm.repositories.ConfigRepository;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
+import master.it_projekt_tablohm.repositories.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +24,15 @@ import java.util.*;
 @RequestMapping(path = "/display")
 public class DisplayController {
     @Autowired
-    private DisplayRepository displayRepository;
+    private final DisplayRepository displayRepository;
+    private final EventRepository eventRepository;
+    private final ConfigRepository configRepository;
+
+    public DisplayController(EventRepository eventRepository, DisplayRepository displayRepository, ConfigRepository configRepository) {
+        this.eventRepository = eventRepository;
+        this.displayRepository = displayRepository;
+        this.configRepository = configRepository;
+    }
 
     @CrossOrigin(origins = "*")
     @PostMapping(path = "/add")
@@ -79,10 +92,12 @@ public class DisplayController {
         Display display = new Display();
         display.setMacAddress(macAddress);
         //display.setFilename("src/frontend/public/uploads/initial.jpg");
+        display.setDoSwitch(true);
+        display.setFilenameApp("");
         display.setFilename("initial.jpg");
         display.setWidth(width);
         display.setHeight(height);
-        display.setWakeTime(LocalDateTime.now().plusHours(1));
+        display.setWakeTime(LocalDateTime.now().plusMinutes(10));
         displayRepository.save(display);
 
         // Add current time and new wake time to the response
@@ -124,19 +139,63 @@ public class DisplayController {
     @CrossOrigin(origins = "*")
     @GetMapping(path = "/get/{mac}")
     public @ResponseBody Display getDisplayById(@PathVariable String mac) {
-        return displayRepository.findByMacAddress(Objects.requireNonNull(mac))
+         Display display = displayRepository.findByMacAddress(Objects.requireNonNull(mac))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Display not found"));
+
+         List<Event> events = eventRepository.findByDisplayMacAddress(mac);
+        Config config = configRepository.findAll().stream().findFirst().get();
+
+         LocalDateTime next = LocalDateTime.MAX;
+         String filename = "";
+         if(!events.isEmpty()) {
+             for(Event e : events) {
+                 for(DisplayImage di : e.getDisplayImages()) {
+                     if (di.getdisplayMac().equals(mac)) {
+                         if(e.getStart().minusMinutes(config.getLeadTime()).isBefore(LocalDateTime.now()) && e.getEnd().plusMinutes(config.getFollowUpTime()).isAfter(LocalDateTime.now())) {
+                             filename = di.getImage();
+                             next = e.getEnd().plusMinutes(config.getFollowUpTime());
+                         }
+                     }
+                 }
+             }
+
+             if(next == LocalDateTime.MAX) {
+                 for(Event e : events) {
+                     for(DisplayImage di : e.getDisplayImages()) {
+                         if (di.getdisplayMac().equals(mac)) {
+                             if(e.getStart().minusMinutes(config.getLeadTime()).isAfter(LocalDateTime.now())) {
+                                 next = e.getStart().minusMinutes(config.getLeadTime());
+                             }
+                         }
+                     }
+                 }
+             }
+         }
+
+         if(next == LocalDateTime.MAX)
+             next = LocalDateTime.now().plusMinutes(10);
+
+         if(filename.equals(""))
+             filename = "initial.jpg";
+
+         display.setDoSwitch(!display.getFilenameApp().equals(filename));
+         display.setFilename(filename);
+         display.setWakeTime(next);
+         displayRepository.save(display);
+
+         return display;
     }
 
     @CrossOrigin(origins = "*")
     @PostMapping(path = "/switch")
-    public @ResponseBody String initiateDisplay(@RequestParam String macAddress, @RequestParam String filename) {
+    public @ResponseBody String imageSwitch(@RequestParam String macAddress, @RequestParam String filename) {
         LocalDateTime timeNow = LocalDateTime.now();
 
         return displayRepository.findByMacAddress(Objects.requireNonNull(macAddress))
                 .map(display -> {
                     display.setFilenameApp(filename);
                     display.setLastSwitch(timeNow);
+					display.setDoSwitch(false);
                     displayRepository.save(display);
                     return "Image of Display with MAC address: " + macAddress + " switched to " + filename + " at " + timeNow.toString() + ".";
                 })
