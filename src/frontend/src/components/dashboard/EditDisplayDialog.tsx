@@ -97,6 +97,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body:
+                    //'displayName='+ data.displayName + // aktuell noch auskommentiert, da das backend zuerst noch angepasst werden muss
                     'macAddress='+ data.macAddress +
                     '&brand=' + data.brand +
                     '&model=' + data.model +
@@ -135,9 +136,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                             value={data.displayName ?? ''}
                             onChange={displayNameChangeHandler}
                         />
-                        <Select label={'Displaymodell'} value={data.model} name={'model'} onChange={modelChangeHandler}>
-                            <Option value={'Tableaux'}>Tableaux</Option>
-                        </Select>
+
                     </div>
 
                     <div className="mt-5 flex gap-2 items-center">
