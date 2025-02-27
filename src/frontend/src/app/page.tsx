@@ -59,7 +59,8 @@ export default function Home() {
 
     const displayUpdatedHandler = async (macAddress: string) => {
         try {
-            await fetchDisplay(macAddress)
+            //await fetchDisplay(macAddress) // aktuell alle refreshen statt nur das abgeänderte, da irgendein interner server error auftritt, wenn die /display/get/' + macAddress schnittstelle genutzt wird
+            await fetchDisplays()
         } catch (err) {
             console.error(err)
         }

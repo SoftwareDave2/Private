@@ -24,7 +24,10 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
 
     const backendApiUrl = 'http://localhost:8080'
 
-    const [data, setData] = useState<DisplayData>(displayData)
+    const [data, setData] = useState<DisplayData>({
+        ...displayData,
+        displayName: displayData.displayName ?? '' // Fallback-Wert setzen
+    });
     const [openDeleteDisplay, setOpenDeleteDisplay] = useState<boolean>(false)
 
     const [brandSuggestions, setBrandSuggestions] = useState<string[]>([]);
@@ -55,6 +58,9 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
         setData(prevState => ({...prevState, orientation: orientation ?? ''}))
     const filenameChangeHandler = (filename: string) =>
         setData(prevState => ({...prevState, filename: filename}))
+    const displayNameChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setData(prevState => ({ ...prevState, displayName: event.target.value }));
+    };
 
     const displayDeletedHandler = () => {
         toggleOpenDeleteDisplayHandler()
@@ -85,11 +91,13 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
 
 
     const updateDisplay = async (formdata: FormData) => {
+        console.log(data);
         try {
             const response = await fetch(backendApiUrl + '/display/add', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body:
+                    //'displayName='+ data.displayName + // aktuell noch auskommentiert, da das backend zuerst noch angepasst werden muss
                     'macAddress='+ data.macAddress +
                     '&brand=' + data.brand +
                     '&model=' + data.model +
@@ -107,6 +115,9 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
         onDataUpdated()
     }
 
+
+
+
     return (
         <Dialog open={open}>
             <DialogHeader>Display {data.id} Anpassen</DialogHeader>
@@ -119,9 +130,13 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                         {/*<Select label={'Displaymarke'} value={data.brand} name={'brand'} onChange={brandChangeHandler}>
                             <Option key={'Philips'} value={'Philips'}>Philips</Option>
                         </Select> */}
-                        <Select label={'Displaymodell'} value={data.model} name={'model'} onChange={modelChangeHandler}>
-                            <Option value={'Tableaux'}>Tableaux</Option>
-                        </Select>
+                        <Input
+                            label="Name"
+                            name="displayName"
+                            value={data.displayName ?? ''}
+                            onChange={displayNameChangeHandler}
+                        />
+
                     </div>
 
                     <div className="mt-5 flex gap-2 items-center">

@@ -1,4 +1,5 @@
 export type DisplayData = {
+    displayName: string,
     macAddress: string,
     id: number,
     brand: string,
@@ -8,4 +9,6 @@ export type DisplayData = {
     orientation: string,
     filename: string,
     wakeTime: string,
+    battery_percentage: number,
+    timeOfBattery: string,
 }
