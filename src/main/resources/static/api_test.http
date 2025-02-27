@@ -99,8 +99,8 @@ GET http://localhost:8080/display/brands
 POST http://localhost:8080/display/postBattery
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:05 &
-batteryPercentage=89
+macAddress=00:00:00:00:03 &
+batteryPercentage=99
 
 ### Example 16: Create a new configuration
 POST http://localhost:8080/config/post
