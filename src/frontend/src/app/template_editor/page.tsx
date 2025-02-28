@@ -176,7 +176,7 @@ const templateConfig: Record<string, FieldConfig[]> = {
 const backendApiUrl = 'http://localhost:8080';
 
 const TemplateEditorPage: React.FC = () => {
-    const [selectedTemplate, setSelectedTemplate] = useState<string>("template_1_links_bsp.png");
+    const [selectedTemplate, setSelectedTemplate] = useState<string>("template_1_links.png");
     const [inputValues, setInputValues] = useState<Record<string, string>>({});
     const [imageName, setImageName] = useState<string>('');
     const [popupMessage, setPopupMessage] = useState<string | null>(null);
