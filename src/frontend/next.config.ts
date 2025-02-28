@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
         backendApiUrl: 'http://localhost:8080'
     },
 
+
+
 };
 
 export default nextConfig;

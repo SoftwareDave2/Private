@@ -18,6 +18,10 @@ export default function NavLinks() {
             name: 'Mediathek'
         },
         {
+            href: '/template_editor',
+            name: 'Template Editor'
+        },
+        {
             href: '/config',
             name: 'Config'
 
