@@ -38,6 +38,7 @@ public class DisplayController {
     @PostMapping(path = "/add")
     public @ResponseBody String addDisplay(
             @RequestParam String macAddress,
+            @RequestParam String displayName,
             @RequestParam String brand,
             @RequestParam String model,
             @RequestParam Integer width,
@@ -51,6 +52,7 @@ public class DisplayController {
             return "Display with this Mac Address not initiated yet!";
         }
         Display display = existingDisplay.get();
+        display.setDisplayName(displayName);
         display.setBrand(brand);
         display.setModel(model);
         display.setWidth(width);
@@ -206,6 +208,12 @@ public class DisplayController {
     @GetMapping(path = "/brands")
     public @ResponseBody List<String> getDistinctBrands() {
         return displayRepository.findDistinctBrands();
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/models")
+    public @ResponseBody List<String> getDistinctModels() {
+        return displayRepository.findDistinctModels();
     }
 
     @CrossOrigin(origins = "*")

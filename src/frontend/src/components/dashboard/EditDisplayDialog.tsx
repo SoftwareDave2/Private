@@ -97,8 +97,8 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body:
-                    //'displayName='+ data.displayName + // aktuell noch auskommentiert, da das backend zuerst noch angepasst werden muss
                     'macAddress='+ data.macAddress +
+                    '&displayName='+ data.displayName +
                     '&brand=' + data.brand +
                     '&model=' + data.model +
                     '&width=' + formdata.get('width') +

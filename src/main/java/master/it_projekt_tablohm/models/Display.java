@@ -13,6 +13,7 @@ public class Display {
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Integer id;
     private String macAddress;
+    private String displayName;
     private String brand;
     private String model;
     private Integer width;
@@ -44,6 +45,14 @@ public class Display {
 
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public String getBrand() {
