@@ -50,7 +50,7 @@ export default function DisplayInfoDialog({open, displayData, onClose, onDisplay
 
     return (
         <Dialog open={open} handler={onClose}>
-            <DialogHeader>Display {displayData.id}</DialogHeader>
+            <DialogHeader>{displayData.displayName}</DialogHeader>
             <DialogBody>
                 <div className={'flex gap-6'}>
                     <DisplayFrame displayData={displayData} />
