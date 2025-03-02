@@ -13,14 +13,14 @@ interface FieldConfig {
     defaultText?: string;
     fontSizePercent?: number; // Schriftgröße relativ zur Bildhöhe
     bold?: boolean;
+    defaultColor?: string;
 }
 
-// Beispiel-Templates mit relativen Werten
 const baseTemplateConfig: FieldConfig[] = [
     {
         id: 'field1',
-        xPercent: 0.04,  // 10% der Bildbreite
-        yPercent: 0.145,  // 20% der Bildhöhe
+        xPercent: 0.04,
+        yPercent: 0.145,
         widthPercent: 0.8,
         heightPercent: 0.05,
         placeholder: "Textfeld 1",
@@ -30,89 +30,52 @@ const baseTemplateConfig: FieldConfig[] = [
     },
     {
         id: 'field2',
-        xPercent: 0.04,  // 10% der Bildbreite
-        yPercent: 0.198,  // 20% der Bildhöhe
+        xPercent: 0.04,
+        yPercent: 0.198,
         widthPercent: 0.8,
         heightPercent: 0.02,
         placeholder: "Textfeld 2",
         defaultText: "Datum",
         fontSizePercent: 0.02,
         bold: true
-    }, {
+    },
+    {
         id: 'field3',
-        xPercent: 0.04,  // 10% der Bildbreite
-        yPercent: 0.245,  // 20% der Bildhöhe
+        xPercent: 0.04,
+        yPercent: 0.245,
         widthPercent: 0.8,
         heightPercent: 0.02,
         placeholder: "Textfeld 3",
         defaultText: "Unterthema",
         fontSizePercent: 0.02,
         bold: true
-    },{
+    },
+    {
         id: 'field4',
-        xPercent: 0.05,  // 10% der Bildbreite
-        yPercent: 0.37,  // 20% der Bildhöhe
+        xPercent: 0.05,
+        yPercent: 0.37,
         widthPercent: 0.8,
         heightPercent: 0.045,
         placeholder: "Textfeld 4",
         defaultText: "Themen:",
         fontSizePercent: 0.045,
         bold: true
-    },{
+    },
+    {
         id: 'field5',
-        xPercent: 0.05,  // 10% der Bildbreite
-        yPercent: 0.48,  // 20% der Bildhöhe
+        xPercent: 0.05,
+        yPercent: 0.48,
         widthPercent: 0.8,
         heightPercent: 0.025,
         placeholder: "Textfeld 5",
         defaultText: "Name",
         fontSizePercent: 0.02,
         bold: false
-    },{
+    },
+    {
         id: 'field6',
-        xPercent: 0.05,  // 10% der Bildbreite
-        yPercent: 0.51,  // 20% der Bildhöhe
-        widthPercent: 0.8,
-        heightPercent: 0.025,
-        placeholder: "Textfeld 6",
-        defaultText: "Thema",
-        fontSizePercent: 0.025,
-        bold: true
-    }
-    ,{
-        id: 'field7',
-        xPercent: 0.05,  // 10% der Bildbreite
-        yPercent: 0.57,  // 20% der Bildhöhe
-        widthPercent: 0.8,
-        heightPercent: 0.025,
-        placeholder: "Textfeld 7",
-        defaultText: "Name",
-        fontSizePercent: 0.02,
-        bold: false
-    },{
-        id: 'field8',
-        xPercent: 0.05,  // 10% der Bildbreite
-        yPercent: 0.60,  // 20% der Bildhöhe
-        widthPercent: 0.8,
-        heightPercent: 0.025,
-        placeholder: "Textfeld 8",
-        defaultText: "Thema",
-        fontSizePercent: 0.025,
-        bold: true
-    },{
-        id: 'field9',
-        xPercent: 0.05,  // 10% der Bildbreite
-        yPercent: 0.66,  // 20% der Bildhöhe
-        widthPercent: 0.8,
-        heightPercent: 0.025,
-        placeholder: "Textfeld 5",
-        defaultText: "Name",
-        fontSizePercent: 0.02,
-        bold: false
-    },{
-        id: 'field10',
-        xPercent: 0.05,  // 10% der Bildbreite
-        yPercent: 0.69,  // 20% der Bildhöhe
+        xPercent: 0.05,
+        yPercent: 0.51,
         widthPercent: 0.8,
         heightPercent: 0.025,
         placeholder: "Textfeld 6",
@@ -120,33 +83,57 @@ const baseTemplateConfig: FieldConfig[] = [
         fontSizePercent: 0.025,
         bold: true
     },
+    {
+        id: 'field7',
+        xPercent: 0.05,
+        yPercent: 0.57,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 7",
+        defaultText: "Name",
+        fontSizePercent: 0.02,
+        bold: false
+    },
+    {
+        id: 'field8',
+        xPercent: 0.05,
+        yPercent: 0.60,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 8",
+        defaultText: "Thema",
+        fontSizePercent: 0.025,
+        bold: true
+    },
+    {
+        id: 'field9',
+        xPercent: 0.05,
+        yPercent: 0.66,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 9",
+        defaultText: "Name",
+        fontSizePercent: 0.02,
+        bold: false
+    },
+    {
+        id: 'field10',
+        xPercent: 0.05,
+        yPercent: 0.69,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 10",
+        defaultText: "Thema",
+        fontSizePercent: 0.025,
+        bold: true
+    },
 ];
 
-
-// Beispiel für Templates, die von der Basis-Konfiguration abgeleitet sind
 const templateConfig: Record<string, FieldConfig[]> = {
-    "template_1_links_bsp.png": [
-        ...baseTemplateConfig,
-        // {
-        //     id: 'field3',
-        //     xPercent: 0.04,
-        //     yPercent: 0.245,
-        //     widthPercent: 0.8,
-        //     heightPercent: 0.02,
-        //     placeholder: "Textfeld 3",
-        //     defaultText: "Unterthema",
-        //     fontSizePercent: 0.02,
-        //     bold: true
-        // },
-        // Weitere spezifische Felder für "template_1_links_bsp.png" ...
-    ],
     "template_1_links.png": [
         ...baseTemplateConfig,
     ],
     "template_1_rechts.png": [
-        ...baseTemplateConfig,
-    ],
-    "template_2_links_bsp.png": [
         ...baseTemplateConfig,
     ],
     "template_2_links.png": [
@@ -155,34 +142,26 @@ const templateConfig: Record<string, FieldConfig[]> = {
     "template_2_rechts.png": [
         ...baseTemplateConfig,
     ],
-    "template_3_links_bsp.png": [
-        ...baseTemplateConfig,
-    ],
     "template_3_links.png": [
         ...baseTemplateConfig,
     ],
     "template_3_rechts.png": [
         ...baseTemplateConfig,
     ],
-    "test3200.png": [
-        ...baseTemplateConfig,
-    ],
-
 };
-
-
-
 
 const backendApiUrl = 'http://localhost:8080';
 
 const TemplateEditorPage: React.FC = () => {
     const [selectedTemplate, setSelectedTemplate] = useState<string>("template_1_links.png");
     const [inputValues, setInputValues] = useState<Record<string, string>>({});
-    const [imageName, setImageName] = useState<string>('');
-    const [popupMessage, setPopupMessage] = useState<string | null>(null);
+    const [textColors, setTextColors] = useState<Record<string, string>>({});
     const [canvasDimensions, setCanvasDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
+    const [showNamePopup, setShowNamePopup] = useState<boolean>(false);
+    const [tempImageName, setTempImageName] = useState<string>('');
+    const [popupMessage, setPopupMessage] = useState<string | null>(null);
 
     useEffect(() => {
         const img = new Image();
@@ -200,14 +179,15 @@ const TemplateEditorPage: React.FC = () => {
                     ctx.drawImage(img, 0, 0);
                 }
             }
-
-            // Setze die defaultText-Werte beim Laden des Templates
             const fields = templateConfig[selectedTemplate] || [];
             const initialValues: Record<string, string> = {};
+            const initialColors: Record<string, string> = {};
             fields.forEach(field => {
                 initialValues[field.id] = field.defaultText || "";
+                initialColors[field.id] = field.defaultColor || "#000000";
             });
             setInputValues(initialValues);
+            setTextColors(initialColors);
         };
     }, [selectedTemplate]);
 
@@ -222,36 +202,42 @@ const TemplateEditorPage: React.FC = () => {
         }));
     };
 
-    // Funktion zum Zeichnen von Text auf dem Canvas
+    const handleColorChange = (e: ChangeEvent<HTMLInputElement>, id: string) => {
+        setTextColors(prev => ({
+            ...prev,
+            [id]: e.target.value,
+        }));
+    };
+
     const drawTextOnCanvas = () => {
         const canvas = canvasRef.current;
         if (!canvas || !bgImage) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);  // Canvas löschen
-        ctx.drawImage(bgImage, 0, 0);  // Hintergrundbild neu zeichnen
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bgImage, 0, 0);
 
         const fields = templateConfig[selectedTemplate] || [];
         fields.forEach(field => {
-            const text = inputValues[field.id] || field.defaultText || "";  // Text aus Input oder DefaultText
+            const text = inputValues[field.id] || field.defaultText || "";
             const fontSize = field.fontSizePercent ? field.fontSizePercent * canvas.height : 16;
             const fontWeight = field.bold ? 'bold' : 'normal';
             ctx.font = `${fontWeight} ${fontSize}px Arial`;
-            ctx.fillStyle = "black";
-
+            ctx.fillStyle = textColors[field.id] || "#000000";
             const x = field.xPercent * canvas.width;
             const y = field.yPercent * canvas.height + (field.heightPercent * canvas.height) - 5;
-
-            ctx.fillText(text, x, y);  // Text zeichnen
+            ctx.fillText(text, x, y);
         });
     };
 
-    const handleSave = () => {
-        drawTextOnCanvas();  // Text auf das Canvas zeichnen
+    const saveImage = () => {
+        drawTextOnCanvas();
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const finalFileName = imageName.trim() !== '' ? imageName.trim() + '.png' : `output_${Date.now()}.png`;
+        const finalFileName = tempImageName.trim() !== ''
+            ? `${tempImageName.trim()}_output_${Date.now()}.png`
+            : `output_${Date.now()}.png`;
         canvas.toBlob(async (blob) => {
             if (!blob) return;
             const file = new File([blob], finalFileName, { type: 'image/png' });
@@ -263,11 +249,9 @@ const TemplateEditorPage: React.FC = () => {
                     method: 'POST',
                     body: formData
                 });
-
                 if (!response.ok) {
                     throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
                 }
-
                 setPopupMessage('Bild wurde erfolgreich hochgeladen.');
             } catch (error: any) {
                 console.error('Error on uploading file.', error.message || error);
@@ -276,58 +260,114 @@ const TemplateEditorPage: React.FC = () => {
         }, 'image/png');
     };
 
-    return (
+    const handleSaveClick = () => {
+        setShowNamePopup(true);
+    };
 
+    const handlePopupSave = () => {
+        setShowNamePopup(false);
+        saveImage();
+    };
+
+    const handlePopupCancel = () => {
+        setShowNamePopup(false);
+    };
+
+    return (
         <div style={{ padding: '16px' }}>
             <PageHeader title={'Template Editor'} info={''}></PageHeader>
             <div style={{ marginBottom: '16px' }}>
                 <label htmlFor="templateSelect">Wähle ein Template: </label>
                 <select id="templateSelect" value={selectedTemplate} onChange={handleTemplateChange}>
-                    <option value="template_1_links_bsp.png">template_1_links_bsp</option>
                     <option value="template_1_links.png">template_1_links</option>
                     <option value="template_1_rechts.png">template_1_rechts</option>
-
-                    <option value="template_2_links_bsp.png">template_2_links_bsp</option>
                     <option value="template_2_links.png">template_2_links</option>
                     <option value="template_2_rechts.png">template_2_rechts</option>
-
-                    <option value="template_3_links_bsp.png">template_3_links_bsp</option>
                     <option value="template_3_links.png">template_3_links</option>
                     <option value="template_3_rechts.png">template_3_rechts</option>
 
-                    <option value="test3200.png">test3200</option>
                 </select>
             </div>
 
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px'}}>
                 <div style={{position: 'relative', width: canvasDimensions.width, height: canvasDimensions.height}}>
-                <canvas ref={canvasRef} style={{ border: '1px solid #000', display: 'block' }} />
+                    <canvas ref={canvasRef} style={{ border: '1px solid #000', display: 'block' }} />
                     {(templateConfig[selectedTemplate] || []).map(field => (
-                        <input
+                        <div
                             key={field.id}
-                            type="text"
-                            value={inputValues[field.id] || ""}
-                            placeholder={field.placeholder}
-                            onChange={(e) => handleInputChange(e, field.id)}
                             style={{
                                 position: 'absolute',
                                 left: `${field.xPercent * 100}%`,
                                 top: `${field.yPercent * 100}%`,
                                 width: `${field.widthPercent * 100}%`,
                                 height: `${field.heightPercent * 100}%`,
-                                border: '1px solid #ccc',
-                                background: 'rgba(255,255,255,0.7)',
-                                fontSize: field.fontSizePercent ? `${field.fontSizePercent * canvasDimensions.height}px` : '16px',
-                                fontWeight: field.bold ? 'bold' : 'normal'
+                                display: 'flex',
+                                alignItems: 'center',
+                                background: 'rgba(255,255,255,0.7)'
                             }}
-                        />
+                        >
+                            <input
+                                type="text"
+                                value={inputValues[field.id] || ""}
+                                placeholder={field.placeholder}
+                                onChange={(e) => handleInputChange(e, field.id)}
+                                style={{
+                                    width: 'calc(100% - 40px)',
+                                    height: '100%',
+                                    border: '1px solid #ccc',
+                                    fontSize: field.fontSizePercent ? `${field.fontSizePercent * canvasDimensions.height}px` : '16px',
+                                    fontWeight: field.bold ? 'bold' : 'normal',
+                                    color: textColors[field.id] || "#000000"
+                                }}
+                            />
+                            <input
+                                type="color"
+                                value={textColors[field.id] || "#000000"}
+                                onChange={(e) => handleColorChange(e, field.id)}
+                                style={{
+                                    width: '35px',
+                                    height: '100%',
+                                    border: 'none',
+                                    marginLeft: '5px'
+                                }}
+                            />
+                        </div>
                     ))}
                 </div>
             </div>
 
-            <button onClick={handleSave}>Bild speichern</button>
+            <button onClick={handleSaveClick}>Bild speichern</button>
 
             {popupMessage && <div style={{ marginTop: '16px', color: 'green' }}>{popupMessage}</div>}
+
+            {showNamePopup && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <div style={{ background: '#fff', padding: '24px', borderRadius: '8px', minWidth: '300px' }}>
+                        <h3>Bild benennen</h3>
+                        <input
+                            type="text"
+                            value={tempImageName}
+                            onChange={(e) => setTempImageName(e.target.value)}
+                            placeholder="Name eingeben"
+                            style={{ width: '100%', padding: '8px', marginBottom: '16px' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button onClick={handlePopupCancel} style={{ marginRight: '8px' }}>Abbrechen</button>
+                            <button onClick={handlePopupSave}>Speichern</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
