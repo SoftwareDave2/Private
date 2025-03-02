@@ -5,7 +5,7 @@ GET http://localhost:8080/display/all
 POST http://localhost:8080/display/add
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:01 &
+macAddress=00:00:00:00:06 &
 displayName=Besprechung1 &
 brand=Phillips &
 model=Tableux &
@@ -24,7 +24,7 @@ GET http://localhost:8080/image/download/moon.jpg
 POST http://localhost:8080/display/initiate
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:01 &
+macAddress=00:00:00:00:06 &
 width=1280 &
 height=1920
 
@@ -100,8 +100,8 @@ GET http://localhost:8080/display/brands
 POST http://localhost:8080/display/postBattery
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:01 &
-batteryPercentage=99
+macAddress=00:00:00:00:06 &
+batteryPercentage=87
 
 ### Example 16: Create a new configuration
 POST http://localhost:8080/config/post
