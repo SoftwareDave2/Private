@@ -243,7 +243,11 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                                name={'height'}/>
                     </div>
                     <div className={'mt-5'}>
-                        <SelectImage selectedFilename={data.filename} onSelect={filenameChangeHandler}/>
+                        <SelectImage selectedFilename={data.filename}
+                                     width={data.width}
+                                     height={data.height}
+                                     onSelect={filenameChangeHandler}
+                                      />
                     </div>
                 </DialogBody>
                 <DialogFooter className={'justify-between'}>

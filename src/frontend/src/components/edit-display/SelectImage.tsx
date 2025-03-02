@@ -84,15 +84,30 @@ export default function SelectImage({selectedFilename, width, height, onSelect, 
     }
 
     const isResolutionMatch = (imgWidth: number, imgHeight: number) => {
-        const tolerance = 5
-        return Math.abs(imgWidth - (width ?? 0)) <= tolerance &&
-            Math.abs(imgHeight - (height ?? 0)) <= tolerance
+        //const tolerance = 1
+        //const isMatch = Math.abs(imgWidth - (width ?? 0)) <= tolerance && Math.abs(imgHeight - (height ?? 0)) <= tolerance
+
+        const tolerance = 0.05; // 5% Toleranz
+
+        // Sicherstellen, dass sowohl Bildschirmauflösung als auch Bildhöhe gültig sind
+        if (!width || !height || imgHeight === 0) {
+            return false;
+        }
+
+        const screenRatio = width / height;
+        const imgRatio = imgWidth / imgHeight;
+        const isMatch = imgRatio / screenRatio >= (1 - tolerance) && imgRatio / screenRatio <= (1 + tolerance);
+
+
+        return isMatch
     }
 
     const updateFilteredImages = () => {
         if (!width || !height) {
             setFilteredImages(images)
+            console.log("width"+ width + "height" + height+ "images" + images)
         } else {
+            console.log("filtered: width"+ width + "height" + height+ "images" + images)
             const filtered: ImageData[] = []
             images.forEach(i => {
                 if (isResolutionMatch(i.width, i.height)) {
