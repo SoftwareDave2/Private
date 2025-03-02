@@ -4,52 +4,69 @@ import React, { useState, useEffect, FormEvent } from "react";
 import {
     Input,
     Button,
+    Checkbox,
     Dialog,
     DialogBody,
     DialogFooter,
 } from "@material-tailwind/react";
 import PageHeader from "@/components/layout/PageHeader";
 
+interface DayTimeConfig {
+    enabled: boolean;
+    startTime: string;
+    endTime: string;
+}
+
 interface Config {
     displayIntervalDay: string;
-    displayIntervalNight: string;
-    nachlaufzeit: string;
     vorlaufzeit: string;
+    nachlaufzeit: string;
     deleteAfterDays: string;
+    weekdayTimes: { [day: string]: DayTimeConfig };
 }
 
 export default function ConfigPage() {
-    // Initialer State als null, um anzuzeigen, dass noch keine Daten geladen wurden
-    const [config, setConfig] = useState<Config | null>(null);
+    const defaultWeekdayTimes: { [day: string]: DayTimeConfig } = {
+        Montag: { enabled: true, startTime: "08:00", endTime: "18:00" },
+        Dienstag: { enabled: true, startTime: "08:00", endTime: "18:00" },
+        Mittwoch: { enabled: true, startTime: "08:00", endTime: "18:00" },
+        Donnerstag: { enabled: true, startTime: "08:00", endTime: "18:00" },
+        Freitag: { enabled: true, startTime: "08:00", endTime: "18:00" },
+        Samstag: { enabled: false, startTime: "08:00", endTime: "18:00" },
+        Sonntag: { enabled: false, startTime: "08:00", endTime: "18:00" },
+    };
 
-    // Modal-Status
+    const [config, setConfig] = useState<Config | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [saveStatus, setSaveStatus] = useState("");
 
-    // Beim Laden der Seite: aktuelle Konfiguration abrufen
+    const days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+
     useEffect(() => {
         const fetchConfig = async () => {
             try {
                 const response = await fetch("http://localhost:8080/config/get");
                 if (response.ok) {
                     const data = await response.json();
-                    // Mapping der Backend-Felder zu unseren State-Feldern
+                    // Falls data.weekdayTimes nicht existiert, nutze defaultWeekdayTimes
+                    const weekdayTimes = data.weekdayTimes || defaultWeekdayTimes;
+                    // Fehlende Tage werden mit Standardwerten ergänzt
+                    const mergedWeekdayTimes = { ...defaultWeekdayTimes, ...weekdayTimes };
                     setConfig({
                         displayIntervalDay: data.wakeIntervalDay.toString(),
-                        displayIntervalNight: data.wakeIntervalNight.toString(),
                         vorlaufzeit: data.leadTime.toString(),
                         nachlaufzeit: data.followUpTime.toString(),
                         deleteAfterDays: data.deleteAfterDays.toString(),
+                        weekdayTimes: mergedWeekdayTimes,
                     });
                 } else if (response.status === 404) {
                     console.error("Keine Konfiguration gefunden. Es werden Standardwerte verwendet.");
-                    // Default-Werte, falls keine Konfiguration vorhanden ist
                     setConfig({
                         displayIntervalDay: "30",
-                        displayIntervalNight: "60",
                         vorlaufzeit: "10",
                         nachlaufzeit: "5",
                         deleteAfterDays: "30",
+                        weekdayTimes: defaultWeekdayTimes,
                     });
                 } else {
                     console.error("Fehler beim Abrufen der Konfiguration:", response.statusText);
@@ -62,18 +79,58 @@ export default function ConfigPage() {
         fetchConfig();
     }, []);
 
-    // Funktion zum Verarbeiten des Formulars und Speichern der Konfiguration
+    // Toggle-Funktion mit Fallback für einen Tag
+    const toggleWeekday = (day: string) => {
+        if (!config) return;
+        const currentDayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day];
+        setConfig({
+            ...config,
+            weekdayTimes: {
+                ...config.weekdayTimes,
+                [day]: {
+                    ...currentDayConfig,
+                    enabled: !currentDayConfig.enabled,
+                },
+            },
+        });
+    };
+
+    // Aktualisieren der Start-/Endzeit mit Fallback
+    const handleDayTimeChange = (day: string, field: "startTime" | "endTime", value: string) => {
+        if (!config) return;
+        const currentDayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day];
+        setConfig({
+            ...config,
+            weekdayTimes: {
+                ...config.weekdayTimes,
+                [day]: {
+                    ...currentDayConfig,
+                    [field]: value,
+                },
+            },
+        });
+    };
+
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!config) return;
 
-        const formData = new FormData(e.currentTarget);
-        // Erstellen des Objekts im Format, das das Backend erwartet
+        // Validierung für jeden aktivierten Tag
+        for (const day of days) {
+            const dayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day];
+            if (dayConfig.enabled && dayConfig.startTime >= dayConfig.endTime) {
+                setSaveStatus(`Fehler: Bei ${day} muss die Startzeit vor der Endzeit liegen.`);
+                setIsModalOpen(true);
+                return;
+            }
+        }
+
         const updatedConfig = {
-            wakeIntervalDay: parseFloat(formData.get("displayIntervalDay") as string),
-            wakeIntervalNight: parseFloat(formData.get("displayIntervalNight") as string),
-            leadTime: parseFloat(formData.get("vorlaufzeit") as string),
-            followUpTime: parseFloat(formData.get("nachlaufzeit") as string),
-            deleteAfterDays: parseInt(formData.get("deleteAfterDays") as string, 10),
+            wakeIntervalDay: parseFloat(config.displayIntervalDay),
+            leadTime: parseFloat(config.vorlaufzeit),
+            followUpTime: parseFloat(config.nachlaufzeit),
+            deleteAfterDays: parseInt(config.deleteAfterDays, 10),
+            weekdayTimes: config.weekdayTimes,
         };
 
         console.log("Neue Konfiguration:", updatedConfig);
@@ -87,12 +144,14 @@ export default function ConfigPage() {
 
             if (response.ok) {
                 const data = await response.json();
+                const weekdayTimes = data.weekdayTimes || config.weekdayTimes;
+                const mergedWeekdayTimes = { ...defaultWeekdayTimes, ...weekdayTimes };
                 setConfig({
                     displayIntervalDay: data.wakeIntervalDay.toString(),
-                    displayIntervalNight: data.wakeIntervalNight.toString(),
                     vorlaufzeit: data.leadTime.toString(),
                     nachlaufzeit: data.followUpTime.toString(),
                     deleteAfterDays: data.deleteAfterDays.toString(),
+                    weekdayTimes: mergedWeekdayTimes,
                 });
                 setSaveStatus("Konfiguration erfolgreich gespeichert!");
             } else {
@@ -106,7 +165,6 @@ export default function ConfigPage() {
         setIsModalOpen(true);
     };
 
-    // Solange config null ist, zeigen wir einen Ladezustand
     if (config === null) {
         return (
             <main>
@@ -119,11 +177,10 @@ export default function ConfigPage() {
     return (
         <main>
             <PageHeader title="Konfiguration" info="" />
-
             <div className="max-w-xl mx-auto p-4">
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <Input
-                        label="Aufweck-Intervall Tagsüber (in Stunden)"
+                        label="Aufweck-Intervall Tagsüber (in Minuten)"
                         type="number"
                         name="displayIntervalDay"
                         step="0.1"
@@ -131,17 +188,6 @@ export default function ConfigPage() {
                         value={config.displayIntervalDay}
                         onChange={(e) =>
                             setConfig({ ...config, displayIntervalDay: e.target.value })
-                        }
-                    />
-                    <Input
-                        label="Aufweck-Intervall Nachts (in Stunden)"
-                        type="number"
-                        name="displayIntervalNight"
-                        step="0.1"
-                        required
-                        value={config.displayIntervalNight}
-                        onChange={(e) =>
-                            setConfig({ ...config, displayIntervalNight: e.target.value })
                         }
                     />
                     <Input
@@ -174,6 +220,53 @@ export default function ConfigPage() {
                             setConfig({ ...config, deleteAfterDays: e.target.value })
                         }
                     />
+
+                    <div>
+                        <span className="block mb-2">Wochentage:</span>
+                        <ul>
+                            {days.map((day) => {
+                                // Sicherer Zugriff auf den Tag
+                                const dayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day];
+                                return (
+                                    <li key={day} className="mb-2 border p-2 rounded">
+                                        <div className="flex items-center">
+                                            <Checkbox
+                                                id={day}
+                                                label={day}
+                                                checked={dayConfig.enabled}
+                                                onChange={() => toggleWeekday(day)}
+                                            />
+                                        </div>
+                                        {dayConfig.enabled && (
+                                            <div className="mt-2 flex gap-2">
+                                                <Input
+                                                    label="Startzeit"
+                                                    type="time"
+                                                    name={`${day}-startTime`}
+                                                    required
+                                                    value={dayConfig.startTime}
+                                                    onChange={(e) =>
+                                                        handleDayTimeChange(day, "startTime", e.target.value)
+                                                    }
+                                                />
+                                                <Input
+                                                    label="Endzeit"
+                                                    type="time"
+                                                    name={`${day}-endTime`}
+                                                    required
+                                                    value={dayConfig.endTime}
+                                                    onChange={(e) =>
+                                                        handleDayTimeChange(day, "endTime", e.target.value)
+                                                    }
+                                                />
+                                            </div>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+
                     <Button
                         type="submit"
                         variant="filled"
@@ -185,7 +278,6 @@ export default function ConfigPage() {
                 </form>
             </div>
 
-            {/* Pop-up Modal */}
             <Dialog open={isModalOpen} handler={() => setIsModalOpen(false)}>
                 <DialogBody className="text-center">{saveStatus}</DialogBody>
                 <DialogFooter>

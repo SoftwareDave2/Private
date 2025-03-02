@@ -48,7 +48,7 @@ export function DisplayInputCard(
                             {allDisplays.map((d, index) =>
                                 <Option key={index} value={d.macAddress}
                                         disabled={usedDisplays.includes(d.macAddress) && d.macAddress != macAddress}>
-                                    Display {d.id} <span className={'text-gray-600'}>({d.width}x{d.height})</span>
+                                     {d.displayName} <span className={'text-gray-600'}>({d.width}x{d.height})</span>
                                 </Option>
                             )}
                         </Select>}

@@ -55,7 +55,7 @@ export default function DisplayFilters({selectedMacs, onSelectedMacsChanged}: Di
                     <Checkbox key={index}
                               label={
                                   <div>
-                                      <Typography color={'blue-gray'} className={'leading-none'}>Display {d.id}</Typography>
+                                      <Typography color={'blue-gray'} className={'leading-none'}>{d.displayName}</Typography>
                                       <Typography className={'text-xs'} color={'gray'} >{d.macAddress}</Typography>
                                   </div>
                               }
