@@ -18,7 +18,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
 
 
     // Find overlapping events for a specific display MAC address
-    @Query("SELECT e FROM Event e JOIN e.displayImages d WHERE d.displayMac = :macAddress " +
+    @Query("SELECT DISTINCT e FROM Event e JOIN e.displayImages d WHERE d.displayMac = :macAddress " +
             "AND ((:start < e.end AND :end > e.start) OR " +
             "(:start <= e.start AND :end >= e.end) OR " +
             "(:start >= e.start AND :start < e.end) OR " +
