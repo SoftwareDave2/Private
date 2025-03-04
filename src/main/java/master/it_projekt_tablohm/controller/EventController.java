@@ -12,6 +12,7 @@ import org.dmfs.rfc5545.recur.RecurrenceRuleIterator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -54,7 +55,18 @@ public class EventController {
             }
         }
 
-        // Here i have to check if rrule is set
+        // Check if event is before wakeTime of displays
+        for (Display display : existingDisplays) {
+            LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalTime
+            LocalDateTime eventStart = eventRequest.getStart();
+
+            // Convert eventStart to LocalTime for comparison (assuming same time zone)
+            if (wakeTime != null && eventStart.isAfter(wakeTime)) {
+                return ResponseEntity.badRequest().body("Event start time is before the wake time of display: " + display.getMacAddress());
+            }
+        }
+
+
 
         // Save the event
         Event event = new Event();
