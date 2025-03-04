@@ -34,6 +34,10 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
     // Separater State für den Wert des Brand-Inputs, um diesen temporär leeren zu können
     const [brandInputValue, setBrandInputValue] = useState<string>(data.brand);
 
+    const [modelSuggestions, setModelSuggestions] = useState<string[]>([]);
+    // Separater State für den Wert des Brand-Inputs, um diesen temporär leeren zu können
+    const [modelInputValue, setModelInputValue] = useState<string>(data.model);
+
 
     // Beim Initialisieren: Abrufen der Marken vom Backend
     useEffect(() => {
@@ -48,12 +52,21 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
 
 
 
+    // Beim Initialisieren: Abrufen der Marken vom Backend
+    useEffect(() => {
+        fetch(backendApiUrl + "/display/models")
+            .then((response) => response.json())
+            .then((models: string[]) => {
+                console.log("Fetched models:", models);
+                setModelSuggestions(models);
+            })
+            .catch((err) => console.error("Error fetching models:", err));
+    }, [backendApiUrl]);
+
+
+
 
     const toggleOpenDeleteDisplayHandler = () => setOpenDeleteDisplay(!openDeleteDisplay)
-    // const brandChangeHandler = (brand: string | undefined) =>
-    //     setData(prevState => ({...prevState, brand: brand ?? ''}))
-    const modelChangeHandler = (model: string | undefined) =>
-        setData(prevState => ({...prevState, model: model ?? ''}))
     const orientationChangeHandler = (orientation: string | undefined) =>
         setData(prevState => ({...prevState, orientation: orientation ?? ''}))
     const filenameChangeHandler = (filename: string) =>
@@ -88,6 +101,29 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
         }
     };
 
+
+
+
+    // Wenn sich der Wert im Input ändert, wird sowohl der lokale State als auch data.brand aktualisiert.
+    const handleModelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setModelInputValue(value);
+        setData((prev) => ({ ...prev, model: value }));
+    };
+
+    // Beim Fokussieren wird der Input temporär geleert,
+    // damit der Browser alle Vorschläge anzeigt.
+    const handleModelFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        setModelInputValue("");
+    };
+
+    // Beim Verlassen (Blur) wird geprüft, ob das Feld leer ist.
+    // Falls ja, wird der bisherige Wert wiederhergestellt.
+    const handleModelBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (e.target.value.trim() === "") {
+            setModelInputValue(data.model);
+        }
+    };
 
 
     const updateDisplay = async (formdata: FormData) => {
@@ -165,14 +201,32 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                                 <option key={brand} value={brand}/>
                             ))}
                         </datalist>
+
+
                         <div className="w-full">
-                            <label className="block text-sm font-medium text-blue-gray-400 mb-1">
+                            <label
+                                htmlFor="modelInput"
+                                className="block text-sm font-medium text-blue-gray-400 mb-1"
+                            >
                                 Displaymodell
                             </label>
-                            <Select value={data.model} name={'model'} onChange={modelChangeHandler}>
-                                <Option value={'Tableaux'}>Tableaux</Option>
-                            </Select>
+                            <input
+                                id="modelInput"
+                                type="text"
+                                name="model"
+                                value={modelInputValue}
+                                onChange={handleModelChange}
+                                onFocus={handleModelFocus}
+                                onBlur={handleModelBlur}
+                                list="modelSuggestions"
+                                className="mt-1 block w-full rounded-md border border-blue-gray-200 shadow-sm focus:border-black font-medium focus:ring-black sm:text-sm p-2 text-gray-700"
+                            />
                         </div>
+                        <datalist id="modelSuggestions">
+                            {modelSuggestions.map((model) => (
+                                <option key={model} value={model}/>
+                            ))}
+                        </datalist>
                     </div>
 
 
@@ -189,7 +243,11 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                                name={'height'}/>
                     </div>
                     <div className={'mt-5'}>
-                        <SelectImage selectedFilename={data.filename} onSelect={filenameChangeHandler}/>
+                        <SelectImage selectedFilename={data.filename}
+                                     width={data.width}
+                                     height={data.height}
+                                     onSelect={filenameChangeHandler}
+                                      />
                     </div>
                 </DialogBody>
                 <DialogFooter className={'justify-between'}>
