@@ -104,11 +104,47 @@ POST http://localhost:8080/config/post
 Content-Type: application/json
 
 {
-  "wakeIntervalDay": 30,
-  "wakeIntervalNight": 90,
-  "leadTime": 10,
-  "followUpTime": 5,
-  "deleteAfterDays": 30
+  "wakeIntervalDay":30,
+  "leadTime":10,
+  "followUpTime":5,
+  "deleteAfterDays":30,
+  "weekdayTimes": {
+    "Montag":{
+      "enabled":true,
+      "startTime":"08:00",
+      "endTime":"18:00"
+    },
+    "Dienstag":{
+      "enabled":true,
+      "startTime":"08:00",
+      "endTime":"18:00"
+    },
+    "Mittwoch":{
+      "enabled":true,
+      "startTime":"08:00",
+      "endTime":"18:00"
+    },
+    "Donnerstag":{
+      "enabled":true,
+      "startTime":"08:00",
+      "endTime":"18:00"
+    },
+    "Freitag":{
+      "enabled":true,
+      "startTime":"08:00",
+      "endTime":"18:00"
+    },
+    "Samstag":{
+      "enabled":false,
+      "startTime":"08:00",
+      "endTime":"18:00"
+    },
+    "Sonntag":{
+      "enabled":false,
+      "startTime":"08:00",
+      "endTime":"18:00"
+    }
+  }
 }
 
 ### Example 17: Get the current configuration

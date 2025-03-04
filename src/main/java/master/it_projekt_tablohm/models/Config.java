@@ -1,9 +1,8 @@
 package master.it_projekt_tablohm.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.util.Map;
 
 @Entity // This tells Hibernate to make a table out of this class
 public class Config {
@@ -12,10 +11,22 @@ public class Config {
     private Long id;
 
     private Integer wakeIntervalDay;
-    private Integer wakeIntervalNight;
     private Integer leadTime;
     private Integer followUpTime;
     private Integer deleteAfterDays;
+
+    @ElementCollection
+    @CollectionTable(name = "weekday_times", joinColumns = @JoinColumn(name = "config_id"))
+    @MapKeyColumn(name = "weekday") // Store keys as "Montag", "Dienstag", etc.
+    private Map<String, WeekdayTime> weekdayTimes;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Integer getWakeIntervalDay() {
         return wakeIntervalDay;
@@ -23,14 +34,6 @@ public class Config {
 
     public void setWakeIntervalDay(Integer wakeIntervalDay) {
         this.wakeIntervalDay = wakeIntervalDay;
-    }
-
-    public Integer getWakeIntervalNight() {
-        return wakeIntervalNight;
-    }
-
-    public void setWakeIntervalNight(Integer wakeIntervalNight) {
-        this.wakeIntervalNight = wakeIntervalNight;
     }
 
     public Integer getLeadTime() {
@@ -55,5 +58,13 @@ public class Config {
 
     public void setDeleteAfterDays(Integer deleteAfterDays) {
         this.deleteAfterDays = deleteAfterDays;
+    }
+
+    public Map<String, WeekdayTime> getWeekdayTimes() {
+        return weekdayTimes;
+    }
+
+    public void setWeekdayTimes(Map<String, WeekdayTime> weekdayTimes) {
+        this.weekdayTimes = weekdayTimes;
     }
 }

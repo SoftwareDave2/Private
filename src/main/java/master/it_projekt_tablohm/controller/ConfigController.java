@@ -31,20 +31,27 @@ public class ConfigController {
     @CrossOrigin(origins = "*")
     @PostMapping(path = "/post")
     public ResponseEntity<Config> createOrUpdateConfig(@RequestBody Config config) {
-        Optional<Config> existingConfig = configRepository.findAll().stream().findFirst();
+        Optional<Config> existingConfigOpt = configRepository.findAll().stream().findFirst();
 
-        if (existingConfig.isPresent()) {
-            // Update the existing config
-            Config updatedConfig = existingConfig.get();
-            updatedConfig.setWakeIntervalDay(config.getWakeIntervalDay());
-            updatedConfig.setWakeIntervalNight(config.getWakeIntervalNight());
-            updatedConfig.setLeadTime(config.getLeadTime());
-            updatedConfig.setFollowUpTime(config.getFollowUpTime());
-            return ResponseEntity.ok(configRepository.save(updatedConfig));
+        if (existingConfigOpt.isPresent()) {
+            // Update existing config
+            Config existingConfig = existingConfigOpt.get();
+            existingConfig.setWakeIntervalDay(config.getWakeIntervalDay());
+            existingConfig.setLeadTime(config.getLeadTime());
+            existingConfig.setFollowUpTime(config.getFollowUpTime());
+
+            // Update `weekdayTimes`
+            if (config.getWeekdayTimes() != null) {
+                existingConfig.getWeekdayTimes().clear();
+                existingConfig.getWeekdayTimes().putAll(config.getWeekdayTimes());
+            }
+
+            return ResponseEntity.ok(configRepository.save(existingConfig));
         } else {
-            // Create new config if none exists
+            // Create new config
             return ResponseEntity.ok(configRepository.save(config));
         }
     }
+
 
 }
