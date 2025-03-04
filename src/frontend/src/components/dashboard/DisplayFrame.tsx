@@ -17,15 +17,20 @@ export default function DisplayFrame({displayData, clickable, onClick}: DisplayF
     }
 
     return (
-        <div className={`flex flex-col ${clickable ? 'cursor-pointer' : null}`} onClick={clickHandler}>
-            <div className={`${styles.frame} border-gray-700 rounded`}>
-                <Image filename={displayData.filename} className={`h-full object-fill`}/>
-            </div>
-            <div className="flex justify-between w-full">
-                <span className={`${styles.name} text-gray-800`}>Display {displayData.displayName}</span>
-                <span className={`${styles.name} text-gray-800`}> {displayData.battery_percentage}%</span>
+        <div className={`flex flex-col ${clickable ? 'cursor-pointer' : ''}`} onClick={clickHandler}>
+            <div className={`${styles.frame} border-gray-700 rounded relative`}>
+                <Image filename={displayData.filename} className="h-full object-fill" />
+                {displayData.error && (
+                    <div className="absolute top-0 right-0 bg-yellow-500 p-1 rounded-bl">
+                        <span className="text-black text-xl font-bold">⚠️</span>
+                    </div>
+                )}
             </div>
 
+            <div className="flex justify-between w-full">
+                <span className={`${styles.name} text-gray-800`}>Display {displayData.displayName}</span>
+                <span className={`${styles.name} text-gray-800`}>{displayData.battery_percentage}%</span>
+            </div>
         </div>
-    )
+    );
 }

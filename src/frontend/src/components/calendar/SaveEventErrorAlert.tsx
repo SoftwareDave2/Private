@@ -14,7 +14,8 @@ export default function SaveEventErrorAlert({errorMsg}: SaveEventErrorAlertProps
             </Typography>
             <ul className={'ms-3 list-disc list-inside'}>
                 {errorMsg.map((m, i) =>
-                    <li key={i} className={'font-light text-sm'}>{m}</li>
+                    <li key={i} className={'font-light text-sm whitespace-pre-line'}>{m}</li>
+
                 )}
             </ul>
         </Alert>
