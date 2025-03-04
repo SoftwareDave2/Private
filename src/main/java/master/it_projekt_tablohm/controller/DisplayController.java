@@ -224,6 +224,11 @@ public class DisplayController {
         return displayRepository.findByMacAddress(Objects.requireNonNull(macAddress))
                 .map(display -> {
                     display.setBattery_percentage(batteryPercentage);
+                    if(batteryPercentage <= 10){
+                        display.setError("Battery low!");
+                    }else{
+                        display.setError(null);
+                    }
                     display.setTimeOfBattery(timeNow);
                     displayRepository.save(display);
                     return "Battery percentage of Display with MAC address: " + macAddress + " saved at " + timeNow.toString() + ".";

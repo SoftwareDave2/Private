@@ -20,6 +20,8 @@ public class Display {
     private Integer height;
     private String orientation;
 
+    private String error;
+
     private Integer battery_percentage;
     private LocalDateTime timeOfBattery;
 
@@ -93,6 +95,14 @@ public class Display {
 
     public void setOrientation(String orientation) {
         this.orientation = orientation;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
     }
 
     public Integer getBattery_percentage() {
