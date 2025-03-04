@@ -1,6 +1,8 @@
 package master.it_projekt_tablohm.services;
 
+import jakarta.transaction.Transactional;
 import master.it_projekt_tablohm.models.Display;
+import master.it_projekt_tablohm.models.DisplayImage;
 import master.it_projekt_tablohm.models.Event;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.repositories.EventRepository;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DisplayService {
@@ -22,27 +25,40 @@ public class DisplayService {
     }
 
     // Scheduled method to check display's lastSwitch time every 5 minutes
+    @Transactional
     @Scheduled(fixedRate = 6000)  // 300000 milliseconds = 5 minutes
     public void checkDisplayStatus() {
-        System.out.println("Display service running!");
-        List<Event> events = eventRepository.findAll();  // Retrieve all events
-        List<Display> displays = (List<Display>) displayRepository.findAll();  // Retrieve all displays
+        List<Event> events = eventRepository.findAll(); // Retrieve all events
+
+        LocalDateTime now = LocalDateTime.now();
 
         for (Event event : events) {
             LocalDateTime eventStart = event.getStart();
-            for (Display display : displays) {
-                LocalDateTime lastSwitch = display.getLastSwitch();
+            LocalDateTime eventEnd = event.getEnd(); // Assuming Event has an 'end' field
 
-                // Check if the lastSwitch time is within 5 minutes of the event start time
-                if (lastSwitch != null && eventStart.isBefore(lastSwitch.plusMinutes(1)) && eventStart.isAfter(lastSwitch.minusMinutes(5))) {
-                    // If it's within 5 minutes before or after the event start time
-                    // (meaning the display is correctly updated)
-                    display.setError(null);
-                } else {
-                    // If it's not within the tolerance window
-                    display.setError("Failed to update for event " + event.getTitle());
+            if (now.isAfter(eventStart) && now.isBefore(eventEnd)) {
+
+                List<DisplayImage> displayImages = event.getDisplayImages();
+                for (DisplayImage displayImage : displayImages) {
+                    Optional<Display> displayOptional = displayRepository.findByMacAddress(displayImage.getdisplayMac());
+                    if (displayOptional.isPresent()) {
+                        Display display = displayOptional.get();
+                        LocalDateTime lastSwitch = display.getLastSwitch();
+
+                        // Check if the lastSwitch time is within 5 minutes of the event start time
+                        if (lastSwitch != null && eventStart.isBefore(lastSwitch.plusMinutes(1)) && eventStart.isAfter(lastSwitch.minusMinutes(5))) {
+                            // If it's within 5 minutes before or after the event start time
+                            // (meaning the display is correctly updated)
+                            display.setError(null);
+                        } else {
+                            // If it's not within the tolerance window
+                            display.setError("Failed to update for event " + event.getTitle());
+                        }
+                    }
                 }
             }
         }
+
+
     }
 }
