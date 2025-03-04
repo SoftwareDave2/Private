@@ -56,13 +56,16 @@ public class EventController {
         }
 
         // Check if event is before wakeTime of displays
+        Boolean warning = false;
+        Display collisionDisplay = null;
         for (Display display : existingDisplays) {
             LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalTime
             LocalDateTime eventStart = eventRequest.getStart();
 
             // Convert eventStart to LocalTime for comparison (assuming same time zone)
-            if (wakeTime != null && eventStart.isAfter(wakeTime)) {
-                return ResponseEntity.badRequest().body("Event start time is before the wake time of display: " + display.getMacAddress());
+            if (wakeTime != null && eventStart.isBefore(wakeTime)) {
+                warning = true;
+                collisionDisplay = display;
             }
         }
 
@@ -77,7 +80,12 @@ public class EventController {
         event.setDisplayImages(eventRequest.getDisplayImages());
 
         eventRepository.save(event);
-        return ResponseEntity.ok("Event saved successfully.");
+        if(warning) {
+            return ResponseEntity.badRequest().body("Event saved, but the start time is before the wake time of display: " + collisionDisplay.getMacAddress());
+
+        }else{
+            return ResponseEntity.ok("Event saved successfully.");
+        }
     }
 
     @CrossOrigin(origins = "*")
