@@ -6,6 +6,8 @@ import master.it_projekt_tablohm.models.DisplayImage;
 import master.it_projekt_tablohm.models.Event;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.repositories.EventRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +17,7 @@ import java.util.Optional;
 
 @Service
 public class DisplayService {
-
+    private static final Logger logger = LoggerFactory.getLogger(DisplayService.class);
     private final DisplayRepository displayRepository;
     private final EventRepository eventRepository; // Repository for events
 
@@ -53,6 +55,7 @@ public class DisplayService {
                         } else {
                             // If it's not within the tolerance window
                             display.setError("Failed to update for event " + event.getTitle());
+                            logger.error("Display: {} failed to update for event {}", display.getDisplayName(), event.getTitle());
                         }
                     }
                 }

@@ -86,7 +86,7 @@ DELETE http://localhost:8080/event/delete/18
 POST http://localhost:8080/display/switch
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:02 &
+macAddress=00:00:00:00:01 &
 filename=pineapple.jpg
 
 ### Example 14: Get already registered Brands
