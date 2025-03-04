@@ -11,4 +11,5 @@ export type DisplayData = {
     wakeTime: string,
     battery_percentage: number,
     timeOfBattery: string,
+    error: string,
 }

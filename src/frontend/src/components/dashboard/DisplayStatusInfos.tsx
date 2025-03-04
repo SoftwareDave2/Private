@@ -1,4 +1,6 @@
 import {DisplayData} from "@/types/displayData";
+import {Checkbox} from "@material-tailwind/react";
+import React from "react";
 
 type DisplayStatusInfosProps = {
     displayData: DisplayData,
@@ -25,6 +27,8 @@ export default function DisplayStatusInfos({displayData}: DisplayStatusInfosProp
 
 
 
+
+
     return (
         <div>
             <div className={'flex justify-between gap-7'}>
@@ -45,6 +49,13 @@ export default function DisplayStatusInfos({displayData}: DisplayStatusInfosProp
                 <span> Akkustand: </span>
                 <span className={'font-bold'}>{displayData.battery_percentage + "% am " + to_timestring(displayData.timeOfBattery)}</span>
             </div>
+            {displayData.error != null && displayData.error != ""  && (
+                <div className={'flex justify-between gap-7'}>
+                    <span> Error: </span>
+                    <span
+                        className={'font-bold text-red-500'}>{displayData.error}</span>
+                </div>
+            )}
         </div>
     )
 }
