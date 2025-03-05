@@ -253,3 +253,9 @@
 2025-03-05T13:15:13.966+01:00  INFO 1555 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
 2025-03-05T13:15:13.967+01:00  INFO 1555 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
 2025-03-05T13:15:13.968+01:00  INFO 1555 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-03-05T15:11:25.112+01:00  WARN 1555 --- [it_projekt_tablohm] [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=30m24s849ms).
+2025-03-05T15:29:39.640+01:00  WARN 1555 --- [it_projekt_tablohm] [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=17m44s524ms).
+2025-03-05T15:45:51.179+01:00  WARN 1555 --- [it_projekt_tablohm] [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=15m41s541ms).
+2025-03-05T15:56:49.065+01:00  INFO 1555 --- [it_projekt_tablohm] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-03-05T15:56:49.076+01:00  INFO 1555 --- [it_projekt_tablohm] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-03-05T15:56:49.085+01:00  INFO 1555 --- [it_projekt_tablohm] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
