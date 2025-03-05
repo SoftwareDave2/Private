@@ -147,11 +147,13 @@ export default function Calendar() {
         setOpenCalendarEntry(true)
     }
 
-    const handleDisplayDataUpdated = () => {
+    const handleDisplayDataUpdated = (wasWakeupError: boolean = false) => {
         updateEvents()
             .then(() => console.log('Events successfully updated!'))
             .catch(err => console.error(err))
-        closeCalendarEditEntryHandler()
+        if(!wasWakeupError){
+            closeCalendarEditEntryHandler()
+        }
     }
 
     return (
