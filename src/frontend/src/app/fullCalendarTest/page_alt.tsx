@@ -44,7 +44,7 @@ export default function Calendar() {
   // Fetch data on mount using useEffect
   useEffect(() => {
     const fetchEvents = async () => {
-      const response = await fetch('http://localhost:8080/event/all');
+      const response = await fetch('http://' + window.location.hostname + ':8080/event/all');
       const eventData = await response.json();
       // Hinweis: die console.log(...) befehle werden in der Console im browser ausgeführt -> bei Safari: Entwickler -> javaScript-Konsole einblenden
       console.log(eventData);

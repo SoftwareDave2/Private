@@ -43,13 +43,13 @@ export default function MockDisplays() {
     // Fetch data on mount using useEffect
     useEffect(() => {
         const fetchDisplays = async () => {
-            const response = await fetch('http://localhost:8080/display/all');
+            const response = await fetch('http://' + window.location.hostname + ':8080/display/all');
             const data = await response.json();
             setDisplays(data); // Update the state with fetched data
         };
 
         const fetchEvents = async () => {
-            const response = await fetch('http://localhost:8080/event/all');
+            const response = await fetch('http://' + window.location.hostname + ':8080/event/all');
             const eventData = await response.json();
             setEvents(eventData); // Update the state with fetched data
         };
@@ -99,7 +99,7 @@ export default function MockDisplays() {
         //const wakeTime = new Date().toISOString()
         const wakeTime = "2024-12-01T12:30:00"
 
-        const res = await fetch("http://localhost:8080/display/add", {
+        const res = await fetch("http://" + window.location.hostname + ":8080/display/add", {
                 method: "POST",
                 headers: {"Content-Type": "application/x-www-form-urlencoded",
                     //Authorization: "Bearer YOUR_PRIVATE_KEY" // secure because it is server side code.
@@ -128,7 +128,7 @@ export default function MockDisplays() {
         //"use server"
         closeModalDelete();
         const id = formdata.get("id");
-        const res = await fetch("http://localhost:8080/display/delete/"+id, {
+        const res = await fetch("http://" + window.location.hostname + ":8080/display/delete/"+id, {
                 method: "DELETE"
             }
         );

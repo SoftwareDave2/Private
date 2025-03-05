@@ -45,7 +45,7 @@ export default function ConfigPage() {
     useEffect(() => {
         const fetchConfig = async () => {
             try {
-                const response = await fetch("http://localhost:8080/config/get");
+                const response = await fetch("http://" + window.location.hostname + ":8080/config/get");
                 if (response.ok) {
                     const data = await response.json();
                     // Falls data.weekdayTimes nicht existiert, nutze defaultWeekdayTimes
@@ -136,7 +136,7 @@ export default function ConfigPage() {
         console.log("Neue Konfiguration:", updatedConfig);
 
         try {
-            const response = await fetch("http://localhost:8080/config/post", {
+            const response = await fetch("http://" + window.location.hostname + ":8080/config/post", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updatedConfig),
