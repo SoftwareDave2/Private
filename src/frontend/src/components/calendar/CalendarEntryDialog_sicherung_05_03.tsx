@@ -19,7 +19,7 @@ type CalendarEntryDialogProps = {
     open: boolean,
     eventDetails: EventDetails,
     onClose: () => void,
-    onDataUpdated: (wasWakeupError?:boolean) => void,
+    onDataUpdated: () => void,
 }
 
 export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated }: CalendarEntryDialogProps) {
@@ -40,7 +40,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
     });
     const [errors, setErrors] = useState<string[] | null>(null);
     const [collisionError, setCollisionError] = useState<boolean>(false);
-    const [wakeupError, setWakeupError] = useState<string | null>(null);
+    const [wakeupError, setWakeupError] = useState<boolean>(false);
     const [openDeleteEvent, setOpenDeleteEvent] = useState<boolean>(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,8 +128,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
         return errors;
     };
 
-    const updateEvent = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const updateEvent = async (formdata: FormData) => {
         const validationErrors = validateData();
         if (validationErrors.length > 0) {
             setErrors(validationErrors);
@@ -167,11 +166,10 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                     body: JSON.stringify(event)
                 });
                 if (response.status === 200) {
-                    onDataUpdated(false);
-                } else if (response.status === DISPLAY_DOES_NOT_WAKE_UP_ON_TIME) {
+                    onDataUpdated();
+                } else if(response.status == DISPLAY_DOES_NOT_WAKE_UP_ON_TIME){
                     console.log("wird nicht rechtzeitig aufgeweckt!");
-                    const errorMsg = await response.text();
-                    setWakeupError(errorMsg || "Unbekannter Fehler");
+                    setWakeupError(true);
                 }
                 else {
                     if (response.status === COLLISION_DETECTED_ERROR_CODE) {
@@ -185,16 +183,28 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                 console.error(err);
                 setErrors(["Error: " + err]);
             }
+            // ...
         } else {
             // Wiederkehrender Termin – neuer Endpunkt und neues Request-Format
 
+            // Für den Payload:
+            // Die Felder 'start' und 'end' bleiben als lokale Zeiten, weil das Backend
+            // diese als LocalDateTime erwartet.
             const floatingStart = data.recurrenceStartDate + 'T' + data.recurrenceStartTime + ':00';
             const floatingEnd   = data.recurrenceStartDate + 'T' + data.recurrenceEndTime + ':00';
 
+            // Für die RRULE müssen wir einen UNTIL-Wert erzeugen, der absolut ist.
+            // Dazu rechnen wir den lokalen Endzeitpunkt in ein absolutes Datum um.
             const localUntil = new Date(data.recurrenceEndDate + 'T' + data.recurrenceEndTime);
-            const isoUntil = localUntil.toISOString();
+            // Beispiel: Wenn data.recurrenceEndDate = "2025-02-27" und data.recurrenceEndTime = "09:30"
+            // und das System hat Zeitzone CET (UTC+01:00),
+            // dann liefert localUntil.toISOString() etwa "2025-02-27T08:30:00.000Z".
+            // Wir formatieren das nun ins RFC5545 basic Format (ohne Bindestriche, Doppelpunkte, Millisekunden):
+            const isoUntil = localUntil.toISOString(); // z. B. "2025-02-27T08:30:00.000Z"
             const absoluteUntil = isoUntil.replace(/[-:]/g, "").split('.')[0] + "Z";
+            // Das liefert dann z. B. "20250227T083000Z"
 
+            // Nun erzeugen wir den RRULE-String – er enthält den UNTIL-Wert als absoluten Zeitpunkt.
             let rrule = "";
             if (data.recurrenceType === "täglich") {
                 rrule = "FREQ=DAILY;UNTIL=" + absoluteUntil;
@@ -210,9 +220,9 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
 
             const recurringEventPayload = {
                 title: data.title,
-                start: floatingStart,
-                end: floatingEnd,
-                rrule: rrule,
+                start: floatingStart, // z. B. "2025-02-25T08:00:00"
+                end: floatingEnd,     // z. B. "2025-02-25T09:30:00"
+                rrule: rrule,         // z. B. "FREQ=DAILY;UNTIL=20250227T083000Z"
                 displayImages: data.displayImages
             };
 
@@ -225,13 +235,12 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                     body: JSON.stringify(recurringEventPayload)
                 });
                 if (response.status === 200) {
-                    onDataUpdated(false);
+                    onDataUpdated();
                 } else if (response.status === DISPLAY_DOES_NOT_WAKE_UP_ON_TIME) {
                     console.log("wird nicht rechtzeitig aufgeweckt!");
-                    const errorMsg = await response.text();
-                    setWakeupError(errorMsg || "Unbekannter Fehler");
-                }
-                else {
+                    setWakeupError(true);
+
+                } else {
                     if (response.status === COLLISION_DETECTED_ERROR_CODE) {
                         setCollisionError(true);
                     } else {
@@ -244,6 +253,10 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                 setErrors(["Error: " + err]);
             }
         }
+
+
+
+
     };
 
     const toggleOpenDeleteDialogHandler = () => {
@@ -252,61 +265,28 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
 
     const eventDeletedHandler = () => {
         toggleOpenDeleteDialogHandler();
-        onDataUpdated(false);
+        onDataUpdated();
     };
-
-    // Handler für den OK-Button im Fehlerdialog
-    const handleWakeupErrorOk = () => {
-        setWakeupError(null);
-        onClose();
-    };
-
-    // Falls wakeupError gesetzt ist, wird ein spezieller Fehlerdialog angezeigt
-    if (wakeupError) {
-        onDataUpdated(true);
-        return (
-            <Dialog open={open} handler={onClose}>
-                <DialogHeader>Warnung</DialogHeader>
-                <DialogBody className={"text-black"}>
-                    Der Display-Aufweckfehler ist aufgetreten:
-                    <br></br>
-                    {wakeupError}
-                </DialogBody>
-                <DialogFooter>
-                    <Button
-                        type="button"
-                        variant="filled"
-                        className="bg-primary text-white"
-                        onClick={handleWakeupErrorOk}
-                    >
-                        OK
-                    </Button>
-                </DialogFooter>
-            </Dialog>
-        );
-    }
 
     return (
         <Dialog open={open} handler={onClose}>
             <DialogHeader>Kalendereintrag {data.id > 0 ? "anpassen" : "erstellen"}</DialogHeader>
-            <form onSubmit={updateEvent}>
+            <form action={updateEvent}>
                 <DialogBody className={'max-h-[75vh] overflow-y-auto'}>
                     {collisionError  && <CollisionDetectedAlert />}
                     {errors && <SaveEventErrorAlert errorMsg={errors} />}
-                    {data.groupId !== "" && data.groupId != null &&
-                        <label className="block text-sm font-medium text-gray-700 mb-4">
-                            Hinweis: Dieser Termin gehört zu einer Gruppe!
-                        </label>
-                    }
+                        {data.groupId != "" && data.groupId != null &&
+                                <label className="block text-sm font-medium text-gray-700 mb-4">Hinweis: Dieser Termin gehört zu einer Gruppe!</label>
+                        }
                     <div>
                         <Input label={'Titel'} name={'title'} value={data.title} onChange={handleInputChange}/>
                     </div>
-                    {data.id === 0 &&
+                    {data.id == 0 &&
                         <div className={'mt-5'}>
                             <label className="block text-sm font-medium text-gray-700">Wiederholung</label>
                             <select name="recurrenceType" value={data.recurrenceType} onChange={handleRecurrenceChange}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="keine">keine</option>
+                            <option value="keine">keine</option>
                                 <option value="täglich">täglich</option>
                                 <option value="wöchentlich">wöchentlich</option>
                             </select>
@@ -358,6 +338,8 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                         <Button type={'button'} variant={'filled'}
                                 className={'bg-primary text-white'}
                                 onClick={toggleOpenDeleteDialogHandler}>Löschen</Button>}
+
+
                     {data.id === 0 && <div></div>}
                     <div className={'flex space-x-2'}>
                         <Button type={'button'} variant='outlined' className='text-primary border-primary'
