@@ -9,6 +9,7 @@ import org.dmfs.rfc5545.DateTime;
 import org.dmfs.rfc5545.recur.InvalidRecurrenceRuleException;
 import org.dmfs.rfc5545.recur.RecurrenceRule;
 import org.dmfs.rfc5545.recur.RecurrenceRuleIterator;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -81,7 +82,7 @@ public class EventController {
 
         eventRepository.save(event);
         if(warning) {
-            return ResponseEntity.badRequest().body("Event saved, but the start time is before the wake time of display: " + collisionDisplay.getMacAddress());
+            return ResponseEntity.status(HttpStatusCode.valueOf(541)).body("Event saved, but the start time is before the wake time of display: " + collisionDisplay.getMacAddress());
 
         }else{
             return ResponseEntity.ok("Event saved successfully.");
