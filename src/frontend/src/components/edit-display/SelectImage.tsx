@@ -19,6 +19,7 @@ type SelectImageProps = {
 export default function SelectImage({selectedFilename, width, height, onSelect, onUnselect}: SelectImageProps) {
 
     const host = window.location.hostname;
+    const backendApiUrl = "http://" + host + ":8080";
 
     const hasFetched = useRef(false)
     const [dialogOpen, setDialogOpen] = useState<boolean>(false)
