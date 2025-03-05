@@ -25,7 +25,8 @@ type CalendarEntryDialogProps = {
 export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated }: CalendarEntryDialogProps) {
 
     const COLLISION_DETECTED_ERROR_CODE = 569;
-    const backendApiUrl = 'http://localhost:8080';
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';;
 
     // Heutiges Datum im Format "YYYY-MM-DD"
     const today = new Date().toISOString().split("T")[0];

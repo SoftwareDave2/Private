@@ -9,7 +9,8 @@ import MediaContentItems from "@/components/media/MediaContentItems";
 
 export default function Media() {
 
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+    const backendApiUrl = 'http://' + host + ':8080';
 
     const hasFetched = useRef(false)
     const [dialogOpen, setDialogOpen] = useState<boolean>(false)

@@ -8,7 +8,8 @@ type UploadMediaButtonProps = {
 
 export default function UploadMediaButton({file, onClick}: UploadMediaButtonProps) {
 
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';
 
     const handleUpload = async () => {
 

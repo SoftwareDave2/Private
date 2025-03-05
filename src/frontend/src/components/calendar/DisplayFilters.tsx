@@ -9,7 +9,8 @@ type DisplayFiltersProps = {
 
 export default function DisplayFilters({selectedMacs, onSelectedMacsChanged}: DisplayFiltersProps) {
 
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
     const hasFetched = useRef(false)
