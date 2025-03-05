@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
 
     /* Available on both server and client */
     publicRuntimeConfig: {
-        backendApiUrl: 'http://localhost:8080'
+        backendApiUrl: 'http://' + window.location.hostname + ':8080'
     },
 
 
