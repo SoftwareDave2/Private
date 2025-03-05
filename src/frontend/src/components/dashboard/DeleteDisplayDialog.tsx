@@ -11,7 +11,8 @@ type DeleteDisplayDialogProps = {
 
 export function DeleteDisplayDialog({open, displayData, onClose, onDisplayDeleted}: DeleteDisplayDialogProps) {
 
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';
 
     const deleteDisplayHandler = async () => {
         try {

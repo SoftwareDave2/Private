@@ -14,7 +14,8 @@ import DisplayFilters from "@/components/calendar/DisplayFilters";
 
 export default function Calendar() {
 
-    const backendApiUrl = 'http://localhost:8080';
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';;
 
     const calendarRef = useRef<FullCalendar | null>(null);
     const hasFetched = useRef(false);

@@ -22,7 +22,8 @@ type EditDisplayDialogProps = {
 
 export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: EditDisplayDialogProps) {
 
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';
 
     const [data, setData] = useState<DisplayData>({
         ...displayData,

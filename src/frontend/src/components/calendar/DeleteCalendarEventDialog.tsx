@@ -10,7 +10,8 @@ type DeleteCalendarEventDialogProps = {
 }
 
 export function DeleteCalendarEventDialog({open, event, onClose, onDeleted}: DeleteCalendarEventDialogProps) {
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';
 
     const deleteHandler = async () => {
         try {

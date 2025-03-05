@@ -11,7 +11,8 @@ import DisplayInfoDialog from "@/components/dashboard/DisplayInfoDialog";
 export default function Home() {
 
     //const { serverRuntimeConfig, publicRuntimeConfig } = getConfig()
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+    const backendApiUrl = 'http://' + host + ':8080';
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
     const [displayDialogOpen, setDisplayDialogOpen] = useState<boolean>(false)

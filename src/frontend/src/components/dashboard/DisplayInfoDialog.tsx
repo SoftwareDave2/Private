@@ -13,7 +13,8 @@ type DisplayInfoDialogProps = {
 }
 
 export default function DisplayInfoDialog({open, displayData, onClose, onDisplayDataUpdated}: DisplayInfoDialogProps) {
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';
 
     const [openEditDisplay, setOpenEditDisplay] = useState<boolean>(false)
     const [displayDataForEdit, setDisplayDataForEdit] = useState<DisplayData | null>(null)

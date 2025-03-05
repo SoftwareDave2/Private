@@ -26,7 +26,8 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
 
     const COLLISION_DETECTED_ERROR_CODE = 569;
     const DISPLAY_DOES_NOT_WAKE_UP_ON_TIME = 541;
-    const backendApiUrl = 'http://localhost:8080';
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';;
 
     // Initial State: Defaultwerte für Wiederholungsfelder setzen, falls nicht vorhanden.
     const [data, setData] = useState<EventDetails>({
