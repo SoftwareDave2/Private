@@ -12,7 +12,8 @@ export function ConfirmDeleteImageDialog({open, filename, onClose, onDeleted}: C
 
     // TODO: Fetch events and check displays if this image is used!
 
-    const backendApiUrl = 'http://localhost:8080'
+    const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';
 
     const deleteHandler = async () => {
         try {
