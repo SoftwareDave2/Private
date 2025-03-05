@@ -86,7 +86,7 @@ const backendApiUrl = 'http://' + host + ':8080';
                         localStorage.setItem("selectedMACs", JSON.stringify([macAddress]));
 
                         // Zur Kalenderseite navigieren
-                        window.location.href = "http://localhost:3000/calendar";
+                        window.location.href = "http://" + window.location.hostname + ":3000/calendar";
                     }}
                 >
                     Kalender öffnen

@@ -34,7 +34,7 @@ const FormComponent = () => {
         params.append('filename', formData.filename);
 
         try {
-            const response = await fetch('http://localhost:8080/display/all', {
+            const response = await fetch('http://' + window.location.hostname + ':8080/display/all', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded', // Richtiges Format setzen
