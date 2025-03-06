@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useMemo} from 'react'
 import PageHeader from "@/components/layout/PageHeader";
 import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import { DisplayData } from "@/types/displayData"
@@ -14,7 +14,9 @@ export default function Home() {
     //const { serverRuntimeConfig, publicRuntimeConfig } = getConfig()
     // const host = window.location.hostname;
     // const backendApiUrl = 'http://' + host + ':8080';
-    const backendApiUrl = getBackendApiUrl();
+    //const backendApiUrl = getBackendApiUrl();
+    const backendApiUrl = useMemo(() => getBackendApiUrl(), []);
+    //const backendApiUrl = useBackendApiUrl();
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
     const [displayDialogOpen, setDisplayDialogOpen] = useState<boolean>(false)
