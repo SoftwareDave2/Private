@@ -6,11 +6,13 @@ import React, {useState, useEffect, useRef} from "react";
 import UploadMediaDialog from "@/components/media/UploadMediaDialog";
 import {MediaContentItemData} from "@/types/mediaContentItemData";
 import MediaContentItems from "@/components/media/MediaContentItems";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 export default function Media() {
 
-    const host = window.location.hostname;
-    const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const hasFetched = useRef(false)
     const [dialogOpen, setDialogOpen] = useState<boolean>(false)

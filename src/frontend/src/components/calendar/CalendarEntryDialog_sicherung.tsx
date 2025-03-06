@@ -14,6 +14,7 @@ import CollisionDetectedAlert from "@/components/calendar/CollisionDetectedAlert
 import {DeleteCalendarEventDialog} from "@/components/calendar/DeleteCalendarEventDialog";
 import SaveEventErrorAlert from "@/components/calendar/SaveEventErrorAlert";
 import DisplayInputCards from "@/components/calendar/DisplayInputCards";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type CalendarEntryDialogProps = {
     open: boolean,
@@ -25,8 +26,9 @@ type CalendarEntryDialogProps = {
 export function CalendarEntryDialog({open, eventDetails, onClose, onDataUpdated}: CalendarEntryDialogProps) {
 
     const COLLISION_DETECTED_ERROR_CODE = 569
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const [data, setData] = useState<EventDetails>(eventDetails)
     const [errors, setErrors] = useState<string[] | null>(null)

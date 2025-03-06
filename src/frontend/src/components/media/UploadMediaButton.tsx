@@ -1,5 +1,6 @@
 import {Button} from "@material-tailwind/react";
 import {EventHandler} from "react";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type UploadMediaButtonProps = {
     file: File | null,
@@ -8,8 +9,9 @@ type UploadMediaButtonProps = {
 
 export default function UploadMediaButton({file, onClick}: UploadMediaButtonProps) {
 
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const handleUpload = async () => {
 

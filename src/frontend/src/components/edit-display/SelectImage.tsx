@@ -7,19 +7,22 @@ import SelectImageDialog from "@/components/edit-display/SelectImageDialog";
 import {MediaContentItemData} from "@/types/mediaContentItemData";
 import Image from "@/components/shared/Image";
 import {ImageData} from "@/types/imageData";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type SelectImageProps = {
     selectedFilename?: string,
-    width?: number,
-    height?: number,
+    screenWidth?: number,
+    screenHeight?: number,
+    screenOrientation?: string,
     onSelect: (filename: string) => void
     onUnselect: () => void
 }
 
-export default function SelectImage({selectedFilename, width, height, onSelect, onUnselect}: SelectImageProps) {
+export default function SelectImage({selectedFilename, screenWidth, screenHeight, screenOrientation, onSelect, onUnselect}: SelectImageProps) {
 
-    const host = window.location.hostname;
-    const backendApiUrl = "http://" + host + ":8080";
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const hasFetched = useRef(false)
     const [dialogOpen, setDialogOpen] = useState<boolean>(false)
@@ -48,7 +51,7 @@ export default function SelectImage({selectedFilename, width, height, onSelect, 
         }
 
         updateFilteredImages()
-    }, [width, height]);
+    }, [screenWidth, screenHeight]);
 
     const fetchImages = async () => {
         const response = await fetch(backendApiUrl + '/image/download/all')
@@ -87,15 +90,18 @@ export default function SelectImage({selectedFilename, width, height, onSelect, 
     const isResolutionMatch = (imgWidth: number, imgHeight: number) => {
         //const tolerance = 1
         //const isMatch = Math.abs(imgWidth - (width ?? 0)) <= tolerance && Math.abs(imgHeight - (height ?? 0)) <= tolerance
+        // Sicherstellen, dass sowohl Bildschirmauflösung als auch Bildhöhe gültig sind
+        if (!screenWidth || !screenHeight || !screenOrientation || imgHeight === 0 || imgWidth ===0) {
+            return false;
+        }
+        let screenRatio = screenWidth / screenHeight; // screen ratio if orientation is vertical
+        if (screenOrientation=="horizontal"){ // switch width and height for ratio calculation if screen orientation is horizontal
+            screenRatio = screenHeight / screenWidth;
+        }
 
         const tolerance = 0.05; // 5% Toleranz
 
-        // Sicherstellen, dass sowohl Bildschirmauflösung als auch Bildhöhe gültig sind
-        if (!width || !height || imgHeight === 0) {
-            return false;
-        }
 
-        const screenRatio = width / height;
         const imgRatio = imgWidth / imgHeight;
         const isMatch = imgRatio / screenRatio >= (1 - tolerance) && imgRatio / screenRatio <= (1 + tolerance);
 
@@ -104,11 +110,11 @@ export default function SelectImage({selectedFilename, width, height, onSelect, 
     }
 
     const updateFilteredImages = () => {
-        if (!width || !height) {
+        if (!screenWidth || !screenHeight) {
             setFilteredImages(images)
-            console.log("width"+ width + "height" + height+ "images" + images)
+            console.log("width"+ screenWidth + "height" + screenHeight+ "images" + images)
         } else {
-            console.log("filtered: width"+ width + "height" + height+ "images" + images)
+            console.log("filtered: width"+ screenWidth + "height" + screenHeight+ "images" + images)
             const filtered: ImageData[] = []
             images.forEach(i => {
                 if (isResolutionMatch(i.width, i.height)) {

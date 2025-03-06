@@ -11,11 +11,13 @@ import {  useEffect } from 'react';
 import PageHeader from "@/components/layout/PageHeader";
 import {EventClickArg} from "@fullcalendar/core";
 import DisplayFilters from "@/components/calendar/DisplayFilters";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 export default function Calendar() {
 
-    const host = window.location.hostname;
-    const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const calendarRef = useRef<FullCalendar | null>(null)
     const hasFetched = useRef(false)
@@ -157,6 +159,7 @@ export default function Calendar() {
         }
     }
 
+
     return (
         <>
             <PageHeader title={'Kalender'} info={''}></PageHeader>
@@ -183,15 +186,24 @@ export default function Calendar() {
                         dateClick={handleDateClicked}
                         ref={calendarRef}
                         initialView="dayGridMonth"
-                        eventContent={(info) => (
-                            <div>
-                                <b>{info.event.title}</b>
-                                {info.event.extendedProps.image && (
-                                    <img src={info.event.extendedProps.image} alt="Event"
-                                         style={{maxWidth: "50px", marginTop: "5px"}}/>
-                                )}
-                            </div>
-                        )}
+                        eventContent={(info) => {
+                            let displayTitle = info.event.title;
+                            if (displayTitle.length > 15) {
+                                displayTitle = displayTitle.substring(0, 15) + "...";
+                            }
+                            return (
+                                <div>
+                                    <b>{displayTitle}</b>
+                                    {info.event.extendedProps.image && (
+                                        <img
+                                            src={info.event.extendedProps.image}
+                                            alt="Event"
+                                            style={{ maxWidth: "50px", marginTop: "5px" }}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        }}
                         eventClick={handleEventClicked}
                     />
                 </div>

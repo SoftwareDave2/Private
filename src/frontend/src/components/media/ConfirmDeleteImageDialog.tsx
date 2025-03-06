@@ -1,5 +1,6 @@
 import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from "@material-tailwind/react";
 import React from "react";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type ConfirmDeleteImageDialogProps = {
     open: boolean,
@@ -12,8 +13,9 @@ export function ConfirmDeleteImageDialog({open, filename, onClose, onDeleted}: C
 
     // TODO: Fetch events and check displays if this image is used!
 
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const deleteHandler = async () => {
         try {

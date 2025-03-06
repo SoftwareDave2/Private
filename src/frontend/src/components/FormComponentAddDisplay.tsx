@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, ChangeEvent, FormEvent } from 'react';
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 interface FormData {
     brand: string;
@@ -32,9 +33,12 @@ const FormComponent = () => {
         params.append('height', formData.height);
         params.append('orientation', formData.orientation);
         params.append('filename', formData.filename);
+        // const host = window.location.hostname;
+        // const backendApiUrl = 'http://' + host + ':8080';
+        const backendApiUrl = getBackendApiUrl();
 
         try {
-            const response = await fetch('http://' + window.location.hostname + ':8080/display/all', {
+            const response = await fetch(backendApiUrl + '/display/all', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded', // Richtiges Format setzen

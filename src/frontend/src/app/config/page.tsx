@@ -10,6 +10,7 @@ import {
     DialogFooter,
 } from "@material-tailwind/react";
 import PageHeader from "@/components/layout/PageHeader";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 interface DayTimeConfig {
     enabled: boolean;
@@ -52,8 +53,11 @@ export default function ConfigPage() {
 
     useEffect(() => {
         const fetchConfig = async () => {
+            // const host = window.location.hostname;
+            // const backendApiUrl = 'http://' + host + ':8080';
+            const backendApiUrl = getBackendApiUrl();
             try {
-                const response = await fetch("http://" + window.location.hostname + ":8080/config/get");
+                const response = await fetch(backendApiUrl+ "/config/get");
                 if (response.ok) {
                     const data = await response.json();
                     const weekdayTimes = data.weekdayTimes || defaultWeekdayTimes;
