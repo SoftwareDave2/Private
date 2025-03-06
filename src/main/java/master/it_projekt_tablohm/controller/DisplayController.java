@@ -39,7 +39,7 @@ public class DisplayController {
             @RequestParam Integer width,
             @RequestParam Integer height,
             @RequestParam String orientation,
-            @RequestParam String filename,
+            @RequestParam String defaultFilename,
             @RequestParam(required = false) LocalDateTime wakeTime) {
 
         Optional<Display> existingDisplay = displayRepository.findByMacAddress(macAddress);
@@ -53,8 +53,7 @@ public class DisplayController {
         display.setWidth(width);
         display.setHeight(height);
         display.setOrientation(orientation);
-        //display.setFilename("/uploads/" + filename);
-        display.setFilename(filename);
+        display.setDefaultFilename(defaultFilename);
 
         // Set wakeTime to null if it's not provided
         if (wakeTime != null) {
@@ -90,7 +89,8 @@ public class DisplayController {
         display.setMacAddress(macAddress);
         display.setDoSwitch(true);
         display.setFilenameApp("");
-        display.setFilename("initial.jpg");
+        display.setDefaultFilename("initial.jpg");
+        display.setFilename(display.getDefaultFilename());
         display.setWidth(width);
         display.setHeight(height);
         display.setWakeTime(LocalDateTime.now().plusMinutes(10));
@@ -215,7 +215,7 @@ public class DisplayController {
             next = LocalDateTime.now().plusYears(1);
 
         if(filename.equals(""))
-            filename = "initial.jpg";
+            filename = display.getDefaultFilename();
 
         display.setDoSwitch(!display.getFilenameApp().equals(filename));
         display.setFilename(filename);
