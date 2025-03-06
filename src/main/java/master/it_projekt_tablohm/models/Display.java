@@ -1,11 +1,11 @@
 package master.it_projekt_tablohm.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import org.springframework.cglib.proxy.Dispatcher;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity // This tells Hibernate to make a table out of this class
 public class Display {
@@ -20,7 +20,9 @@ public class Display {
     private Integer height;
     private String orientation;
 
-    private String error;
+    @ElementCollection
+    @CollectionTable(name = "display_errors", joinColumns = @JoinColumn(name = "display_id"))
+    private List<DisplayError> errors = new ArrayList<>();
 
     private Integer battery_percentage;
     private LocalDateTime timeOfBattery;
@@ -31,7 +33,9 @@ public class Display {
 
     private LocalDateTime lastSwitch;
 
+    private LocalDateTime runningSince;
     private LocalDateTime wakeTime;
+    private LocalDateTime nextEventTime;
 
     public Integer getId() {
         return id;
@@ -97,12 +101,19 @@ public class Display {
         this.orientation = orientation;
     }
 
-    public String getError() {
-        return error;
+    public List<DisplayError> getErrors() {
+        return errors;
     }
 
-    public void setError(String error) {
-        this.error = error;
+    public void addError(Integer errorCode, String errorMessage) {
+        // Check if error already exists before adding
+        if (errors.stream().noneMatch(error -> error.getErrorCode().equals(errorCode))) {
+            errors.add(new DisplayError(errorCode, errorMessage));
+        }
+    }
+
+    public void removeErrorByCode(Integer errorCode) {
+        errors.removeIf(error -> error.getErrorCode().equals(errorCode));
     }
 
     public Integer getBattery_percentage() {
@@ -143,6 +154,22 @@ public class Display {
 
     public void setLastSwitch(LocalDateTime lastSwitch) {
         this.lastSwitch = lastSwitch;
+    }
+
+    public LocalDateTime getRunningSince() {
+        return runningSince;
+    }
+
+    public void setRunningSince(LocalDateTime runningSince) {
+        this.runningSince = runningSince;
+    }
+
+    public LocalDateTime getNextEventTime() {
+        return nextEventTime;
+    }
+
+    public void setNextEventTime(LocalDateTime nextEventTime) {
+        this.nextEventTime = nextEventTime;
     }
 
     public LocalDateTime getWakeTime() {

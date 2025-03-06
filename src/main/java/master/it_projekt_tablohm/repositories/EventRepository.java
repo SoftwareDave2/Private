@@ -26,5 +26,9 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     List<Event> findOverlappingEvents(@Param("macAddress") String macAddress,
                                       @Param("start") LocalDateTime start,
                                       @Param("end") LocalDateTime end);
+
+    @Query("SELECT e FROM Event e JOIN e.displayImages di WHERE di.displayMac = :macAddress AND e.start > :currentTime ORDER BY e.start ASC")
+    List<Event> findUpcomingEventsForDisplay(@Param("macAddress") String macAddress, @Param("currentTime") LocalDateTime currentTime);
+
 }
 

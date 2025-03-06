@@ -1,12 +1,10 @@
 package master.it_projekt_tablohm.controller;
 
-import master.it_projekt_tablohm.models.Config;
-import master.it_projekt_tablohm.models.Display;
-import master.it_projekt_tablohm.models.DisplayImage;
-import master.it_projekt_tablohm.models.Event;
+import master.it_projekt_tablohm.models.*;
 import master.it_projekt_tablohm.repositories.ConfigRepository;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.repositories.EventRepository;
+import master.it_projekt_tablohm.services.ErrorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +25,8 @@ public class DisplayController {
     private final DisplayRepository displayRepository;
     private final EventRepository eventRepository;
     private final ConfigRepository configRepository;
+    @Autowired
+    private ErrorService errorService;
 
     public DisplayController(EventRepository eventRepository, DisplayRepository displayRepository, ConfigRepository configRepository) {
         this.eventRepository = eventRepository;
@@ -100,6 +100,7 @@ public class DisplayController {
         display.setWidth(width);
         display.setHeight(height);
         display.setWakeTime(LocalDateTime.now().plusMinutes(10));
+        display.setRunningSince(LocalDateTime.now());
         displayRepository.save(display);
 
         // Add current time and new wake time to the response
@@ -225,9 +226,10 @@ public class DisplayController {
                 .map(display -> {
                     display.setBattery_percentage(batteryPercentage);
                     if(batteryPercentage <= 10){
-                        display.setError("Battery low!");
+                        DisplayError error = new DisplayError(121, "Battery low");
+                        display.addError(error.getErrorCode(), error.getErrorMessage());
                     }else{
-                        display.setError(null);
+                        errorService.removeErrorFromDisplay(display.getId(), 121);
                     }
                     display.setTimeOfBattery(timeNow);
                     displayRepository.save(display);

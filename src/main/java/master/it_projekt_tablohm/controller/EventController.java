@@ -81,6 +81,18 @@ public class EventController {
         event.setDisplayImages(eventRequest.getDisplayImages());
 
         eventRepository.save(event);
+
+        // Update the display's nextEventTime if necessary
+        for (Display display : existingDisplays) {
+            LocalDateTime nextEventTime = display.getNextEventTime();
+
+            // If nextEventTime is null or after the current event's start time, update nextEventTime
+            if (nextEventTime == null || nextEventTime.isAfter(eventRequest.getStart())) {
+                display.setNextEventTime(eventRequest.getStart());
+                displayRepository.save(display);
+            }
+        }
+
         if(warning) {
             return ResponseEntity.status(HttpStatusCode.valueOf(541)).body("Event saved, but the start time is before the wake time of display: " + collisionDisplay.getMacAddress());
 
@@ -97,11 +109,45 @@ public class EventController {
             return ResponseEntity.notFound().build();
         }
 
+        // Check if all specified displays exist
+        List<String> macAddresses = eventRequest.getDisplayImages().stream()
+                .map(DisplayImage::getdisplayMac)
+                .collect(Collectors.toList());
+
+        List<Display> existingDisplays = displayRepository.findByMacAddressIn(macAddresses);
+
+        if (existingDisplays.size() != macAddresses.size()) {
+            return ResponseEntity.badRequest().body("One or more specified displays do not exist.");
+        }
+
+        // Check for overlapping events
+        for (String macAddress : macAddresses) {
+            List<Event> overlappingEvents = eventRepository.findOverlappingEvents(macAddress, eventRequest.getStart(), eventRequest.getEnd());
+            if (!overlappingEvents.isEmpty()) {
+                return ResponseEntity.badRequest().body("Event overlaps with an existing event on display: " + macAddress);
+            }
+        }
+
+        // Check if event is before wakeTime of displays
+        boolean warning = false;
+        Display collisionDisplay = null;
+        for (Display display : existingDisplays) {
+            LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalTime
+            LocalDateTime eventStart = eventRequest.getStart();
+
+            // Convert eventStart to LocalTime for comparison (assuming same time zone)
+            if (wakeTime != null && eventStart.isBefore(wakeTime)) {
+                warning = true;
+                collisionDisplay = display;
+            }
+        }
+
         Event event = optionalEvent.get();
         event.setTitle(eventRequest.getTitle());
         event.setAllDay(eventRequest.getAllDay());
         event.setStart(eventRequest.getStart());
         event.setEnd(eventRequest.getEnd());
+
 
         // Ensure displayImages is properly updated
         if (eventRequest.getDisplayImages() != null) {
@@ -110,7 +156,24 @@ public class EventController {
         }
 
         eventRepository.save(event);
-        return ResponseEntity.ok("Event updated successfully.");
+
+        // Update the display's nextEventTime if necessary
+        for (Display display : existingDisplays) {
+            LocalDateTime nextEventTime = display.getNextEventTime();
+
+            // If nextEventTime is null or after the current event's start time, update nextEventTime
+            if (nextEventTime == null || nextEventTime.isAfter(eventRequest.getStart())) {
+                display.setNextEventTime(eventRequest.getStart());
+                displayRepository.save(display);
+            }
+        }
+
+        if(warning) {
+            return ResponseEntity.status(HttpStatusCode.valueOf(541)).body("Event saved, but the start time is before the wake time of display: " + collisionDisplay.getMacAddress());
+
+        }else{
+            return ResponseEntity.ok("Event saved successfully.");
+        }
     }
 
     @CrossOrigin(origins = "*")
