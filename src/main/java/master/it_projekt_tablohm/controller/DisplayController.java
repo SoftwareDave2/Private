@@ -1,9 +1,6 @@
 package master.it_projekt_tablohm.controller;
 
-import master.it_projekt_tablohm.models.Config;
-import master.it_projekt_tablohm.models.Display;
-import master.it_projekt_tablohm.models.DisplayImage;
-import master.it_projekt_tablohm.models.Event;
+import master.it_projekt_tablohm.models.*;
 import master.it_projekt_tablohm.repositories.ConfigRepository;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.repositories.EventRepository;
@@ -12,12 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.*;
+import java.time.format.TextStyle;
 import java.util.*;
 
 @Controller
@@ -93,7 +88,6 @@ public class DisplayController {
         // If not, create and save a new display
         Display display = new Display();
         display.setMacAddress(macAddress);
-        //display.setFilename("src/frontend/public/uploads/initial.jpg");
         display.setDoSwitch(true);
         display.setFilenameApp("");
         display.setFilename("initial.jpg");
@@ -102,9 +96,6 @@ public class DisplayController {
         display.setWakeTime(LocalDateTime.now().plusMinutes(10));
         displayRepository.save(display);
 
-        // Add current time and new wake time to the response
-        response.put("currentTime", LocalDateTime.now().toString());
-        response.put("wakeTime", display.getWakeTime().toString());
         response.put("message", "Display initiated with mac-address: " + macAddress);
 
         return ResponseEntity.ok(response);
@@ -138,54 +129,100 @@ public class DisplayController {
         return displayRepository.findAll();
     }
 
+    private LocalDateTime findNextInterval(Config config) {
+        Map<String, WeekdayTime> weekdayTimes = config.getWeekdayTimes();
+
+        LocalDateTime localDateTimeNow = LocalDateTime.now();
+        LocalDate localDateNow = localDateTimeNow.toLocalDate();
+        LocalTime localTimeNow = localDateTimeNow.toLocalTime();
+
+        DayOfWeek dayOfWeek = localDateTimeNow.getDayOfWeek();
+        int days = 0;
+        while(days <= 7) {
+            String dayName = dayOfWeek.getDisplayName(TextStyle.FULL, Locale.GERMANY);
+            WeekdayTime weekdayTime = weekdayTimes.get(dayName);
+
+            if(weekdayTime.isEnabled()) {
+                LocalTime start = weekdayTime.getStartTime();
+                LocalTime end = weekdayTime.getEndTime();
+
+                if(days == 0) {
+                    if(localTimeNow.isAfter(start) && localTimeNow.isBefore(end)) {
+                        Duration wakeIntervalDay = Duration.ofMinutes(config.getWakeIntervalDay());
+                        long count = Duration.between(start, localTimeNow).dividedBy(wakeIntervalDay);
+                        count++;
+
+                        LocalTime nextTime = start.plus(wakeIntervalDay.multipliedBy(count));
+                        if(!nextTime.isAfter(end))
+                            return nextTime.atDate(localDateNow);
+                    }
+                }
+                else {
+                    return start.atDate(localDateNow.plusDays(days));
+                }
+            }
+
+            dayOfWeek = dayOfWeek.plus(1);
+            days++;
+        }
+        return LocalDateTime.MAX;
+    }
+
     @CrossOrigin(origins = "*")
     @GetMapping(path = "/get/{mac}")
     public @ResponseBody Display getDisplayById(@PathVariable String mac) {
-         Display display = displayRepository.findByMacAddress(Objects.requireNonNull(mac))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Display not found"));
+        Display display = displayRepository.findByMacAddress(Objects.requireNonNull(mac))
+               .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Display not found"));
 
-         List<Event> events = eventRepository.findByDisplayMacAddress(mac);
+        List<Event> events = eventRepository.findByDisplayMacAddress(mac);
         Config config = configRepository.findAll().stream().findFirst().get();
 
-         LocalDateTime next = LocalDateTime.MAX;
-         String filename = "";
-         if(!events.isEmpty()) {
-             for(Event e : events) {
-                 for(DisplayImage di : e.getDisplayImages()) {
-                     if (di.getdisplayMac().equals(mac)) {
-                         if(e.getStart().minusMinutes(config.getLeadTime()).isBefore(LocalDateTime.now()) && e.getEnd().plusMinutes(config.getFollowUpTime()).isAfter(LocalDateTime.now())) {
-                             filename = di.getImage();
-                             next = e.getEnd().plusMinutes(config.getFollowUpTime());
-                         }
-                     }
-                 }
-             }
+        LocalDateTime next = LocalDateTime.MAX;
+        String filename = "";
+        if(!events.isEmpty()) {
+            // function: find current event and end time
+            for(Event e : events) {
+                for(DisplayImage di : e.getDisplayImages()) {
+                    if (di.getdisplayMac().equals(mac)) {
+                        if(e.getStart().minusMinutes(config.getLeadTime()).isBefore(LocalDateTime.now()) && e.getEnd().plusMinutes(config.getFollowUpTime()).isAfter(LocalDateTime.now())) {
+                            filename = di.getImage();
+                            next = e.getEnd().plusMinutes(config.getFollowUpTime());
+                        }
+                    }
+                }
+            }
 
-             if(next == LocalDateTime.MAX) {
-                 for(Event e : events) {
-                     for(DisplayImage di : e.getDisplayImages()) {
-                         if (di.getdisplayMac().equals(mac)) {
-                             if(e.getStart().minusMinutes(config.getLeadTime()).isAfter(LocalDateTime.now())) {
-                                 next = e.getStart().minusMinutes(config.getLeadTime());
-                             }
-                         }
-                     }
-                 }
-             }
-         }
+            if(next == LocalDateTime.MAX) {
+                // function: find next event start time
+                for(Event e : events) {
+                    for(DisplayImage di : e.getDisplayImages()) {
+                        if (di.getdisplayMac().equals(mac)) {
+                            if(e.getStart().minusMinutes(config.getLeadTime()).isAfter(LocalDateTime.now())) {
+                                next = e.getStart().minusMinutes(config.getLeadTime());
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-         if(next == LocalDateTime.MAX)
-             next = LocalDateTime.now().plusMinutes(10);
+        LocalDateTime intervalNext = findNextInterval(config);
+        if(intervalNext.isBefore(next))
+            next = intervalNext;
 
-         if(filename.equals(""))
-             filename = "initial.jpg";
+        // LocalDateTime.MAX throws exception in database
+        if(next == LocalDateTime.MAX)
+            next = LocalDateTime.now().plusYears(1);
 
-         display.setDoSwitch(!display.getFilenameApp().equals(filename));
-         display.setFilename(filename);
-         display.setWakeTime(next);
-         displayRepository.save(display);
+        if(filename.equals(""))
+            filename = "initial.jpg";
 
-         return display;
+        display.setDoSwitch(!display.getFilenameApp().equals(filename));
+        display.setFilename(filename);
+        display.setWakeTime(next);
+        displayRepository.save(display);
+
+        return display;
     }
 
     @CrossOrigin(origins = "*")
