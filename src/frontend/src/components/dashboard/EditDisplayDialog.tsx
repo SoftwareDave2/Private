@@ -12,6 +12,7 @@ import {DisplayData} from "@/types/displayData";
 import SelectImage from "@/components/edit-display/SelectImage";
 import React, {useEffect, useState} from "react";
 import {DeleteDisplayDialog} from "@/components/dashboard/DeleteDisplayDialog";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type EditDisplayDialogProps = {
     open: boolean,
@@ -22,8 +23,9 @@ type EditDisplayDialogProps = {
 
 export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: EditDisplayDialogProps) {
 
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const [data, setData] = useState<DisplayData>({
         ...displayData,
@@ -157,7 +159,7 @@ const backendApiUrl = 'http://' + host + ':8080';
 
     return (
         <Dialog open={open}>
-            <DialogHeader>Display {data.id} Anpassen</DialogHeader>
+            <DialogHeader>{data.displayName} Anpassen</DialogHeader>
             <form action={updateDisplay}>
                 <DialogBody>
                     <div>
@@ -235,6 +237,7 @@ const backendApiUrl = 'http://' + host + ':8080';
                         <Select label={'Orientierung'} value={data.orientation} name={'orientation'}
                                 onChange={orientationChangeHandler}>
                             <Option value={'vertical'}>vertical</Option>
+                            <Option value={'horizontal'}>horizontal</Option>
                         </Select>
                         <Input label={'Breite'} type={'number'} className={'min-w-[100px]'}
                                defaultValue={data.width}
@@ -245,8 +248,9 @@ const backendApiUrl = 'http://' + host + ':8080';
                     </div>
                     <div className={'mt-5'}>
                         <SelectImage selectedFilename={data.filename}
-                                     width={data.width}
-                                     height={data.height}
+                                     screenWidth={data.width}
+                                     screenHeight={data.height}
+                                     screenOrientation={data.orientation}
                                      onSelect={filenameChangeHandler}
                                       />
                     </div>

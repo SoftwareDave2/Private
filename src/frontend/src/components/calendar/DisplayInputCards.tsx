@@ -4,6 +4,7 @@ import AddIcon from "@/components/shared/AddIcon";
 import {Button} from "@material-tailwind/react";
 import {DisplayInputCard} from "@/components/calendar/DisplayInputCard";
 import {DisplayData} from "@/types/displayData";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type DisplayInputCards = {
     displays: EventDisplayDetails[]
@@ -12,8 +13,9 @@ type DisplayInputCards = {
 
 export default function DisplayInputCards({displays, onSetDisplays}: DisplayInputCards) {
 
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const [allDisplays, setAllDisplays] = useState<DisplayData[]>([])
     const hasFetched = useRef(false)

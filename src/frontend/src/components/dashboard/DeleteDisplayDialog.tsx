@@ -1,6 +1,7 @@
 import { Button, Dialog, DialogHeader, DialogBody, DialogFooter } from "@material-tailwind/react"
 import {DisplayData} from "@/types/displayData";
 import React from "react";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type DeleteDisplayDialogProps = {
     open: boolean,
@@ -11,8 +12,9 @@ type DeleteDisplayDialogProps = {
 
 export function DeleteDisplayDialog({open, displayData, onClose, onDisplayDeleted}: DeleteDisplayDialogProps) {
 
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const deleteDisplayHandler = async () => {
         try {

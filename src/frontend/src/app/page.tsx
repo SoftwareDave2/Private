@@ -6,13 +6,15 @@ import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import { DisplayData } from "@/types/displayData"
 import getConfig from 'next/config'
 import DisplayInfoDialog from "@/components/dashboard/DisplayInfoDialog";
+import { getBackendApiUrl } from "@/utils/backendApiUrl";
 
 
 export default function Home() {
 
     //const { serverRuntimeConfig, publicRuntimeConfig } = getConfig()
-    const host = window.location.hostname;
-    const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
     const [displayDialogOpen, setDisplayDialogOpen] = useState<boolean>(false)

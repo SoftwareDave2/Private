@@ -31,6 +31,7 @@ export function DisplayInputCard(
 
     const displayWidth = () => getDisplay()?.width
     const displayHeight = () => getDisplay()?.height
+    const displayOrientation = () => getDisplay()?.orientation
 
     return (
         <Card className={'border border-blue-gray-200 shadow-sm mt-4'}>
@@ -55,8 +56,9 @@ export function DisplayInputCard(
                 </div>
                 {macAddress.length > 0 &&
                     <SelectImage selectedFilename={image}
-                                 width={displayWidth()}
-                                 height={displayHeight()}
+                                 screenWidth={displayWidth()}
+                                 screenHeight={displayHeight()}
+                                 screenOrientation={displayOrientation()}
                                  onSelect={onImageChanged}
                                  onUnselect={() => onImageChanged("")} />}
             </CardBody>

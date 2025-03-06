@@ -1,6 +1,7 @@
 import {EventDetails} from "@/types/eventDetails";
 import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from "@material-tailwind/react";
 import React from "react";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type DeleteCalendarEventDialogProps = {
     open: boolean,
@@ -10,8 +11,9 @@ type DeleteCalendarEventDialogProps = {
 }
 
 export function DeleteCalendarEventDialog({open, event, onClose, onDeleted}: DeleteCalendarEventDialogProps) {
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const deleteHandler = async () => {
         try {

@@ -14,6 +14,7 @@ import CollisionDetectedAlert from "@/components/calendar/CollisionDetectedAlert
 import { DeleteCalendarEventDialog } from "@/components/calendar/DeleteCalendarEventDialog";
 import SaveEventErrorAlert from "@/components/calendar/SaveEventErrorAlert";
 import DisplayInputCards from "@/components/calendar/DisplayInputCards";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type CalendarEntryDialogProps = {
     open: boolean,
@@ -26,8 +27,9 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
 
     const COLLISION_DETECTED_ERROR_CODE = 569;
     const DISPLAY_DOES_NOT_WAKE_UP_ON_TIME = 541;
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';;
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     // Initial State: Defaultwerte für Wiederholungsfelder setzen, falls nicht vorhanden.
     const [data, setData] = useState<EventDetails>({

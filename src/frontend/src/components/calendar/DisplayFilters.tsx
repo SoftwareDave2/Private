@@ -1,6 +1,7 @@
 import {DisplayData} from "@/types/displayData";
 import React, {useEffect, useRef, useState} from "react";
 import {Checkbox, Typography} from "@material-tailwind/react";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type DisplayFiltersProps = {
     selectedMacs: string[]
@@ -9,8 +10,9 @@ type DisplayFiltersProps = {
 
 export default function DisplayFilters({selectedMacs, onSelectedMacsChanged}: DisplayFiltersProps) {
 
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const [displays, setDisplays] = useState<DisplayData[]>([])
     const hasFetched = useRef(false)

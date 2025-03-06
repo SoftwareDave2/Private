@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 import PageHeader from "@/components/layout/PageHeader";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 // Erweitertes Interface mit relativen Positionen
 interface FieldConfig {
@@ -150,8 +151,9 @@ const templateConfig: Record<string, FieldConfig[]> = {
     ],
 };
 
-const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+// const host = window.location.hostname;
+// const backendApiUrl = 'http://' + host + ':8080';
+const backendApiUrl = getBackendApiUrl();
 
 const TemplateEditorPage: React.FC = () => {
     const [selectedTemplate, setSelectedTemplate] = useState<string>("template_1_links.png");

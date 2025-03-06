@@ -4,6 +4,7 @@ import {DisplayData} from "@/types/displayData";
 import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import DisplayStatusInfos from "@/components/dashboard/DisplayStatusInfos";
 import {EditDisplayDialog} from "@/components/dashboard/EditDisplayDialog";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type DisplayInfoDialogProps = {
     open: boolean,
@@ -13,8 +14,9 @@ type DisplayInfoDialogProps = {
 }
 
 export default function DisplayInfoDialog({open, displayData, onClose, onDisplayDataUpdated}: DisplayInfoDialogProps) {
-    const host = window.location.hostname;
-const backendApiUrl = 'http://' + host + ':8080';
+    // const host = window.location.hostname;
+    // const backendApiUrl = 'http://' + host + ':8080';
+    const backendApiUrl = getBackendApiUrl();
 
     const [openEditDisplay, setOpenEditDisplay] = useState<boolean>(false)
     const [displayDataForEdit, setDisplayDataForEdit] = useState<DisplayData | null>(null)

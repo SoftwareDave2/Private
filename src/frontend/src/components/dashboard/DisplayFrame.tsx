@@ -28,7 +28,7 @@ export default function DisplayFrame({displayData, clickable, onClick}: DisplayF
             </div>
 
             <div className="flex justify-between w-full">
-                <span className={`${styles.name} text-gray-800`}>Display {displayData.displayName}</span>
+                <span className={`${styles.name} text-gray-800`}>{displayData.displayName}</span>
                 <span className={`${styles.name} text-gray-800`}>{displayData.battery_percentage}%</span>
             </div>
         </div>
