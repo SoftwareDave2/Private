@@ -132,3 +132,38 @@
 2025-03-06T10:39:58.961+01:00  INFO 3605 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
 2025-03-06T10:39:58.962+01:00  INFO 3605 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
 2025-03-06T10:39:58.963+01:00  INFO 3605 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-03-07T09:10:02.001+01:00  INFO 1185 --- [it_projekt_tablohm] [main] m.i.ItProjektTablohmApplication          : Starting ItProjektTablohmApplication using Java 23.0.2 with PID 1185 (/Users/markus/Documents/TH/Master_Informatik/1_Semester/IT_Projekt/webservice/target/classes started by markus in /Users/markus/Documents/TH/Master_Informatik/1_Semester/IT_Projekt/webservice)
+2025-03-07T09:10:02.004+01:00 DEBUG 1185 --- [it_projekt_tablohm] [main] m.i.ItProjektTablohmApplication          : Running with Spring Boot v3.3.5, Spring v6.1.14
+2025-03-07T09:10:02.005+01:00  INFO 1185 --- [it_projekt_tablohm] [main] m.i.ItProjektTablohmApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-03-07T09:10:02.107+01:00  INFO 1185 --- [it_projekt_tablohm] [main] .s.b.d.c.l.DockerComposeLifecycleManager : Using Docker Compose file '/Users/markus/Documents/TH/Master_Informatik/1_Semester/IT_Projekt/webservice/docker-compose.yml'
+2025-03-07T09:10:06.349+01:00  INFO 1185 --- [it_projekt_tablohm] [OutputReader-stderr] o.s.boot.docker.compose.core.DockerCli   :  Container guide-mysql  Created
+2025-03-07T09:10:06.389+01:00  INFO 1185 --- [it_projekt_tablohm] [OutputReader-stderr] o.s.boot.docker.compose.core.DockerCli   :  Container guide-mysql  Starting
+2025-03-07T09:10:06.913+01:00  INFO 1185 --- [it_projekt_tablohm] [OutputReader-stderr] o.s.boot.docker.compose.core.DockerCli   :  Container guide-mysql  Started
+2025-03-07T09:10:06.914+01:00  INFO 1185 --- [it_projekt_tablohm] [OutputReader-stderr] o.s.boot.docker.compose.core.DockerCli   :  Container guide-mysql  Waiting
+2025-03-07T09:10:07.418+01:00  INFO 1185 --- [it_projekt_tablohm] [OutputReader-stderr] o.s.boot.docker.compose.core.DockerCli   :  Container guide-mysql  Healthy
+2025-03-07T09:10:11.852+01:00  INFO 1185 --- [it_projekt_tablohm] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-03-07T09:10:11.918+01:00  INFO 1185 --- [it_projekt_tablohm] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 57 ms. Found 5 JPA repository interfaces.
+2025-03-07T09:10:12.508+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-03-07T09:10:12.525+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-03-07T09:10:12.526+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.31]
+2025-03-07T09:10:12.574+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-03-07T09:10:12.574+01:00  INFO 1185 --- [it_projekt_tablohm] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1421 ms
+2025-03-07T09:10:12.729+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-03-07T09:10:12.807+01:00  INFO 1185 --- [it_projekt_tablohm] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2025-03-07T09:10:12.849+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-03-07T09:10:13.245+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-03-07T09:10:13.280+01:00  INFO 1185 --- [it_projekt_tablohm] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-03-07T09:10:13.920+01:00  INFO 1185 --- [it_projekt_tablohm] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@42b43a6
+2025-03-07T09:10:13.922+01:00  INFO 1185 --- [it_projekt_tablohm] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-03-07T09:10:15.133+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-03-07T09:10:15.375+01:00  INFO 1185 --- [it_projekt_tablohm] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-03-07T09:10:15.659+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-03-07T09:10:16.515+01:00  WARN 1185 --- [it_projekt_tablohm] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-03-07T09:10:16.977+01:00  INFO 1185 --- [it_projekt_tablohm] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-03-07T09:10:16.991+01:00  INFO 1185 --- [it_projekt_tablohm] [main] m.i.ItProjektTablohmApplication          : Started ItProjektTablohmApplication in 15.544 seconds (process running for 16.915)
+2025-03-07T09:10:31.199+01:00  INFO 1185 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-03-07T09:10:31.199+01:00  INFO 1185 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-03-07T09:10:31.201+01:00  INFO 1185 --- [it_projekt_tablohm] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-03-07T09:37:32.346+01:00  INFO 1185 --- [it_projekt_tablohm] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-03-07T09:37:32.349+01:00  INFO 1185 --- [it_projekt_tablohm] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-03-07T09:37:32.359+01:00  INFO 1185 --- [it_projekt_tablohm] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

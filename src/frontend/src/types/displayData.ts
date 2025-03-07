@@ -13,5 +13,10 @@ export type DisplayData = {
     nextEventTime: string,
     battery_percentage: number,
     timeOfBattery: string,
-    error: string,
+    errors: DisplayErrors[],
+}
+
+export type DisplayErrors = {
+    errorCode: number,
+    errorMessage: string
 }
