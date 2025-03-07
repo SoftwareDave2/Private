@@ -29,6 +29,43 @@ public class DisplayService {
         this.errorService = errorService;
     }
 
+//    // Scheduled method to check display's lastSwitch time every 5 minutes
+//    @Transactional
+//    @Scheduled(fixedRate = 6000)  // 300000 milliseconds = 5 minutes
+//    public void checkDisplayStatus() {
+//        List<Event> events = eventRepository.findAll(); // Retrieve all events
+//
+//        LocalDateTime now = LocalDateTime.now();
+//
+//        for (Event event : events) {
+//            LocalDateTime eventStart = event.getStart();
+//            LocalDateTime eventEnd = event.getEnd(); // Assuming Event has an 'end' field
+//
+//            if (now.isAfter(eventStart) && now.isBefore(eventEnd)) {
+//
+//                List<DisplayImage> displayImages = event.getDisplayImages();
+//                for (DisplayImage displayImage : displayImages) {
+//                    Optional<Display> displayOptional = displayRepository.findByMacAddress(displayImage.getdisplayMac());
+//                    if (displayOptional.isPresent()) {
+//                        Display display = displayOptional.get();
+//                        LocalDateTime lastSwitch = display.getLastSwitch();
+//
+//
+//                        if (lastSwitch != null && eventStart.isBefore(lastSwitch) && eventEnd.isAfter(lastSwitch)) {
+//                            errorService.removeErrorFromDisplay(display.getId(), 101);
+//                        } else {
+//                            DisplayError error = new DisplayError(101, "Event not Updated");
+//                            display.addError(error.getErrorCode(), error.getErrorMessage());
+//                            displayRepository.save(display);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//
+//    }
+
     // Scheduled method to check display's lastSwitch time every 5 minutes
     @Transactional
     @Scheduled(fixedRate = 6000)  // 300000 milliseconds = 5 minutes
@@ -42,29 +79,36 @@ public class DisplayService {
             LocalDateTime eventEnd = event.getEnd(); // Assuming Event has an 'end' field
 
             if (now.isAfter(eventStart) && now.isBefore(eventEnd)) {
+                // only the events that are currently planned
 
-                List<DisplayImage> displayImages = event.getDisplayImages();
+                List<DisplayImage> displayImages = event.getDisplayImages(); // all the displays from the event with .mac and .image
                 for (DisplayImage displayImage : displayImages) {
                     Optional<Display> displayOptional = displayRepository.findByMacAddress(displayImage.getdisplayMac());
                     if (displayOptional.isPresent()) {
                         Display display = displayOptional.get();
                         LocalDateTime lastSwitch = display.getLastSwitch();
-
-
-                        if (lastSwitch != null && eventStart.isBefore(lastSwitch) && eventEnd.isAfter(lastSwitch)) {
+                        String currentImageOnDisplay = display.getFilenameApp();
+                        String plannedImageOnDisplay = displayImage.getImage();
+                        if(currentImageOnDisplay!= null && plannedImageOnDisplay!= null && currentImageOnDisplay.equals(plannedImageOnDisplay)) {
                             errorService.removeErrorFromDisplay(display.getId(), 101);
                         } else {
                             DisplayError error = new DisplayError(101, "Event not Updated");
                             display.addError(error.getErrorCode(), error.getErrorMessage());
                             displayRepository.save(display);
                         }
+
                     }
                 }
             }
+
         }
 
 
     }
+
+
+
+
 
     // Scheduled method to check display's nextEvent time every 5 minutes
     @Transactional

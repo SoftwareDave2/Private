@@ -5,6 +5,7 @@ import master.it_projekt_tablohm.models.Event;
 import master.it_projekt_tablohm.models.DisplayImage;
 import master.it_projekt_tablohm.repositories.EventRepository;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
+import master.it_projekt_tablohm.services.ErrorService;
 import org.dmfs.rfc5545.DateTime;
 import org.dmfs.rfc5545.recur.InvalidRecurrenceRuleException;
 import org.dmfs.rfc5545.recur.RecurrenceRule;
@@ -23,10 +24,12 @@ import java.util.stream.Collectors;
 public class EventController {
     private final EventRepository eventRepository;
     private final DisplayRepository displayRepository;
+    private final ErrorService errorService;
 
-    public EventController(EventRepository eventRepository, DisplayRepository displayRepository) {
+    public EventController(EventRepository eventRepository, DisplayRepository displayRepository, ErrorService errorService) {
         this.eventRepository = eventRepository;
         this.displayRepository = displayRepository;
+        this.errorService = errorService;
     }
 
 
@@ -197,6 +200,30 @@ public class EventController {
         if (!eventRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
+        Event event = eventRepository.findById(id).get();
+        // if event gets deleted while it should be active -> remove errors from display, that the event is not getting displayed
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime eventStart = event.getStart();
+        LocalDateTime eventEnd = event.getEnd();
+        if (now.isAfter(eventStart) && now.isBefore(eventEnd)) {
+            // only the if event should currently take place
+            List<DisplayImage> displayImages = event.getDisplayImages();
+            for (DisplayImage displayImage : displayImages) {
+                Optional<Display> displayOptional = displayRepository.findByMacAddress(displayImage.getdisplayMac());
+                if (displayOptional.isPresent()) {
+                    Display display = displayOptional.get();
+                    errorService.removeErrorFromDisplay(display.getId(), 101);
+                }
+
+            }
+
+        }
+
+
+
+
+
+
         eventRepository.deleteById(id);
         return ResponseEntity.ok("Event deleted successfully.");
     }
