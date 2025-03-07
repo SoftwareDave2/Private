@@ -71,14 +71,19 @@ public class EventController {
         }
 
 
-
         // Save the event
         Event event = new Event();
         event.setTitle(eventRequest.getTitle());
         event.setAllDay(eventRequest.getAllDay());
         event.setStart(eventRequest.getStart());
-        event.setEnd(eventRequest.getEnd());
         event.setDisplayImages(eventRequest.getDisplayImages());
+
+        // Adjust the all day end time
+        if (eventRequest.getAllDay()){
+            event.setEnd(eventRequest.getEnd().plusHours(23).plusMinutes(59).plusSeconds(59));
+        }else{
+            event.setEnd(eventRequest.getEnd());
+        }
 
         eventRepository.save(event);
 
@@ -146,7 +151,12 @@ public class EventController {
         event.setTitle(eventRequest.getTitle());
         event.setAllDay(eventRequest.getAllDay());
         event.setStart(eventRequest.getStart());
-        event.setEnd(eventRequest.getEnd());
+        // Adjust the all day end time
+        if (eventRequest.getAllDay()){
+            event.setEnd(eventRequest.getEnd().plusHours(23).plusMinutes(59).plusSeconds(59));
+        }else{
+            event.setEnd(eventRequest.getEnd());
+        }
 
 
         // Ensure displayImages is properly updated

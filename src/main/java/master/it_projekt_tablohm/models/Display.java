@@ -29,6 +29,7 @@ public class Display {
 
     private boolean doSwitch;
     private String filename;
+    private String defaultFilename;
     private String filenameApp;
 
     private LocalDateTime lastSwitch;
@@ -186,5 +187,13 @@ public class Display {
 
     public void setDoSwitch(boolean doSwitch) {
         this.doSwitch = doSwitch;
+    }
+
+    public String getDefaultFilename() {
+        return defaultFilename;
+    }
+
+    public void setDefaultFilename(String defaultFilename) {
+        this.defaultFilename = defaultFilename;
     }
 }
