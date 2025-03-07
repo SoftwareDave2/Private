@@ -86,8 +86,8 @@ DELETE http://localhost:8080/event/delete/18
 POST http://localhost:8080/display/switch
 Content-Type: application/x-www-form-urlencoded
 
-macAddress=00:00:00:00:01 &
-filename=pineapple.jpg
+macAddress=00:00:00:00:03 &
+filename=farbtest2_output_1740904172975.png
 
 ### Example 14: Get already registered Brands
 GET http://localhost:8080/display/brands
@@ -97,7 +97,7 @@ POST http://localhost:8080/display/postBattery
 Content-Type: application/x-www-form-urlencoded
 
 macAddress=00:00:00:00:05 &
-batteryPercentage=4
+batteryPercentage=7
 
 ### Example 16: Create a new configuration
 POST http://localhost:8080/config/post
