@@ -72,8 +72,8 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
     const toggleOpenDeleteDisplayHandler = () => setOpenDeleteDisplay(!openDeleteDisplay)
     const orientationChangeHandler = (orientation: string | undefined) =>
         setData(prevState => ({...prevState, orientation: orientation ?? ''}))
-    const filenameChangeHandler = (filename: string) =>
-        setData(prevState => ({...prevState, filename: filename}))
+    const defaultFilenameChangeHandler = (defaultFilename: string) =>
+        setData(prevState => ({...prevState, defaultFilename: defaultFilename}))
     const displayNameChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
         setData(prevState => ({ ...prevState, displayName: event.target.value }));
     };
@@ -143,7 +143,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                     '&width=' + formdata.get('width') +
                     '&height=' + formdata.get('height') +
                     '&orientation=' + data.orientation +
-                    '&filename=' + data.filename,
+                    '&defaultFilename=' + data.defaultFilename,
             })
             const responseText = await response.text()
             console.log(responseText)
@@ -247,11 +247,11 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                                name={'height'}/>
                     </div>
                     <div className={'mt-5'}>
-                        <SelectImage selectedFilename={data.filename}
+                        <SelectImage selectedFilename={data.defaultFilename}
                                      screenWidth={data.width}
                                      screenHeight={data.height}
                                      screenOrientation={data.orientation}
-                                     onSelect={filenameChangeHandler}
+                                     onSelect={defaultFilenameChangeHandler}
                                       />
                     </div>
                 </DialogBody>
