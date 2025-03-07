@@ -8,10 +8,16 @@ export type DisplayData = {
     height: number,
     orientation: string,
     filename: string,
+    defaultFilename: string,
     runningSince: string,
     wakeTime: string,
     nextEventTime: string,
     battery_percentage: number,
     timeOfBattery: string,
-    error: string,
+    errors: DisplayErrors[],
+}
+
+export type DisplayErrors = {
+    errorCode: number,
+    errorMessage: string
 }

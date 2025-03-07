@@ -33,7 +33,7 @@ export default function DisplayStatusInfos({displayData}: DisplayStatusInfosProp
         <div>
             <div className={'flex justify-between gap-7'}>
                 <span>Laufend seit:</span>
-                <span className={'font-bold'}>{displayData.runningSince || "unbekannt"}</span>
+                <span className={'font-bold'}>{to_timestring(displayData.runningSince) || "unbekannt"}</span>
             </div>
             <div className={'flex justify-between gap-7'}>
                 <span>Aufweckzeitpunkt:</span>
@@ -43,17 +43,27 @@ export default function DisplayStatusInfos({displayData}: DisplayStatusInfosProp
             </div>
             <div className={'flex justify-between gap-7'}>
                 <span>Nächstes Event:</span>
-                <span className={'font-bold'}>{displayData.nextEventTime || "unbekannt"}</span>
+                <span className={'font-bold'}>{to_timestring(displayData.nextEventTime) || "unbekannt"}</span>
             </div>
             <div className={'flex justify-between gap-7'}>
                 <span> Akkustand: </span>
                 <span className={'font-bold'}>{displayData.battery_percentage + "% am " + to_timestring(displayData.timeOfBattery)}</span>
             </div>
-            {displayData.error != null && displayData.error != ""  && (
+            {/*displayData.error != null && displayData.error != ""  && (
                 <div className={'flex justify-between gap-7'}>
                     <span> Error: </span>
                     <span
                         className={'font-bold text-red-500'}>{displayData.error}</span>
+                </div>
+            )*/}
+            {displayData.errors && displayData.errors.length > 0 && (
+                <div>
+                    {displayData.errors.map((err, index) => (
+                        <div key={index} className="flex justify-between gap-7">
+                            <span>Error:</span>
+                            <span className="font-bold text-red-500">{err.errorMessage}</span>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

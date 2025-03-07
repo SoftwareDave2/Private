@@ -33,9 +33,9 @@ export function DeleteDisplayDialog({open, displayData, onClose, onDisplayDelete
 
     return (
         <Dialog open={open} size={'xs'} handler={onClose}>
-            <DialogHeader>Display {displayData.id} löschen?</DialogHeader>
+            <DialogHeader>{displayData.displayName} löschen?</DialogHeader>
             <DialogBody>
-                <p>Möchten Sie das Display <strong>Display {displayData.id}</strong> wirklich löschen?</p>
+                <p>Möchten Sie das Display <strong>{displayData.displayName}</strong> wirklich löschen?</p>
             </DialogBody>
             <DialogFooter className={'justify-between'}>
                 <Button variant='outlined' className='text-primary border-primary' onClick={onClose}>Cancel</Button>
