@@ -58,9 +58,11 @@ export default function DisplayStatusInfos({displayData}: DisplayStatusInfosProp
             )*/}
             {displayData.errors && displayData.errors.length > 0 && (
                 <div>
+                    <span>Error:</span>
                     {displayData.errors.map((err, index) => (
+
                         <div key={index} className="flex justify-between gap-7">
-                            <span>Error:</span>
+
                             <span className="font-bold text-red-500">{err.errorMessage}</span>
                         </div>
                     ))}
