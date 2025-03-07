@@ -125,13 +125,18 @@ public class EventController {
             return ResponseEntity.badRequest().body("One or more specified displays do not exist.");
         }
 
-        // Check for overlapping events
+        // Check for overlapping events (excluding the current event being updated)
         for (String macAddress : macAddresses) {
-            List<Event> overlappingEvents = eventRepository.findOverlappingEvents(macAddress, eventRequest.getStart(), eventRequest.getEnd());
+            List<Event> overlappingEvents = eventRepository.findOverlappingEvents(macAddress, eventRequest.getStart(), eventRequest.getEnd())
+                    .stream()
+                    .filter(e -> !e.getId().equals(id)) // Exclude the current event
+                    .toList();
+
             if (!overlappingEvents.isEmpty()) {
                 return ResponseEntity.badRequest().body("Event overlaps with an existing event on display: " + macAddress);
             }
         }
+
 
         // Check if event is before wakeTime of displays
         boolean warning = false;
