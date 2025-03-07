@@ -20,7 +20,7 @@ export default function DisplayFrame({displayData, clickable, onClick}: DisplayF
         <div className={`flex flex-col ${clickable ? 'cursor-pointer' : ''}`} onClick={clickHandler}>
             <div className={`${styles.frame} border-gray-700 rounded relative`}>
                 <Image filename={displayData.filename} className="h-full object-fill" />
-                {displayData.error && (
+                {displayData.errors && displayData.errors.length > 0 && (
                     <div className="absolute top-0 right-0 bg-yellow-500 p-1 rounded-bl">
                         <span className="text-black text-xl font-bold">⚠️</span>
                     </div>
