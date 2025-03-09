@@ -2,17 +2,18 @@
 import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 import PageHeader from "@/components/layout/PageHeader";
 import { getBackendApiUrl } from "@/utils/backendApiUrl";
+import { Button } from "@material-tailwind/react";
 
 // Erweitertes Interface mit relativen Positionen
 interface FieldConfig {
     id: string;
-    xPercent: number; // X-Position als Prozentwert (z.B. 0.1 für 10% der Bildbreite)
-    yPercent: number; // Y-Position als Prozentwert
-    widthPercent: number; // Breite als Prozentwert
-    heightPercent: number; // Höhe als Prozentwert
+    xPercent: number;
+    yPercent: number;
+    widthPercent: number;
+    heightPercent: number;
     placeholder: string;
     defaultText?: string;
-    fontSizePercent?: number; // Schriftgröße relativ zur Bildhöhe
+    fontSizePercent?: number;
     bold?: boolean;
     defaultColor?: string;
 }
@@ -244,7 +245,7 @@ const TemplateEditorPage: React.FC = () => {
         if (textMode === 'Freitext') {
             const freitextX = 0.05 * canvas.width;
             const freitextY = 0.48 * canvas.height;
-            const fontSize = 0.02 * canvas.height; // Hier wie bei field5
+            const fontSize = 0.02 * canvas.height;
             ctx.font = `normal ${fontSize}px Arial`;
             ctx.fillStyle = freitextColor;
             const lines = freitextValue.split('\n');
@@ -266,7 +267,6 @@ const TemplateEditorPage: React.FC = () => {
             return data.exists;
         } catch (error) {
             console.error('Fehler beim Prüfen des Dateinamens:', error);
-            // Im Fehlerfall wird angenommen, dass der Name nicht existiert
             return false;
         }
     };
@@ -275,7 +275,6 @@ const TemplateEditorPage: React.FC = () => {
     const getAvailableFileName = async (baseName: string): Promise<string> => {
         let finalName = baseName;
         let counter = 1;
-        // Solange der Dateiname existiert, wird ein Suffix _counter angehängt.
         while (await checkFileNameExists(finalName)) {
             const nameWithoutExt = baseName.substring(0, baseName.lastIndexOf('.'));
             finalName = `${nameWithoutExt}_${counter}.png`;
@@ -290,11 +289,9 @@ const TemplateEditorPage: React.FC = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // Basisname: Wenn ein Name vom Nutzer eingegeben wurde, ansonsten "output"
         let baseName = tempImageName.trim() !== '' ? tempImageName.trim() : 'output';
         baseName = baseName + '.png';
 
-        // Ermittele einen verfügbaren Dateinamen
         const finalFileName = await getAvailableFileName(baseName);
 
         canvas.toBlob(async (blob) => {
@@ -311,7 +308,7 @@ const TemplateEditorPage: React.FC = () => {
                 if (!response.ok) {
                     throw new Error(`Upload fehlgeschlagen: ${response.status} ${response.statusText}`);
                 }
-                setPopupMessage('Bild wurde erfolgreich hochgeladen.');
+                setPopupMessage(`Bild wurde unter dem Namen <strong>${finalFileName}</strong> erfolgreich hochgeladen.`);
             } catch (error: any) {
                 console.error('Fehler beim Hochladen des Bildes:', error.message || error);
                 setPopupMessage('Fehler beim Hochladen des Bildes.');
@@ -334,7 +331,7 @@ const TemplateEditorPage: React.FC = () => {
 
     return (
         <div style={{ padding: '16px' }}>
-            <PageHeader title={'Template Editor'} info={''}></PageHeader>
+            <PageHeader title={'Template Editor'} info={''} />
             <div style={{ marginBottom: '16px' }}>
                 <label htmlFor="templateSelect">Wähle ein Template: </label>
                 <select id="templateSelect" value={selectedTemplate} onChange={handleTemplateChange}>
@@ -356,11 +353,62 @@ const TemplateEditorPage: React.FC = () => {
                 </select>
             </div>
 
-            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px'}}>
-                <div style={{position: 'relative', width: canvasDimensions.width, height: canvasDimensions.height}}>
+            <Button variant={'filled'} className={'bg-primary text-white'} onClick={handleSaveClick}>
+                Bild Speichern
+            </Button>
+
+            {/* Modal für die Benennung */}
+            {showNamePopup && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000  // Hinzufügen eines hohen z-index
+                }}>
+                    <div style={{
+                        background: '#fff',
+                        padding: '24px',
+                        borderRadius: '8px',
+                        minWidth: '300px'
+                    }}>
+                        <h3>Bild benennen</h3>
+                        <input
+                            type="text"
+                            value={tempImageName}
+                            onChange={(e) => setTempImageName(e.target.value)}
+                            placeholder="Name eingeben"
+                            style={{width: '100%', padding: '8px', marginBottom: '16px'}}
+                        />
+                        <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+                            <Button variant={'outlined'}
+                                    className='text-primary border-primary'
+                                    onClick={handlePopupCancel} style={{marginRight: '8px'}}>
+                                Abbrechen
+                            </Button>
+                            <Button variant={'filled'}
+                                    className={'bg-primary text-white'}
+                                    onClick={handlePopupSave} style={{
+
+                            }}>
+                                Speichern
+                            </Button>
+
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Canvas und Eingabefelder */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ position: 'relative', width: canvasDimensions.width, height: canvasDimensions.height }}>
                     <canvas ref={canvasRef} style={{ border: '1px solid #000', display: 'block' }} />
                     {(templateConfig[selectedTemplate] || []).map(field => {
-                        // Bei Freitext-Modus die Felder field5 bis field10 nicht rendern
                         if (textMode === 'Freitext' && ["field5", "field6", "field7", "field8", "field9", "field10"].includes(field.id)) {
                             return null;
                         }
@@ -412,25 +460,25 @@ const TemplateEditorPage: React.FC = () => {
                             left: `${0.05 * canvasDimensions.width}px`,
                             top: `${0.48 * canvasDimensions.height}px`,
                             width: `${0.8 * canvasDimensions.width}px`,
-                            height: `${(0.4 ) * canvasDimensions.height}px`,
+                            height: `${(0.4) * canvasDimensions.height}px`,
                             background: 'rgba(255,255,255,0.7)',
                             display: 'flex',
                             flexDirection: 'column'
                         }}>
-                           <textarea
-                               value={freitextValue}
-                               onChange={(e) => setFreitextValue(e.target.value)}
-                               placeholder="Freitext eingeben..."
-                               style={{
-                                   flex: 1,
-                                   width: '100%',
-                                   height: '100%',
-                                   border: '1px solid #ccc',
-                                   fontSize: `${0.02 * canvasDimensions.height}px`,
-                                   resize: 'none',
-                                   color: freitextColor
-                               }}
-                           />
+                            <textarea
+                                value={freitextValue}
+                                onChange={(e) => setFreitextValue(e.target.value)}
+                                placeholder="Freitext eingeben..."
+                                style={{
+                                    flex: 1,
+                                    width: '100%',
+                                    height: '100%',
+                                    border: '1px solid #ccc',
+                                    fontSize: `${0.02 * canvasDimensions.height}px`,
+                                    resize: 'none',
+                                    color: freitextColor
+                                }}
+                            />
                             <input
                                 type="color"
                                 value={freitextColor}
@@ -447,35 +495,36 @@ const TemplateEditorPage: React.FC = () => {
                 </div>
             </div>
 
-            <button onClick={handleSaveClick}>Bild speichern</button>
-
-            {popupMessage && <div style={{marginTop: '16px', color: 'green'}}>{popupMessage}</div>}
-
-            {showNamePopup && (
+            {/* Neues modales Pop-up für die Erfolgs-/Fehlermeldung */}
+            {popupMessage && (
                 <div style={{
                     position: 'fixed',
                     top: 0,
                     left: 0,
                     width: '100%',
                     height: '100%',
-                    background: 'rgba(0,0,0,0.5)',
+                    background: 'rgba(0, 0, 0, 0.5)',
                     display: 'flex',
                     justifyContent: 'center',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    zIndex: 1000,
                 }}>
-                    <div style={{ background: '#fff', padding: '24px', borderRadius: '8px', minWidth: '300px' }}>
-                        <h3>Bild benennen</h3>
-                        <input
-                            type="text"
-                            value={tempImageName}
-                            onChange={(e) => setTempImageName(e.target.value)}
-                            placeholder="Name eingeben"
-                            style={{ width: '100%', padding: '8px', marginBottom: '16px' }}
-                        />
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <button onClick={handlePopupCancel} style={{ marginRight: '8px' }}>Abbrechen</button>
-                            <button onClick={handlePopupSave}>Speichern</button>
-                        </div>
+                    <div style={{
+                        background: '#fff',
+                        padding: '24px',
+                        borderRadius: '8px',
+                        minWidth: '300px',
+                        textAlign: 'center'
+                    }}>
+                        <h3 style={{marginBottom: '16px'}} dangerouslySetInnerHTML={{__html: popupMessage}}/>
+
+                        <Button variant={'filled'}
+                                className={'bg-primary text-white'}
+                                onClick={() => setPopupMessage(null)} style={{
+
+                        }}>
+                            Schließen
+                        </Button>
                     </div>
                 </div>
             )}
