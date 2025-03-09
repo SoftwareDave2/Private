@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping(path = "/image")
@@ -123,4 +124,18 @@ public class ImageController {
         file.delete();
         return "Image deleted successfully.";
     }
+
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/exists")
+    public @ResponseBody ResponseEntity<Map<String, Boolean>> checkImageExists(@RequestParam("filename") String filename) {
+        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+                "src" + File.separator + "frontend" + File.separator +
+                "public" + File.separator + "uploads";
+        File file = new File(uploadsDirPath, filename);
+        boolean exists = file.exists();
+        return ResponseEntity.ok(Collections.singletonMap("exists", exists));
+    }
+
+
 }

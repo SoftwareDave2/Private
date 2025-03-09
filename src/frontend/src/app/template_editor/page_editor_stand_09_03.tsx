@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 import PageHeader from "@/components/layout/PageHeader";
-import { getBackendApiUrl } from "@/utils/backendApiUrl";
+import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 // Erweitertes Interface mit relativen Positionen
 interface FieldConfig {
@@ -151,6 +151,8 @@ const templateConfig: Record<string, FieldConfig[]> = {
     ],
 };
 
+// const host = window.location.hostname;
+// const backendApiUrl = 'http://' + host + ':8080';
 const backendApiUrl = getBackendApiUrl();
 
 const TemplateEditorPage: React.FC = () => {
@@ -255,48 +257,13 @@ const TemplateEditorPage: React.FC = () => {
         }
     };
 
-    // Funktion zum Überprüfen, ob ein Dateiname bereits existiert
-    const checkFileNameExists = async (fileName: string): Promise<boolean> => {
-        try {
-            const response = await fetch(`${backendApiUrl}/image/exists?filename=${encodeURIComponent(fileName)}`);
-            if (!response.ok) {
-                throw new Error('Fehler bei der Überprüfung des Dateinamens.');
-            }
-            const data = await response.json();
-            return data.exists;
-        } catch (error) {
-            console.error('Fehler beim Prüfen des Dateinamens:', error);
-            // Im Fehlerfall wird angenommen, dass der Name nicht existiert
-            return false;
-        }
-    };
-
-    // Funktion, die einen verfügbaren Dateinamen ermittelt, falls der gewünschte Name schon existiert
-    const getAvailableFileName = async (baseName: string): Promise<string> => {
-        let finalName = baseName;
-        let counter = 1;
-        // Solange der Dateiname existiert, wird ein Suffix _counter angehängt.
-        while (await checkFileNameExists(finalName)) {
-            const nameWithoutExt = baseName.substring(0, baseName.lastIndexOf('.'));
-            finalName = `${nameWithoutExt}_${counter}.png`;
-            counter++;
-        }
-        return finalName;
-    };
-
-    // Angepasste Funktion zum Speichern des Bildes mit überprüfter Benennung
-    const saveImage = async () => {
+    const saveImage = () => {
         drawTextOnCanvas();
         const canvas = canvasRef.current;
         if (!canvas) return;
-
-        // Basisname: Wenn ein Name vom Nutzer eingegeben wurde, ansonsten "output"
-        let baseName = tempImageName.trim() !== '' ? tempImageName.trim() : 'output';
-        baseName = baseName + '.png';
-
-        // Ermittele einen verfügbaren Dateinamen
-        const finalFileName = await getAvailableFileName(baseName);
-
+        const finalFileName = tempImageName.trim() !== ''
+            ? `${tempImageName.trim()}_output_${Date.now()}.png`
+            : `output_${Date.now()}.png`;
         canvas.toBlob(async (blob) => {
             if (!blob) return;
             const file = new File([blob], finalFileName, { type: 'image/png' });
@@ -309,11 +276,11 @@ const TemplateEditorPage: React.FC = () => {
                     body: formData
                 });
                 if (!response.ok) {
-                    throw new Error(`Upload fehlgeschlagen: ${response.status} ${response.statusText}`);
+                    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
                 }
                 setPopupMessage('Bild wurde erfolgreich hochgeladen.');
             } catch (error: any) {
-                console.error('Fehler beim Hochladen des Bildes:', error.message || error);
+                console.error('Error on uploading file.', error.message || error);
                 setPopupMessage('Fehler beim Hochladen des Bildes.');
             }
         }, 'image/png');
@@ -428,7 +395,7 @@ const TemplateEditorPage: React.FC = () => {
                                    border: '1px solid #ccc',
                                    fontSize: `${0.02 * canvasDimensions.height}px`,
                                    resize: 'none',
-                                   color: freitextColor
+                                   color: freitextColor // Hier wird die Textfarbe gesetzt
                                }}
                            />
                             <input
