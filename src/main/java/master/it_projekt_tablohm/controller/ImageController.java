@@ -2,6 +2,7 @@ package master.it_projekt_tablohm.controller;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -15,12 +16,14 @@ import java.util.Map;
 
 @Controller
 @RequestMapping(path = "/image")
+@CrossOrigin(origins = "*")
 public class ImageController {
-
-    @CrossOrigin(origins = "*")
-    @PostMapping(path = "/upload")
+    @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    //@CrossOrigin(origins = "*")
+   //@PostMapping(path = "/upload")
     public @ResponseBody String uploadImage(@RequestParam("image") MultipartFile image) {
         // Define the uploads directory outside the src folder
+
         String uploadsDirPath = System.getProperty("user.dir") + File.separator +
                 "src" + File.separator + "frontend" + File.separator +
                 "public" + File.separator + "uploads";
