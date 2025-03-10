@@ -30,7 +30,7 @@ export default function UploadMediaDialog({open, onCancel, onSaved}: UploadMedia
         if (e.target.files) {
             const newFile: File = e.target.files[0]
             const fileSize = (newFile.size / (1024 * 1024))
-            if (fileSize > 2) {
+            if (fileSize > 5) {
                 setUploadError(true)
                 return
             }
