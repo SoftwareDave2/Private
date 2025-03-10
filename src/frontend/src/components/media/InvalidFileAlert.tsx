@@ -12,7 +12,7 @@ export default function InvalidFileAlert() {
                 Das ausgewählte Bild ist leider nicht im korrekten Format! Bitte beachten Sie folgende Vorgaben:
             </Typography>
             <ul className={'ms-3 list-disc list-inside'}>
-                <li>Maximale Dateigröße: 2MB</li>
+                <li>Maximale Dateigröße: 10MB</li>
             </ul>
         </Alert>
     )
