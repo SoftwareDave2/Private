@@ -1,22 +1,23 @@
-import React, {SyntheticEvent} from "react";
+import React, { SyntheticEvent } from "react";
+import { getBackendApiUrl } from "@/utils/backendApiUrl";
 
 type ImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
-    filename: string,
+    internalName: string,
     onImageLoaded?: (width: number, height: number) => void
 }
 
-export default function Image({filename, onImageLoaded, ...props}: ImageProps) {
-    const imageFolderPath = '/uploads/'
+export default function Image({ internalName, onImageLoaded, ...props }: ImageProps) {
+    const imageUrl = `${getBackendApiUrl()}/image/download/${internalName}`;
 
     const loadedHandler = (e: SyntheticEvent<HTMLImageElement, Event>) => {
-        e.preventDefault()
-        const img = e.target as HTMLImageElement
+        e.preventDefault();
+        const img = e.target as HTMLImageElement;
         if (onImageLoaded) {
-            onImageLoaded(img.naturalWidth, img.naturalHeight)
+            onImageLoaded(img.naturalWidth, img.naturalHeight);
         }
     }
 
     return (
-        <img src={imageFolderPath + filename} alt={''} {...props} onLoad={loadedHandler} />
-    )
+        <img src={imageUrl} alt={''} {...props} onLoad={loadedHandler} />
+    );
 }
