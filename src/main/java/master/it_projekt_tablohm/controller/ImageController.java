@@ -1,5 +1,10 @@
 package master.it_projekt_tablohm.controller;
 
+import jakarta.annotation.PostConstruct;
+import master.it_projekt_tablohm.models.Image;
+import master.it_projekt_tablohm.repositories.DisplayRepository;
+import master.it_projekt_tablohm.repositories.ImageRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -9,43 +14,115 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping(path = "/image")
 @CrossOrigin(origins = "*")
 public class ImageController {
-    @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    //@CrossOrigin(origins = "*")
-   //@PostMapping(path = "/upload")
-    public @ResponseBody String uploadImage(@RequestParam("image") MultipartFile image) {
-        // Define the uploads directory outside the src folder
 
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
-                "src" + File.separator + "frontend" + File.separator +
-                "public" + File.separator + "uploads";
+    private final ImageRepository imageRepository;
+
+    public ImageController(ImageRepository imageRepository) {
+        this.imageRepository = imageRepository;
+    }
+
+    // Define the uploads directory (adjust as needed)
+    private final String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+            "src" + File.separator + "frontend" + File.separator +
+            "public" + File.separator + "uploads";
+
+    // Ensure the uploads directory exists
+    private boolean ensureUploadsDirectoryExists() {
         File uploadsDir = new File(uploadsDirPath);
-
-        // Create the directory if it does not exist
         if (!uploadsDir.exists()) {
-            if (!uploadsDir.mkdir()) {
-                return "Failed to create uploads directory.";
+            return uploadsDir.mkdir();
+        }
+        return true;
+    }
+
+    @PostConstruct
+    public void synchronizeImages() {
+        // Ensure the uploads directory exists
+        if (!ensureUploadsDirectoryExists()) {
+            System.err.println("Uploads directory could not be created.");
+            return;
+        }
+
+        // Get the uploads folder as a File object
+        File uploadsDir = new File(uploadsDirPath);
+        // List file names present in the uploads folder
+        Set<String> fileNamesInFolder = Arrays.stream(uploadsDir.listFiles())
+                .filter(File::isFile)
+                .map(File::getName)
+                .collect(Collectors.toSet());
+
+        // Retrieve all image records from the database
+        List<Image> imagesFromDb = imageRepository.findAll();
+        // Extract the file names stored in the database
+        Set<String> fileNamesInDb = imagesFromDb.stream()
+                .map(Image::getFilename)
+                .collect(Collectors.toSet());
+
+        // Add missing files to the database
+        for (String fileName : fileNamesInFolder) {
+            if (!fileNamesInDb.contains(fileName)) {
+                Image newImage = new Image();
+                newImage.setFilename(fileName);
+                newImage.setUploadDate(LocalDateTime.now());
+                imageRepository.save(newImage);
+                System.out.println("Added missing image record for file: " + fileName);
             }
         }
 
-        // Save the uploaded file
+        // Remove records from the database for files that no longer exist in the folder
+        for (Image image : imagesFromDb) {
+            if (!fileNamesInFolder.contains(image.getFilename())) {
+                imageRepository.delete(image);
+                System.out.println("Removed image record for missing file: " + image.getFilename());
+            }
+        }
+    }
+
+
+    @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public @ResponseBody ResponseEntity<String> uploadImage(@RequestParam("image") MultipartFile image) {
+        if (!ensureUploadsDirectoryExists()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to create uploads directory.");
+        }
+
+        String originalFilename = image.getOriginalFilename();
+        // Extract file extension if present
+        String extension = "";
+        int dotIndex = originalFilename.lastIndexOf('.');
+        if (dotIndex >= 0) {
+            extension = originalFilename.substring(dotIndex);
+        }
+        // Generate a unique internal name
+        String internalName = UUID.randomUUID().toString() + extension;
+        String filePath = uploadsDirPath + File.separator + internalName;
+        File destinationFile = new File(filePath);
+
         try {
-            String filePath = uploadsDirPath + File.separator + image.getOriginalFilename();
-            File destinationFile = new File(filePath);
             image.transferTo(destinationFile);
-            return "Image uploaded successfully to: " + filePath;
         } catch (IOException e) {
             e.printStackTrace();
-            return "Failed to upload image: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload image: " + e.getMessage());
         }
+
+        // Create and save the image record
+        Image img = new Image();
+        img.setFilename(originalFilename);
+        img.setUploadDate(LocalDateTime.now());
+        imageRepository.save(img);
+
+        return ResponseEntity.ok("Image uploaded successfully with id: " + img.getId());
     }
 
     @CrossOrigin(origins = "*")
@@ -76,38 +153,18 @@ public class ImageController {
         }
     }
 
-    @CrossOrigin(origins = "*")
-    @GetMapping(path = "/download/all")
-    public @ResponseBody ResponseEntity<List<String>> listImages() {
-        // Create path to upload folder
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
-                "src" + File.separator + "frontend" + File.separator +
-                "public" + File.separator + "uploads";
-        File uploadsDir = new File(uploadsDirPath);
 
-        if (!uploadsDir.exists() || !uploadsDir.isDirectory()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
-        }
 
-        // Collect all image filenames in the directory
-        String[] imageFiles = uploadsDir.list((dir, name) -> {
-            // Filter for common image file extensions
-            String lowerCaseName = name.toLowerCase();
-            return lowerCaseName.endsWith(".jpg") || lowerCaseName.endsWith(".jpeg") ||
-                    lowerCaseName.endsWith(".png") || lowerCaseName.endsWith(".gif") ||
-                    lowerCaseName.endsWith(".bmp") || lowerCaseName.endsWith(".webp");
-        });
+    @GetMapping(path = "/listByDate")
+    public @ResponseBody ResponseEntity<List<Image>> listImages() {
+        List<Image> images = imageRepository.findAll(Sort.by(Sort.Direction.DESC, "uploadDate"));
+        return ResponseEntity.ok(images);
+    }
 
-        // Add file path to image.
-        //for (int i = 0; i < imageFiles.length; i++) {
-        //    imageFiles[i] = File.separator + "uploads" + File.separator + imageFiles[i];
-        //}
-
-        if (imageFiles == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
-        }
-
-        return ResponseEntity.ok(Arrays.asList(imageFiles));
+    @GetMapping(path = "/listByFilename")
+    public @ResponseBody ResponseEntity<List<Image>> listImagesByFilename() {
+        List<Image> images = imageRepository.findAll(Sort.by(Sort.Direction.ASC, "filename"));
+        return ResponseEntity.ok(images);
     }
 
     @CrossOrigin("*")
@@ -123,6 +180,8 @@ public class ImageController {
         if (!file.exists()){
             return "The image you are trying to delete doesn't exist.";
         }
+
+        imageRepository.delete(imageRepository.findByFilename(filename));
 
         file.delete();
         return "Image deleted successfully.";

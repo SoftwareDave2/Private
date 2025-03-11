@@ -2,7 +2,7 @@
 
 import PageHeader from "@/components/layout/PageHeader";
 import PageHeaderButton from "@/components/layout/PageHeaderButton";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import UploadMediaDialog from "@/components/media/UploadMediaDialog";
 import { MediaContentItemData } from "@/types/mediaContentItemData";
 import MediaContentItems from "@/components/media/MediaContentItems";
@@ -32,27 +32,14 @@ export default function Media() {
     };
 
     const updateImages = async () => {
-        const response = await fetch(backendApiUrl + '/image/download/all');
-        const filenames = (await response.json()) as string[];
-        // Beispielhaft: Falls uploadDate nicht vorhanden ist, setzen wir hier das aktuelle Datum.
-        setImages(
-            filenames.map(f => ({ filename: f, uploadDate: new Date().toISOString() } as MediaContentItemData))
-        );
+        // Use the appropriate endpoint based on sortOption.
+        const endpoint = sortOption === "filename" ? '/image/listByFilename' : '/image/listByDate';
+        const response = await fetch(backendApiUrl + endpoint);
+        const data = (await response.json()) as MediaContentItemData[];
+        setImages(data);
     };
 
-    // Sortiere Bilder basierend auf der gewählten Option
-    const sortedImages = useMemo(() => {
-        return [...images].sort((a, b) => {
-            if (sortOption === "filename") {
-                return a.filename.localeCompare(b.filename);
-            } else if (sortOption === "uploadDate") {
-                //return new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime();
-                return 0;
-            }
-            return 0;
-        });
-    }, [images, sortOption]);
-
+    // Initial image fetch on mount.
     useEffect(() => {
         if (hasFetched.current) return;
         hasFetched.current = true;
@@ -60,6 +47,13 @@ export default function Media() {
             .then(() => console.log('Images loaded!'))
             .catch(err => console.error('Error loading images', err));
     }, []);
+
+    // Re-fetch images whenever the sort option changes.
+    useEffect(() => {
+        updateImages()
+            .then(() => console.log('Images updated on sort change!'))
+            .catch(err => console.error('Error updating images on sort change', err));
+    }, [sortOption]);
 
     return (
         <main>
@@ -79,8 +73,8 @@ export default function Media() {
                 </Select>
             </div>
 
-            {/* Anzeige der sortierten Bilder */}
-            <MediaContentItems images={sortedImages} onImageDeleted={handleImageDeleted} />
+            {/* Anzeige der Bilder, die direkt vom Backend sortiert geliefert werden */}
+            <MediaContentItems images={images} onImageDeleted={handleImageDeleted} />
 
             <UploadMediaDialog open={dialogOpen} onCancel={handleDialogOpen} onSaved={handleImageUpload} />
         </main>
