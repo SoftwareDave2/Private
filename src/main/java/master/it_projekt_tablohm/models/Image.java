@@ -13,9 +13,6 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
-    // Used internally for file storage and retrieval.
-    private String internalName;
-
     // The display name (user-friendly filename).
     private String filename;
 
@@ -27,12 +24,6 @@ public class Image {
     }
     public void setId(int id) {
         this.id = id;
-    }
-    public String getInternalName() {
-        return internalName;
-    }
-    public void setInternalName(String internalName) {
-        this.internalName = internalName;
     }
     public String getFilename() {
         return filename;
