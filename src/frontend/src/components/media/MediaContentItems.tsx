@@ -6,51 +6,57 @@ import MediaItemViewDialog from "@/components/media/MediaItemViewDialog";
 
 type MediaContentItemProps = {
     images: MediaContentItemData[];
-    onImageDeleted: (filename: string) => void;
+    onImageDeleted: (internalName: string) => void;
 };
 
 export default function MediaContentItems({ images, onImageDeleted }: MediaContentItemProps) {
+    // Store the entire image object so both display name and internalName are available.
+    const [selectedImage, setSelectedImage] = useState<MediaContentItemData | null>(null);
     const [showImgView, setShowImgView] = useState<boolean>(false);
-    const [imgViewFilename, setImgViewFilename] = useState<string>("");
 
-    const imageClickHandler = (filename: string) => {
-        setImgViewFilename(filename);
+    const imageClickHandler = (image: MediaContentItemData) => {
+        setSelectedImage(image);
         setShowImgView(true);
     };
 
     const closeImgViewHandler = () => {
         setShowImgView(false);
-        setImgViewFilename("");
+        setSelectedImage(null);
     };
 
     const imgDeletedHandler = () => {
-        const filename = imgViewFilename;
+        if (selectedImage) {
+            onImageDeleted(selectedImage.internalName);
+        }
         closeImgViewHandler();
-        onImageDeleted(filename);
     };
 
     return (
         <>
             <div className={styles.gridContainer}>
                 {images.map((image) => (
-                    <div key={image.filename} className={styles.imageWrapper}>
+                    <div key={image.internalName} className={styles.imageWrapper}>
                         <div className={styles.imageContainer}>
                             <Image
-                                filename={image.filename}
+                                internalName={image.internalName}
                                 className={styles.image}
-                                onClick={() => imageClickHandler(image.filename)}
+                                onClick={() => imageClickHandler(image)}
                             />
                         </div>
                         <span className={styles.filenameText}>{image.filename}</span>
                     </div>
                 ))}
             </div>
-            <MediaItemViewDialog
-                open={showImgView}
-                filename={imgViewFilename}
-                onClose={closeImgViewHandler}
-                onDeleted={imgDeletedHandler}
-            />
+            {selectedImage && (
+                <MediaItemViewDialog
+                    open={showImgView}
+                    filename={selectedImage.filename}
+                    internalName={selectedImage.internalName}
+                    id={selectedImage.id}
+                    onClose={closeImgViewHandler}
+                    onDeleted={imgDeletedHandler}
+                />
+            )}
         </>
     );
 }
