@@ -7,8 +7,8 @@ import { DisplayData } from "@/types/displayData"
 import DisplayInfoDialog from "@/components/dashboard/DisplayInfoDialog";
 import { getBackendApiUrl } from "@/utils/backendApiUrl";
 
-// Material Tailwind Select-Komponenten
-import { Select, Option } from "@material-tailwind/react";
+// Material Tailwind Dropdown-Komponenten
+import { Menu, MenuHandler, MenuList, MenuItem, Button } from "@material-tailwind/react";
 
 export default function Home() {
     const backendApiUrl = useMemo(() => getBackendApiUrl(), []);
@@ -157,17 +157,23 @@ export default function Home() {
                 title={'Dashboard'}
                 info={`${displays.length} Bildschirme laufen - 0 Bildschirme gestoppt`}
             >
-                {/* Material Tailwind Select für die Sortierung, rechtsbündig und kleiner Button */}
-                <div className="flex items-center transform -translate-y-1 justify-end">
-                    <Select
-                        label="Sortieren nach"
-                        value={sortingMode}
-                        onChange={(value) => setSortingMode(value as 'name' | 'custom')}
-                        className="text-xs"
-                    >
-                        <Option value="name">Nach Name sortieren</Option>
-                        <Option value="custom">Freie Sortierung</Option>
-                    </Select>
+                {/* Dropdown im Header, rechtsbündig und kleiner Button */}
+                <div className="flex items-center justify-end w-full">
+                    <Menu>
+                        <MenuHandler>
+                            <Button size="sm" className="ml-auto">
+                                {sortingMode === 'name' ? "Nach Name" : "Freie Sortierung"}
+                            </Button>
+                        </MenuHandler>
+                        <MenuList>
+                            <MenuItem onClick={() => setSortingMode('name')}>
+                                Nach Name sortieren
+                            </MenuItem>
+                            <MenuItem onClick={() => setSortingMode('custom')}>
+                                Freie Sortierung
+                            </MenuItem>
+                        </MenuList>
+                    </Menu>
                 </div>
             </PageHeader>
 
