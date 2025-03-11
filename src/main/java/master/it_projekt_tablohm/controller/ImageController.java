@@ -3,6 +3,7 @@ package master.it_projekt_tablohm.controller;
 import jakarta.annotation.PostConstruct;
 import master.it_projekt_tablohm.models.Image;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
+import master.it_projekt_tablohm.repositories.EventRepository;
 import master.it_projekt_tablohm.repositories.ImageRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
@@ -26,9 +27,13 @@ import java.util.stream.Collectors;
 public class ImageController {
 
     private final ImageRepository imageRepository;
+    private final EventRepository eventRepository;
+    private final DisplayRepository displayRepository;
 
-    public ImageController(ImageRepository imageRepository) {
+    public ImageController(ImageRepository imageRepository, EventRepository eventRepository, DisplayRepository displayRepository) {
         this.imageRepository = imageRepository;
+        this.eventRepository = eventRepository;
+        this.displayRepository = displayRepository;
     }
 
     // Define the uploads directory (adjust as needed)
@@ -166,22 +171,41 @@ public class ImageController {
 
     @CrossOrigin("*")
     @DeleteMapping(path = "/delete/{filename}")
-    public @ResponseBody String deleteImage(@PathVariable("filename") String filename) {
-        // Create path to upload folder
-        // Define the uploads directory outside the src folder
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
-                "src" + File.separator + "frontend" + File.separator +
-                "public" + File.separator + "uploads";
+    public @ResponseBody ResponseEntity<String> deleteImage(@PathVariable("filename") String filename) {
         File file = new File(uploadsDirPath, filename);
 
         if (!file.exists()){
-            return "The image you are trying to delete doesn't exist.";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("The image you are trying to delete doesn't exist.");
         }
 
-        imageRepository.delete(imageRepository.findByFilename(filename));
+        // Check if image is used by any event
+        if (eventRepository.existsByDisplayImages_Image(filename)) {
+            return ResponseEntity.status(409)
+                    .body("Cannot delete image: It is used by an event.");
+        }
 
-        file.delete();
-        return "Image deleted successfully.";
+        // Check if image is used as a default image by any display
+        if (displayRepository.existsByDefaultFilename(filename)) {
+            return ResponseEntity.status(410)
+                    .body("Cannot delete image: It is set as a default image by a display.");
+        }
+
+        // Delete the image record from the database
+        Image imageToDelete = imageRepository.findByFilename(filename);
+        if (imageToDelete != null) {
+            imageRepository.delete(imageToDelete);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Image record not found in database.");
+        }
+
+        // Delete the file from the file system
+        if (!file.delete()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to delete image file.");
+        }
+        return ResponseEntity.ok("Image deleted successfully.");
     }
 
 

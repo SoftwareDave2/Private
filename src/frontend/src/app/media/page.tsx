@@ -7,7 +7,7 @@ import UploadMediaDialog from "@/components/media/UploadMediaDialog";
 import { MediaContentItemData } from "@/types/mediaContentItemData";
 import MediaContentItems from "@/components/media/MediaContentItems";
 import { getBackendApiUrl } from "@/utils/backendApiUrl";
-import { Select, Option } from "@material-tailwind/react";
+import { Select, Option, Dialog, DialogHeader, DialogBody, DialogFooter, Button } from "@material-tailwind/react";
 
 export default function Media() {
     const backendApiUrl = getBackendApiUrl();
@@ -15,6 +15,7 @@ export default function Media() {
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [images, setImages] = useState<MediaContentItemData[]>([]);
     const [sortOption, setSortOption] = useState<"filename" | "uploadDate">("filename");
+    const [deletePopup, setDeletePopup] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
 
     const handleDialogOpen = () => setDialogOpen(!dialogOpen);
 
@@ -31,15 +32,23 @@ export default function Media() {
             .catch(err => console.error('Error updating images', err));
     };
 
+    const showDeletePopup = (message: string) => {
+        setDeletePopup({ open: true, message });
+    };
+
+    const closeDeletePopup = () => {
+        setDeletePopup({ open: false, message: '' });
+    };
+
     const updateImages = async () => {
-        // Use the appropriate endpoint based on sortOption.
+        // Endpunkt entsprechend der Sortierung wählen
         const endpoint = sortOption === "filename" ? '/image/listByFilename' : '/image/listByDate';
         const response = await fetch(backendApiUrl + endpoint);
         const data = (await response.json()) as MediaContentItemData[];
         setImages(data);
     };
 
-    // Initial image fetch on mount.
+    // Initialer Abruf der Bilder beim Mount
     useEffect(() => {
         if (hasFetched.current) return;
         hasFetched.current = true;
@@ -48,7 +57,7 @@ export default function Media() {
             .catch(err => console.error('Error loading images', err));
     }, []);
 
-    // Re-fetch images whenever the sort option changes.
+    // Bilder neu laden, wenn sich die Sortierung ändert
     useEffect(() => {
         updateImages()
             .then(() => console.log('Images updated on sort change!'))
@@ -61,7 +70,6 @@ export default function Media() {
                 <PageHeaderButton onClick={handleDialogOpen}>Hochladen</PageHeaderButton>
             </PageHeader>
 
-            {/* Material Tailwind Dropdown zur Sortierung */}
             <div className="mb-4 flex justify-center">
                 <Select
                     label="Sortieren nach"
@@ -73,10 +81,26 @@ export default function Media() {
                 </Select>
             </div>
 
-            {/* Anzeige der Bilder, die direkt vom Backend sortiert geliefert werden */}
-            <MediaContentItems images={images} onImageDeleted={handleImageDeleted} />
+            <MediaContentItems
+                images={images}
+                onImageDeleted={handleImageDeleted}
+                onDeleteResult={showDeletePopup}
+            />
 
             <UploadMediaDialog open={dialogOpen} onCancel={handleDialogOpen} onSaved={handleImageUpload} />
+
+            {/* Popup zur Anzeige des Lösch-Ergebnisses */}
+            <Dialog open={deletePopup.open} handler={closeDeletePopup}>
+                <DialogHeader>Löschen</DialogHeader>
+                <DialogBody>
+                    {deletePopup.message}
+                </DialogBody>
+                <DialogFooter>
+                    <Button variant="filled" color="primary" onClick={closeDeletePopup}>
+                        OK
+                    </Button>
+                </DialogFooter>
+            </Dialog>
         </main>
     );
 }
