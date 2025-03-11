@@ -53,28 +53,40 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
         updateFilteredImages()
     }, [screenWidth, screenHeight]);
 
-    const fetchImages = async () => {
-        const response = await fetch(backendApiUrl + '/image/listByDate')
-        const filenames = (await response.json()) as string[]
-        updateImageData(filenames)
-    }
+    // const fetchImages = async () => {
+    //     const response = await fetch(backendApiUrl + '/image/download/all')
+    //     const filenames = (await response.json()) as string[]
+    //     updateImageData(filenames)
+    // }
 
-    const updateImageData = (filenames: string[]) => {
+    const fetchImages = async () => {
+        // Use the appropriate endpoint based on sortOption.
+        const endpoint =  '/image/listByFilename';
+        const response = await fetch(backendApiUrl + endpoint);
+        const data = (await response.json()) as MediaContentItemData[];
+        //setImages(data);
+        updateImageData(data)
+    };
+
+
+
+
+    const updateImageData = (contentItemData: MediaContentItemData[]) => {
         const newImages: ImageData[] = []
         let loadedCount = 0
 
         const checkAndUpdate = () => {
             loadedCount++
-            if (loadedCount === filenames.length) {
+            if (loadedCount === contentItemData.length) {
                 setImages(newImages)
             }
         }
 
-        filenames.forEach(filename => {
+        contentItemData.forEach(contentItem => {
             const image: HTMLImageElement = document.createElement('img')
             image.onload = () => {
                 newImages.push({
-                    filename: filename,
+                    filename: contentItem.filename,
                     width: image.width,
                     height: image.height
                 })
@@ -83,7 +95,7 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
             image.onerror = () => {
                 checkAndUpdate()
             }
-            image.src = 'uploads/' + filename
+            image.src = 'uploads/' + contentItem.filename
         })
     }
 

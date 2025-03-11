@@ -95,40 +95,37 @@ public class ImageController {
 
 
     @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public @ResponseBody ResponseEntity<String> uploadImage(@RequestParam("image") MultipartFile image) {
-        if (!ensureUploadsDirectoryExists()) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to create uploads directory.");
+    public @ResponseBody String uploadImage(@RequestParam("image") MultipartFile image) {
+        // Define the uploads directory outside the src folder
+
+        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+                "src" + File.separator + "frontend" + File.separator +
+                "public" + File.separator + "uploads";
+        File uploadsDir = new File(uploadsDirPath);
+
+        // Create the directory if it does not exist
+        if (!uploadsDir.exists()) {
+            if (!uploadsDir.mkdir()) {
+                return "Failed to create uploads directory.";
+            }
         }
 
-        String originalFilename = image.getOriginalFilename();
-        // Extract file extension if present
-        String extension = "";
-        int dotIndex = originalFilename.lastIndexOf('.');
-        if (dotIndex >= 0) {
-            extension = originalFilename.substring(dotIndex);
-        }
-        // Generate a unique internal name
-        String internalName = UUID.randomUUID().toString() + extension;
-        String filePath = uploadsDirPath + File.separator + internalName;
-        File destinationFile = new File(filePath);
-
+        // Save the uploaded file
         try {
+            String filePath = uploadsDirPath + File.separator + image.getOriginalFilename();
+            File destinationFile = new File(filePath);
             image.transferTo(destinationFile);
+            Image newImage = new Image();
+            newImage.setFilename(image.getOriginalFilename());
+            newImage.setUploadDate(LocalDateTime.now());
+            imageRepository.save(newImage);
+            return "Image uploaded successfully to: " + filePath;
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to upload image: " + e.getMessage());
+            return "Failed to upload image: " + e.getMessage();
         }
-
-        // Create and save the image record
-        Image img = new Image();
-        img.setFilename(originalFilename);
-        img.setUploadDate(LocalDateTime.now());
-        imageRepository.save(img);
-
-        return ResponseEntity.ok("Image uploaded successfully with id: " + img.getId());
     }
+
 
     @CrossOrigin(origins = "*")
     @GetMapping(path = "/download/{filename}")
