@@ -3,15 +3,20 @@ import styles from "./MediaContentItems.module.css";
 import Image from "@/components/shared/Image";
 import { useState } from "react";
 import MediaItemViewDialog from "@/components/media/MediaItemViewDialog";
+import { getBackendApiUrl } from "@/utils/backendApiUrl";
+import { ConfirmDeleteImageDialog } from "@/components/media/ConfirmDeleteImageDialog";
 
 type MediaContentItemProps = {
     images: MediaContentItemData[];
     onImageDeleted: (filename: string) => void;
+    onDeleteResult: (message: string) => void;
 };
 
-export default function MediaContentItems({ images, onImageDeleted }: MediaContentItemProps) {
+export default function MediaContentItems({ images, onImageDeleted, onDeleteResult }: MediaContentItemProps) {
     const [showImgView, setShowImgView] = useState<boolean>(false);
     const [imgViewFilename, setImgViewFilename] = useState<string>("");
+    const [imageToDelete, setImageToDelete] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
 
     const imageClickHandler = (filename: string) => {
         setImgViewFilename(filename);
@@ -23,10 +28,34 @@ export default function MediaContentItems({ images, onImageDeleted }: MediaConte
         setImgViewFilename("");
     };
 
-    const imgDeletedHandler = () => {
-        const filename = imgViewFilename;
-        closeImgViewHandler();
-        onImageDeleted(filename);
+    const openDeleteConfirmation = (e: React.MouseEvent, filename: string) => {
+        e.stopPropagation(); // Verhindert, dass die Detailansicht geöffnet wird
+        setImageToDelete(filename);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleDeleteConfirmed = async () => {
+        if (!imageToDelete) return;
+        const backendApiUrl = getBackendApiUrl();
+        try {
+            const response = await fetch(backendApiUrl + '/image/delete/' + imageToDelete, {
+                method: 'DELETE'
+            });
+            const responseText = await response.text();
+            console.log(responseText);
+            onDeleteResult("Bild erfolgreich gelöscht."+ responseText);
+            onImageDeleted(imageToDelete);
+        } catch (err) {
+            console.error(err);
+            onDeleteResult("Fehler beim Löschen des Bildes." +err);
+        }
+        setShowDeleteConfirm(false);
+        setImageToDelete(null);
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setImageToDelete(null);
     };
 
     return (
@@ -34,12 +63,18 @@ export default function MediaContentItems({ images, onImageDeleted }: MediaConte
             <div className={styles.gridContainer}>
                 {images.map((image) => (
                     <div key={image.filename} className={styles.imageWrapper}>
-                        <div className={styles.imageContainer}>
+                        <div className={styles.imageContainer} onClick={() => imageClickHandler(image.filename)}>
                             <Image
                                 filename={image.filename}
                                 className={styles.image}
-                                onClick={() => imageClickHandler(image.filename)}
                             />
+                            {/* "X"-Button als Overlay */}
+                            <button
+                                className={styles.deleteButton}
+                                onClick={(e) => openDeleteConfirmation(e, image.filename)}
+                            >
+                                X
+                            </button>
                         </div>
                         <span className={styles.filenameText}>{image.filename}</span>
                     </div>
@@ -49,8 +84,17 @@ export default function MediaContentItems({ images, onImageDeleted }: MediaConte
                 open={showImgView}
                 filename={imgViewFilename}
                 onClose={closeImgViewHandler}
-                onDeleted={imgDeletedHandler}
+                onDeleted={closeImgViewHandler} // Nach Schließen der Detailansicht wird ggf. die Bildliste aktualisiert
+                onDeleteResult={onDeleteResult}
             />
+            {showDeleteConfirm && imageToDelete && (
+                <ConfirmDeleteImageDialog
+                    open={showDeleteConfirm}
+                    filename={imageToDelete}
+                    onClose={cancelDelete}
+                    onDeleted={handleDeleteConfirmed}
+                />
+            )}
         </>
     );
 }
