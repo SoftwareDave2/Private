@@ -181,13 +181,13 @@ public class ImageController {
 
         // Check if image is used by any event
         if (eventRepository.existsByDisplayImages_Image(filename)) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
+            return ResponseEntity.status(409)
                     .body("Cannot delete image: It is used by an event.");
         }
 
         // Check if image is used as a default image by any display
         if (displayRepository.existsByDefaultFilename(filename)) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
+            return ResponseEntity.status(410)
                     .body("Cannot delete image: It is set as a default image by a display.");
         }
 
