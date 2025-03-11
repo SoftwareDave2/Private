@@ -12,6 +12,8 @@ import java.util.Optional;
 
 public interface DisplayRepository extends CrudRepository<Display, Integer> {
 
+    boolean existsByDefaultFilename(String filename);
+
     Optional<Display> findByMacAddress(String macAddress);
 
     List<Display> findByMacAddressIn(List<String> macAddresses);

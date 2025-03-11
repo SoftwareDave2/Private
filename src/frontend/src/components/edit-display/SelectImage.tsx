@@ -54,7 +54,7 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
     }, [screenWidth, screenHeight]);
 
     const fetchImages = async () => {
-        const response = await fetch(backendApiUrl + '/image/download/all')
+        const response = await fetch(backendApiUrl + '/image/listByDate')
         const filenames = (await response.json()) as string[]
         updateImageData(filenames)
     }

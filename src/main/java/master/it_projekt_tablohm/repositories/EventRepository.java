@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Integer> {
+
+    boolean existsByDisplayImages_Image(String image);
+
     Optional<Event> findById(Integer eventId);
     List<Event> findByGroupId(String groupId);
     // Find events that contain a specific display MAC address
