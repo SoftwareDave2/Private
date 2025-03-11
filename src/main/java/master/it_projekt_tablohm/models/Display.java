@@ -29,7 +29,9 @@ public class Display {
 
     private boolean doSwitch;
     private String filename;
+    private String internalName;
     private String defaultFilename;
+    private String defaultInternalName;
     private String filenameApp;
 
     private LocalDateTime lastSwitch;
@@ -139,6 +141,22 @@ public class Display {
 
     public void setFilename(String image_filename) {
         this.filename = image_filename;
+    }
+
+    public String getInternalName() {
+        return internalName;
+    }
+
+    public void setInternalName(String internalName) {
+        this.internalName = internalName;
+    }
+
+    public String getDefaultInternalName() {
+        return defaultInternalName;
+    }
+
+    public void setDefaultInternalName(String defaultInternalName) {
+        this.defaultInternalName = defaultInternalName;
     }
 
     public String getFilenameApp() {

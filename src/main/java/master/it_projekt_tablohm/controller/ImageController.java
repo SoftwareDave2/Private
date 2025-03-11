@@ -78,12 +78,25 @@ public class ImageController {
 
     @GetMapping(path = "/download/{internalName}")
     public @ResponseBody ResponseEntity<byte[]> downloadImage(@PathVariable("internalName") String internalName) {
-        Optional<Image> optionalImage = imageRepository.findByInternalName(internalName);
-        if (!optionalImage.isPresent()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        File file;
+        String displayFilename;
+
+        // Check if the requested filename is "initial.jpg"
+        if ("initial.jpg".equalsIgnoreCase(internalName)) {
+            // Directly use "initial.jpg" from the uploads folder
+            file = new File(uploadsDirPath, "initial.jpg");
+            displayFilename = "initial.jpg";
+        } else {
+            // Otherwise, look up the image in the repository
+            Optional<Image> optionalImage = imageRepository.findByInternalName(internalName);
+            if (!optionalImage.isPresent()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+            Image img = optionalImage.get();
+            file = new File(uploadsDirPath, img.getInternalName());
+            displayFilename = img.getFilename();
         }
-        Image img = optionalImage.get();
-        File file = new File(uploadsDirPath, img.getInternalName());
+
         if (!file.exists()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
@@ -91,8 +104,8 @@ public class ImageController {
         try (InputStream inputStream = new FileInputStream(file)) {
             byte[] fileContent = inputStream.readAllBytes();
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + img.getFilename() + "\"");
-            // Here we use a hard-coded content type; consider dynamic type detection if needed.
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + displayFilename + "\"");
+            // You can change the content type if needed.
             headers.add(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE);
             return ResponseEntity.ok().headers(headers).body(fileContent);
         } catch (IOException e) {
@@ -100,6 +113,7 @@ public class ImageController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 
     @GetMapping(path = "/listByDate")
     public @ResponseBody ResponseEntity<List<Image>> listImages() {

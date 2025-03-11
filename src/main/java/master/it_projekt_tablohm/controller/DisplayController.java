@@ -4,6 +4,7 @@ import master.it_projekt_tablohm.models.*;
 import master.it_projekt_tablohm.repositories.ConfigRepository;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.repositories.EventRepository;
+import master.it_projekt_tablohm.repositories.ImageRepository;
 import master.it_projekt_tablohm.services.ErrorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,8 @@ public class DisplayController {
     private final ConfigRepository configRepository;
     @Autowired
     private ErrorService errorService;
+    @Autowired
+    private ImageRepository imageRepository;
 
     public DisplayController(EventRepository eventRepository, DisplayRepository displayRepository, ConfigRepository configRepository) {
         this.eventRepository = eventRepository;
@@ -43,6 +46,7 @@ public class DisplayController {
             @RequestParam Integer height,
             @RequestParam String orientation,
             @RequestParam String defaultFilename,
+            @RequestParam String defaultInternalName,
             @RequestParam(required = false) LocalDateTime wakeTime) {
 
         Optional<Display> existingDisplay = displayRepository.findByMacAddress(macAddress);
@@ -57,6 +61,7 @@ public class DisplayController {
         display.setHeight(height);
         display.setOrientation(orientation);
         display.setDefaultFilename(defaultFilename);
+        display.setDefaultInternalName(defaultInternalName);
 
         // Set wakeTime to null if it's not provided
         if (wakeTime != null) {
@@ -93,7 +98,8 @@ public class DisplayController {
         display.setDoSwitch(true);
         display.setFilenameApp("");
         display.setDefaultFilename("initial.jpg");
-        display.setFilename(display.getDefaultFilename());
+        display.setFilename("initial.jpg");
+        display.setInternalName(display.getFilename());
         display.setWidth(width);
         display.setHeight(height);
         display.setWakeTime(LocalDateTime.now().plusMinutes(10));
@@ -220,6 +226,12 @@ public class DisplayController {
 
         if(filename.equals(""))
             filename = display.getDefaultFilename();
+
+        Optional<Image> image = imageRepository.findByFilename(filename);
+        if(image.isPresent()) {
+            Image im = image.get();
+            display.setInternalName(im.getInternalName());
+        }
 
         display.setDoSwitch(!display.getFilenameApp().equals(filename));
         display.setFilename(filename);

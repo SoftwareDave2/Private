@@ -7,42 +7,35 @@ import {
     Input,
     Select,
     Option
-} from "@material-tailwind/react"
-import {DisplayData} from "@/types/displayData";
+} from "@material-tailwind/react";
+import { DisplayData } from "@/types/displayData";
 import SelectImage from "@/components/edit-display/SelectImage";
-import React, {useEffect, useState} from "react";
-import {DeleteDisplayDialog} from "@/components/dashboard/DeleteDisplayDialog";
-import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import React, { useEffect, useState } from "react";
+import { DeleteDisplayDialog } from "@/components/dashboard/DeleteDisplayDialog";
+import { getBackendApiUrl } from "@/utils/backendApiUrl";
 
 type EditDisplayDialogProps = {
     open: boolean,
     displayData: DisplayData,
     onClose: () => void,
     onDataUpdated: () => void,
-}
+};
 
-export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: EditDisplayDialogProps) {
-
-    // const host = window.location.hostname;
-    // const backendApiUrl = 'http://' + host + ':8080';
+export function EditDisplayDialog({ open, displayData, onClose, onDataUpdated }: EditDisplayDialogProps) {
     const backendApiUrl = getBackendApiUrl();
 
     const [data, setData] = useState<DisplayData>({
         ...displayData,
-        displayName: displayData.displayName ?? '' // Fallback-Wert setzen
+        displayName: displayData.displayName ?? ''
     });
-    const [openDeleteDisplay, setOpenDeleteDisplay] = useState<boolean>(false)
+    const [openDeleteDisplay, setOpenDeleteDisplay] = useState<boolean>(false);
 
     const [brandSuggestions, setBrandSuggestions] = useState<string[]>([]);
-    // Separater State für den Wert des Brand-Inputs, um diesen temporär leeren zu können
     const [brandInputValue, setBrandInputValue] = useState<string>(data.brand);
 
     const [modelSuggestions, setModelSuggestions] = useState<string[]>([]);
-    // Separater State für den Wert des Brand-Inputs, um diesen temporär leeren zu können
     const [modelInputValue, setModelInputValue] = useState<string>(data.model);
 
-
-    // Beim Initialisieren: Abrufen der Marken vom Backend
     useEffect(() => {
         fetch(backendApiUrl + "/display/brands")
             .then((response) => response.json())
@@ -53,9 +46,6 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
             .catch((err) => console.error("Error fetching brands:", err));
     }, [backendApiUrl]);
 
-
-
-    // Beim Initialisieren: Abrufen der Marken vom Backend
     useEffect(() => {
         fetch(backendApiUrl + "/display/models")
             .then((response) => response.json())
@@ -66,96 +56,84 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
             .catch((err) => console.error("Error fetching models:", err));
     }, [backendApiUrl]);
 
-
-
-
-    const toggleOpenDeleteDisplayHandler = () => setOpenDeleteDisplay(!openDeleteDisplay)
+    const toggleOpenDeleteDisplayHandler = () => setOpenDeleteDisplay(!openDeleteDisplay);
     const orientationChangeHandler = (orientation: string | undefined) =>
-        setData(prevState => ({...prevState, orientation: orientation ?? ''}))
-    const defaultFilenameChangeHandler = (defaultFilename: string) =>
-        setData(prevState => ({...prevState, defaultFilename: defaultFilename}))
+        setData(prevState => ({ ...prevState, orientation: orientation ?? '' }));
+
+    // New handler: When an image is selected as default, update both defaultFilename and defaultInternalName.
+    const defaultImageChangeHandler = (selected: { filename: string, internalName: string }) =>
+        setData(prevState => ({
+            ...prevState,
+            defaultFilename: selected.filename,
+            defaultInternalName: selected.internalName,
+        }));
+
     const displayNameChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
         setData(prevState => ({ ...prevState, displayName: event.target.value }));
     };
 
     const displayDeletedHandler = () => {
-        toggleOpenDeleteDisplayHandler()
-        onDataUpdated()
-    }
+        toggleOpenDeleteDisplayHandler();
+        onDataUpdated();
+    };
 
-    // Wenn sich der Wert im Input ändert, wird sowohl der lokale State als auch data.brand aktualisiert.
     const handleBrandChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setBrandInputValue(value);
-        setData((prev) => ({ ...prev, brand: value }));
+        setData(prev => ({ ...prev, brand: value }));
     };
 
-    // Beim Fokussieren wird der Input temporär geleert,
-    // damit der Browser alle Vorschläge anzeigt.
     const handleBrandFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         setBrandInputValue("");
     };
 
-    // Beim Verlassen (Blur) wird geprüft, ob das Feld leer ist.
-    // Falls ja, wird der bisherige Wert wiederhergestellt.
     const handleBrandBlur = (e: React.FocusEvent<HTMLInputElement>) => {
         if (e.target.value.trim() === "") {
             setBrandInputValue(data.brand);
         }
     };
 
-
-
-
-    // Wenn sich der Wert im Input ändert, wird sowohl der lokale State als auch data.brand aktualisiert.
     const handleModelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setModelInputValue(value);
-        setData((prev) => ({ ...prev, model: value }));
+        setData(prev => ({ ...prev, model: value }));
     };
 
-    // Beim Fokussieren wird der Input temporär geleert,
-    // damit der Browser alle Vorschläge anzeigt.
     const handleModelFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         setModelInputValue("");
     };
 
-    // Beim Verlassen (Blur) wird geprüft, ob das Feld leer ist.
-    // Falls ja, wird der bisherige Wert wiederhergestellt.
     const handleModelBlur = (e: React.FocusEvent<HTMLInputElement>) => {
         if (e.target.value.trim() === "") {
             setModelInputValue(data.model);
         }
     };
 
-
     const updateDisplay = async (formdata: FormData) => {
         console.log(data);
         try {
             const response = await fetch(backendApiUrl + '/display/add', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body:
-                    'macAddress='+ data.macAddress +
-                    '&displayName='+ data.displayName +
+                    'macAddress=' + data.macAddress +
+                    '&displayName=' + data.displayName +
                     '&brand=' + data.brand +
                     '&model=' + data.model +
                     '&width=' + formdata.get('width') +
                     '&height=' + formdata.get('height') +
                     '&orientation=' + data.orientation +
-                    '&defaultFilename=' + data.defaultFilename,
-            })
-            const responseText = await response.text()
-            console.log(responseText)
+                    '&defaultFilename=' + data.defaultFilename +
+                    '&defaultInternalName=' + data.defaultInternalName,
+            });
+            const responseText = await response.text();
+            console.log(responseText);
         } catch (err) {
-            console.error(err)
+            console.error(err);
         }
 
-        onDataUpdated()
-    }
-
-
-
+        onDataUpdated();
+    };
 
     return (
         <Dialog open={open}>
@@ -163,23 +141,18 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
             <form action={updateDisplay}>
                 <DialogBody>
                     <div>
-                        <Input label={'MAC Adresse'} value={data.macAddress} readOnly={true}/>
+                        <Input label={'MAC Adresse'} value={data.macAddress} readOnly={true} />
                     </div>
                     <div className={'mt-5 flex gap-2'}>
-                        {/*<Select label={'Displaymarke'} value={data.brand} name={'brand'} onChange={brandChangeHandler}>
-                            <Option key={'Philips'} value={'Philips'}>Philips</Option>
-                        </Select> */}
                         <Input
                             label="Name"
                             name="displayName"
                             value={data.displayName ?? ''}
                             onChange={displayNameChangeHandler}
                         />
-
                     </div>
 
                     <div className="mt-5 flex gap-2 items-center">
-                        {/* Hier wird das native Input-Feld verwendet */}
                         <div className="w-full">
                             <label
                                 htmlFor="brandInput"
@@ -201,10 +174,9 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                         </div>
                         <datalist id="brandSuggestions">
                             {brandSuggestions.map((brand) => (
-                                <option key={brand} value={brand}/>
+                                <option key={brand} value={brand} />
                             ))}
                         </datalist>
-
 
                         <div className="w-full">
                             <label
@@ -227,11 +199,10 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                         </div>
                         <datalist id="modelSuggestions">
                             {modelSuggestions.map((model) => (
-                                <option key={model} value={model}/>
+                                <option key={model} value={model} />
                             ))}
                         </datalist>
                     </div>
-
 
                     <div className={'mt-5 flex gap-2'}>
                         <Select label={'Orientierung'} value={data.orientation} name={'orientation'}
@@ -241,18 +212,19 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                         </Select>
                         <Input label={'Breite'} type={'number'} className={'min-w-[100px]'}
                                defaultValue={data.width}
-                               name={'width'}/>
+                               name={'width'} />
                         <Input label={'Höhe'} type={'number'} className={'min-w-[100px]'}
                                defaultValue={data.height}
-                               name={'height'}/>
+                               name={'height'} />
                     </div>
                     <div className={'mt-5'}>
-                        <SelectImage selectedFilename={data.defaultFilename}
+                        {/* Updated: Use defaultImageChangeHandler so both defaultFilename and defaultInternalName update */}
+                        <SelectImage selectedImage={data.defaultInternalName}
                                      screenWidth={data.width}
                                      screenHeight={data.height}
                                      screenOrientation={data.orientation}
-                                     onSelect={defaultFilenameChangeHandler}
-                                      />
+                                     onSelect={defaultImageChangeHandler}
+                        />
                     </div>
                 </DialogBody>
                 <DialogFooter className={'justify-between'}>
@@ -270,7 +242,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
             </form>
             <DeleteDisplayDialog open={openDeleteDisplay} displayData={data}
                                  onClose={toggleOpenDeleteDisplayHandler}
-                                 onDisplayDeleted={displayDeletedHandler}/>
+                                 onDisplayDeleted={displayDeletedHandler} />
         </Dialog>
-    )
+    );
 }

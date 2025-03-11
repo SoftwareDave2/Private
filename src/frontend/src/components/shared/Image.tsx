@@ -7,6 +7,7 @@ type ImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
 }
 
 export default function Image({ internalName, onImageLoaded, ...props }: ImageProps) {
+    console.log("internalName " + internalName);
     const imageUrl = `${getBackendApiUrl()}/image/download/${internalName}`;
 
     const loadedHandler = (e: SyntheticEvent<HTMLImageElement, Event>) => {

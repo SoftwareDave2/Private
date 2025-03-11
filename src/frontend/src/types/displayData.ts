@@ -10,6 +10,7 @@ export type DisplayData = {
     filename: string,
     internalName: string,
     defaultFilename: string,
+    defaultInternalName: string,
     runningSince: string,
     wakeTime: string,
     nextEventTime: string,
