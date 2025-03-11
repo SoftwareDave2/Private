@@ -1,5 +1,9 @@
 package master.it_projekt_tablohm.controller;
 
+import master.it_projekt_tablohm.models.Image;
+import master.it_projekt_tablohm.repositories.ImageRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -9,55 +13,77 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.UUID;
 
 @Controller
 @RequestMapping(path = "/image")
 @CrossOrigin(origins = "*")
 public class ImageController {
-    @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    //@CrossOrigin(origins = "*")
-   //@PostMapping(path = "/upload")
-    public @ResponseBody String uploadImage(@RequestParam("image") MultipartFile image) {
-        // Define the uploads directory outside the src folder
 
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
-                "src" + File.separator + "frontend" + File.separator +
-                "public" + File.separator + "uploads";
+    @Autowired
+    private ImageRepository imageRepository;
+
+    // Define the uploads directory (adjust as needed)
+    private final String uploadsDirPath = System.getProperty("user.dir") + File.separator +
+            "src" + File.separator + "frontend" + File.separator +
+            "public" + File.separator + "uploads";
+
+    // Ensure the uploads directory exists
+    private boolean ensureUploadsDirectoryExists() {
         File uploadsDir = new File(uploadsDirPath);
-
-        // Create the directory if it does not exist
         if (!uploadsDir.exists()) {
-            if (!uploadsDir.mkdir()) {
-                return "Failed to create uploads directory.";
-            }
+            return uploadsDir.mkdir();
         }
-
-        // Save the uploaded file
-        try {
-            String filePath = uploadsDirPath + File.separator + image.getOriginalFilename();
-            File destinationFile = new File(filePath);
-            image.transferTo(destinationFile);
-            return "Image uploaded successfully to: " + filePath;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "Failed to upload image: " + e.getMessage();
-        }
+        return true;
     }
 
-    @CrossOrigin(origins = "*")
-    @GetMapping(path = "/download/{filename}")
-    public @ResponseBody ResponseEntity<byte[]> downloadImage(@PathVariable("filename") String filename) {
-        // Create path to upload folder
-        // Define the uploads directory outside the src folder
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
-                "src" + File.separator + "frontend" + File.separator +
-                "public" + File.separator + "uploads";
-        File file = new File(uploadsDirPath, filename);
+    @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public @ResponseBody ResponseEntity<String> uploadImage(@RequestParam("image") MultipartFile image) {
+        if (!ensureUploadsDirectoryExists()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to create uploads directory.");
+        }
 
+        String originalFilename = image.getOriginalFilename();
+        // Extract file extension if present
+        String extension = "";
+        int dotIndex = originalFilename.lastIndexOf('.');
+        if (dotIndex >= 0) {
+            extension = originalFilename.substring(dotIndex);
+        }
+        // Generate a unique internal name
+        String internalName = UUID.randomUUID().toString() + extension;
+        String filePath = uploadsDirPath + File.separator + internalName;
+        File destinationFile = new File(filePath);
+
+        try {
+            image.transferTo(destinationFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload image: " + e.getMessage());
+        }
+
+        // Create and save the image record
+        Image img = new Image();
+        img.setInternalName(internalName);
+        img.setFilename(originalFilename);
+        img.setUploadDate(LocalDateTime.now());
+        imageRepository.save(img);
+
+        return ResponseEntity.ok("Image uploaded successfully with id: " + img.getId());
+    }
+
+    @GetMapping(path = "/download/{internalName}")
+    public @ResponseBody ResponseEntity<byte[]> downloadImage(@PathVariable("internalName") String internalName) {
+        Optional<Image> optionalImage = imageRepository.findByInternalName(internalName);
+        if (!optionalImage.isPresent()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        Image img = optionalImage.get();
+        File file = new File(uploadsDirPath, img.getInternalName());
         if (!file.exists()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
@@ -65,80 +91,58 @@ public class ImageController {
         try (InputStream inputStream = new FileInputStream(file)) {
             byte[] fileContent = inputStream.readAllBytes();
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
-            headers.add(HttpHeaders.CONTENT_TYPE, "image/jpeg");
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(fileContent);
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + img.getFilename() + "\"");
+            // Here we use a hard-coded content type; consider dynamic type detection if needed.
+            headers.add(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE);
+            return ResponseEntity.ok().headers(headers).body(fileContent);
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
-    @CrossOrigin(origins = "*")
-    @GetMapping(path = "/download/all")
-    public @ResponseBody ResponseEntity<List<String>> listImages() {
-        // Create path to upload folder
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
-                "src" + File.separator + "frontend" + File.separator +
-                "public" + File.separator + "uploads";
-        File uploadsDir = new File(uploadsDirPath);
-
-        if (!uploadsDir.exists() || !uploadsDir.isDirectory()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
-        }
-
-        // Collect all image filenames in the directory
-        String[] imageFiles = uploadsDir.list((dir, name) -> {
-            // Filter for common image file extensions
-            String lowerCaseName = name.toLowerCase();
-            return lowerCaseName.endsWith(".jpg") || lowerCaseName.endsWith(".jpeg") ||
-                    lowerCaseName.endsWith(".png") || lowerCaseName.endsWith(".gif") ||
-                    lowerCaseName.endsWith(".bmp") || lowerCaseName.endsWith(".webp");
-        });
-
-        // Add file path to image.
-        //for (int i = 0; i < imageFiles.length; i++) {
-        //    imageFiles[i] = File.separator + "uploads" + File.separator + imageFiles[i];
-        //}
-
-        if (imageFiles == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
-        }
-
-        return ResponseEntity.ok(Arrays.asList(imageFiles));
+    @GetMapping(path = "/listByDate")
+    public @ResponseBody ResponseEntity<List<Image>> listImages() {
+        List<Image> images = imageRepository.findAll(Sort.by(Sort.Direction.DESC, "uploadDate"));
+        return ResponseEntity.ok(images);
     }
 
-    @CrossOrigin("*")
-    @DeleteMapping(path = "/delete/{filename}")
-    public @ResponseBody String deleteImage(@PathVariable("filename") String filename) {
-        // Create path to upload folder
-        // Define the uploads directory outside the src folder
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
-                "src" + File.separator + "frontend" + File.separator +
-                "public" + File.separator + "uploads";
-        File file = new File(uploadsDirPath, filename);
+    @GetMapping(path = "/listByFilename")
+    public @ResponseBody ResponseEntity<List<Image>> listImagesByFilename() {
+        List<Image> images = imageRepository.findAll(Sort.by(Sort.Direction.ASC, "filename"));
+        return ResponseEntity.ok(images);
+    }
 
-        if (!file.exists()){
-            return "The image you are trying to delete doesn't exist.";
+    @DeleteMapping(path = "/delete/{id}")
+    public @ResponseBody ResponseEntity<String> deleteImage(@PathVariable("id") int id) {
+        Optional<Image> optionalImage = imageRepository.findById(id);
+        if (!optionalImage.isPresent()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("The image you are trying to delete doesn't exist.");
         }
-
-        file.delete();
-        return "Image deleted successfully.";
+        Image img = optionalImage.get();
+        File file = new File(uploadsDirPath, img.getInternalName());
+        if (file.exists()){
+            file.delete();
+        }
+        imageRepository.delete(img);
+        return ResponseEntity.ok("Image deleted successfully.");
     }
 
-
-    @CrossOrigin(origins = "*")
-    @GetMapping(path = "/exists")
-    public @ResponseBody ResponseEntity<Map<String, Boolean>> checkImageExists(@RequestParam("filename") String filename) {
-        String uploadsDirPath = System.getProperty("user.dir") + File.separator +
-                "src" + File.separator + "frontend" + File.separator +
-                "public" + File.separator + "uploads";
-        File file = new File(uploadsDirPath, filename);
-        boolean exists = file.exists();
-        return ResponseEntity.ok(Collections.singletonMap("exists", exists));
+    @PutMapping(path = "/rename/{id}")
+    public @ResponseBody ResponseEntity<String> renameImage(@PathVariable("id") int id,
+                                                            @RequestBody Map<String, String> request) {
+        Optional<Image> optionalImage = imageRepository.findById(id);
+        if (!optionalImage.isPresent()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Image not found.");
+        }
+        Image img = optionalImage.get();
+        String newFilename = request.get("filename");
+        if (newFilename == null || newFilename.trim().isEmpty()){
+            return ResponseEntity.badRequest().body("Invalid filename.");
+        }
+        img.setFilename(newFilename);
+        imageRepository.save(img);
+        return ResponseEntity.ok("Image renamed successfully.");
     }
-
-
 }
