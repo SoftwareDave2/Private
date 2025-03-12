@@ -176,19 +176,19 @@ public class ImageController {
 
         if (!file.exists()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("The image you are trying to delete doesn't exist.");
+                    .body("Das Bild das gelöscht werden soll existiert nicht.");
         }
 
         // Check if image is used by any event
         if (eventRepository.existsByDisplayImages_Image(filename)) {
             return ResponseEntity.status(409)
-                    .body("Cannot delete image: It is used by an event.");
+                    .body("Bild kann nicht gelöscht werden, da es von einem Event benötigt wird.");
         }
 
         // Check if image is used as a default image by any display
         if (displayRepository.existsByDefaultFilename(filename)) {
             return ResponseEntity.status(410)
-                    .body("Cannot delete image: It is set as a default image by a display.");
+                    .body("Bild kann nicht gelöscht werden, da es von einem Display als Standardbild verwendet wird.");
         }
 
         // Delete the image record from the database
@@ -205,7 +205,8 @@ public class ImageController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to delete image file.");
         }
-        return ResponseEntity.ok("Image deleted successfully.");
+
+        return ResponseEntity.ok("Bild erfolgreich gelöscht.");
     }
 
 
