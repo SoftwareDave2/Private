@@ -34,11 +34,11 @@ export default function MediaItemViewDialog({ open, filename, onClose, onDeleted
             });
             const responseText = await response.text();
             console.log(responseText);
-            onDeleteResult("Bild erfolgreich gelöscht."+ responseText);
+            onDeleteResult( responseText);
             onDeleted();
         } catch (err) {
             console.error(err);
-            onDeleteResult("Fehler beim Löschen des Bildes." + err);
+            onDeleteResult(err);
             onClose();
         }
         setShowConfirmDeleteDialog(false);

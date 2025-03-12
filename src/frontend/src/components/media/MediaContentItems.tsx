@@ -43,11 +43,11 @@ export default function MediaContentItems({ images, onImageDeleted, onDeleteResu
             });
             const responseText = await response.text();
             console.log(responseText);
-            onDeleteResult("Bild erfolgreich gelöscht."+ responseText);
+            onDeleteResult( responseText);
             onImageDeleted(imageToDelete);
         } catch (err) {
             console.error(err);
-            onDeleteResult("Fehler beim Löschen des Bildes." +err);
+            onDeleteResult(err);
         }
         setShowDeleteConfirm(false);
         setImageToDelete(null);
