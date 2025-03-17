@@ -18,18 +18,19 @@ export function ConfirmDeleteImageDialog({open, filename, onClose, onDeleted}: C
     const backendApiUrl = getBackendApiUrl();
 
     const deleteHandler = async () => {
-        try {
-            const response = await fetch(backendApiUrl + '/image/delete/' + filename, {
-                method: 'DELETE'
-            })
-            const responseText = await response.text()
-            console.log(responseText)
-
-            onDeleted()
-        } catch (err) {
-            console.error(err)
-            onClose()
-        }
+        onDeleted()
+        // try {
+        //     const response = await fetch(backendApiUrl + '/image/delete/' + filename, {
+        //         method: 'DELETE'
+        //     })
+        //     const responseText = await response.text()
+        //     console.log(responseText)
+        //
+        //     onDeleted()
+        // } catch (err) {
+        //     console.error(err)
+        //     onClose()
+        // }
     }
 
     return (

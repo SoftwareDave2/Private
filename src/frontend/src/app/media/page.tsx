@@ -16,14 +16,19 @@ export default function Media() {
     const [images, setImages] = useState<MediaContentItemData[]>([]);
     const [sortOption, setSortOption] = useState<"filename" | "uploadDate">("filename");
     const [deletePopup, setDeletePopup] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+    const [uploadPopup, setUploadPopup] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
 
-    const handleDialogOpen = () => setDialogOpen(!dialogOpen);
+    const handleDialogOpen = () => setDialogOpen(prev => !prev);
 
-    const handleImageUpload = () => {
+    // Wird vom UploadMediaDialog nach erfolgreichem Upload mit dem finalen Dateinamen aufgerufen
+    const handleUploadComplete = (finalFileName: string) => {
         updateImages()
             .then(() => console.log('Images updated!'))
             .catch(err => console.error('Error updating images', err));
-        handleDialogOpen();
+        setUploadPopup({
+            open: true,
+            message: `Bild wurde unter dem Namen <strong>${finalFileName}</strong> erfolgreich hochgeladen.`
+        });
     };
 
     const handleImageDeleted = (filename: string) => {
@@ -40,8 +45,11 @@ export default function Media() {
         setDeletePopup({ open: false, message: '' });
     };
 
+    const closeUploadPopup = () => {
+        setUploadPopup({ open: false, message: '' });
+    };
+
     const updateImages = async () => {
-        // Endpunkt entsprechend der Sortierung wählen
         const endpoint = sortOption === "filename" ? '/image/listByFilename' : '/image/listByDate';
         const response = await fetch(backendApiUrl + endpoint);
         const data = (await response.json()) as MediaContentItemData[];
@@ -87,17 +95,29 @@ export default function Media() {
                 onDeleteResult={showDeletePopup}
             />
 
-            <UploadMediaDialog open={dialogOpen} onCancel={handleDialogOpen} onSaved={handleImageUpload} />
+            {/* UploadMediaDialog – onSaved wird mit dem finalen Dateinamen aufgerufen */}
+            <UploadMediaDialog open={dialogOpen} onCancel={handleDialogOpen} onSaved={handleUploadComplete} />
 
             {/* Popup zur Anzeige des Lösch-Ergebnisses */}
             <Dialog open={deletePopup.open} handler={closeDeletePopup}>
                 <DialogHeader>Löschen</DialogHeader>
-                <DialogBody>
-                    {deletePopup.message}
-                </DialogBody>
+                <DialogBody>{deletePopup.message}</DialogBody>
                 <DialogFooter>
                     <Button variant="filled" color="primary" onClick={closeDeletePopup}>
                         OK
+                    </Button>
+                </DialogFooter>
+            </Dialog>
+
+            {/* Popup zur Anzeige der Upload-Bestätigung */}
+            <Dialog open={uploadPopup.open} handler={closeUploadPopup}>
+                <DialogHeader>Upload Bestätigung</DialogHeader>
+                <DialogBody>
+                    <div dangerouslySetInnerHTML={{ __html: uploadPopup.message }} />
+                </DialogBody>
+                <DialogFooter>
+                    <Button variant="filled" color="primary" onClick={closeUploadPopup}>
+                        Schließen
                     </Button>
                 </DialogFooter>
             </Dialog>
