@@ -76,7 +76,7 @@ public class DisplayService {
 
         for (Event event : events) {
             LocalDateTime eventStart = event.getStart();
-            LocalDateTime eventEnd = event.getEnd(); // Assuming Event has an 'end' field
+            LocalDateTime eventEnd = event.getEnd();
 
             if (now.isAfter(eventStart) && now.isBefore(eventEnd)) {
                 // only the events that are currently planned
@@ -93,8 +93,7 @@ public class DisplayService {
                             errorService.removeErrorFromDisplay(display.getId(), 101);
                         } else {
                             DisplayError error = new DisplayError(101, "Event not Updated");
-                            display.addError(error.getErrorCode(), error.getErrorMessage());
-                            displayRepository.save(display);
+                            errorService.addErrorToDisplay(display.getId(), error.getErrorCode(), error.getErrorMessage());
                         }
 
                     }
