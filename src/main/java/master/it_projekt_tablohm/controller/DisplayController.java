@@ -94,6 +94,7 @@ public class DisplayController {
         display.setFilenameApp("");
         display.setDefaultFilename("initial.jpg");
         display.setFilename(display.getDefaultFilename());
+        display.setOrientation("vertical");
         display.setWidth(width);
         display.setHeight(height);
         display.setWakeTime(LocalDateTime.now().plusMinutes(10));
