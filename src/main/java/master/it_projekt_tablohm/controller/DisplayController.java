@@ -224,6 +224,7 @@ public class DisplayController {
         display.setDoSwitch(!display.getFilenameApp().equals(filename));
         display.setFilename(filename);
         display.setWakeTime(next);
+        errorService.removeErrorFromDisplay(display.getId(), 102);
         displayRepository.save(display);
 
         return display;

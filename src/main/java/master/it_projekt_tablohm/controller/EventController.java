@@ -6,15 +6,12 @@ import master.it_projekt_tablohm.models.DisplayImage;
 import master.it_projekt_tablohm.repositories.EventRepository;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.services.ErrorService;
-import org.dmfs.rfc5545.DateTime;
-import org.dmfs.rfc5545.recur.InvalidRecurrenceRuleException;
-import org.dmfs.rfc5545.recur.RecurrenceRule;
-import org.dmfs.rfc5545.recur.RecurrenceRuleIterator;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,17 +56,16 @@ public class EventController {
             }
         }
 
-        // Check if event is before wakeTime of displays
-        Boolean warning = false;
-        Display collisionDisplay = null;
+        // Check if event is before wakeTime of any displays and collect affected displays
+        List<Display> affectedDisplays = new ArrayList<>();
+        List<String> affectedDisplayMacs = new ArrayList<>();
         for (Display display : existingDisplays) {
-            LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalTime
+            LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalDateTime
             LocalDateTime eventStart = eventRequest.getStart();
-
-            // Convert eventStart to LocalTime for comparison (assuming same time zone)
-            if (wakeTime != null && eventStart.isBefore(wakeTime)) {
-                warning = true;
-                collisionDisplay = display;
+            System.out.println(LocalDateTime.now());
+            if (wakeTime != null && (eventStart.isBefore(wakeTime) || wakeTime.isBefore(LocalDateTime.now()))) {
+                affectedDisplays.add(display);
+                affectedDisplayMacs.add(display.getMacAddress());
             }
         }
 
@@ -101,10 +97,16 @@ public class EventController {
             }
         }
 
-        if(warning) {
-            return ResponseEntity.status(HttpStatusCode.valueOf(541)).body("Event saved, but the start time is before the wake time of display: " + collisionDisplay.getMacAddress());
-
-        }else{
+        // If there are affected displays, add an error to each using the ErrorService
+        if (!affectedDisplays.isEmpty()) {
+            for (Display display : affectedDisplays) {
+                errorService.addErrorToDisplay(display.getId(), 102, "Bildschirm wacht nicht auf vor Eventbeginn. Manueller neustart nötig.");
+            }
+            String affectedInfo = String.join(", ", affectedDisplayMacs);
+            String warningMessage = String.format("Event gespeichert, aber die Startzeit ist vor dem nächsten Aufwachen des/der %d display(s): %s",
+                    affectedDisplayMacs.size(), affectedInfo);
+            return ResponseEntity.status(HttpStatusCode.valueOf(541)).body(warningMessage);
+        } else {
             return ResponseEntity.ok("Event saved successfully.");
         }
     }
@@ -141,17 +143,16 @@ public class EventController {
         }
 
 
-        // Check if event is before wakeTime of displays
-        boolean warning = false;
-        Display collisionDisplay = null;
+        // Check if event is before wakeTime of any displays and collect affected displays
+        List<Display> affectedDisplays = new ArrayList<>();
+        List<String> affectedDisplayMacs = new ArrayList<>();
         for (Display display : existingDisplays) {
-            LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalTime
+            LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalDateTime
             LocalDateTime eventStart = eventRequest.getStart();
-
-            // Convert eventStart to LocalTime for comparison (assuming same time zone)
-            if (wakeTime != null && eventStart.isBefore(wakeTime)) {
-                warning = true;
-                collisionDisplay = display;
+            System.out.println(LocalDateTime.now());
+            if (wakeTime != null && (eventStart.isBefore(wakeTime) || wakeTime.isBefore(LocalDateTime.now()))) {
+                affectedDisplays.add(display);
+                affectedDisplayMacs.add(display.getMacAddress());
             }
         }
 
@@ -186,10 +187,16 @@ public class EventController {
             }
         }
 
-        if(warning) {
-            return ResponseEntity.status(HttpStatusCode.valueOf(541)).body("Event saved, but the start time is before the wake time of display: " + collisionDisplay.getMacAddress());
-
-        }else{
+        // If there are affected displays, add an error to each using the ErrorService
+        if (!affectedDisplays.isEmpty()) {
+            for (Display display : affectedDisplays) {
+                errorService.addErrorToDisplay(display.getId(), 102, "Bildschirm wacht nicht auf vor Eventbeginn. Manueller neustart nötig.");
+            }
+            String affectedInfo = String.join(", ", affectedDisplayMacs);
+            String warningMessage = String.format("Event gespeichert, aber die Startzeit ist vor dem nächsten Aufwachen des/der %d display(s): %s",
+                    affectedDisplayMacs.size(), affectedInfo);
+            return ResponseEntity.status(HttpStatusCode.valueOf(541)).body(warningMessage);
+        } else {
             return ResponseEntity.ok("Event saved successfully.");
         }
     }
@@ -201,32 +208,49 @@ public class EventController {
             return ResponseEntity.notFound().build();
         }
         Event event = eventRepository.findById(id).get();
-        // if event gets deleted while it should be active -> remove errors from display, that the event is not getting displayed
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime eventStart = event.getStart();
         LocalDateTime eventEnd = event.getEnd();
+
+        // If event is active, remove any associated errors
         if (now.isAfter(eventStart) && now.isBefore(eventEnd)) {
-            // only the if event should currently take place
             List<DisplayImage> displayImages = event.getDisplayImages();
             for (DisplayImage displayImage : displayImages) {
                 Optional<Display> displayOptional = displayRepository.findByMacAddress(displayImage.getdisplayMac());
                 if (displayOptional.isPresent()) {
                     Display display = displayOptional.get();
                     errorService.removeErrorFromDisplay(display.getId(), 101);
+                    errorService.removeErrorFromDisplay(display.getId(), 102);
                 }
-
             }
-
         }
 
-
-
-
-
+        // For each display associated with this event, check if the event being deleted is the next event
+        List<DisplayImage> displayImages = event.getDisplayImages();
+        for (DisplayImage displayImage : displayImages) {
+            Optional<Display> displayOptional = displayRepository.findByMacAddress(displayImage.getdisplayMac());
+            if (displayOptional.isPresent()) {
+                Display display = displayOptional.get();
+                // If the nextEventTime is the event being deleted
+                if (display.getNextEventTime() != null && display.getNextEventTime().equals(eventStart)) {
+                    // Recalculate the next event time for the display (excluding the event being deleted)
+                    List<Event> upcomingEvents = eventRepository.findUpcomingEventsForDisplay(display.getMacAddress(), now);
+                    if (!upcomingEvents.isEmpty()) {
+                        // Set the next event time to the start time of the next upcoming event
+                        display.setNextEventTime(upcomingEvents.get(0).getStart());
+                    } else {
+                        // No upcoming events found, clear the nextEventTime
+                        display.setNextEventTime(null);
+                    }
+                    displayRepository.save(display);
+                }
+            }
+        }
 
         eventRepository.deleteById(id);
         return ResponseEntity.ok("Event deleted successfully.");
     }
+
 
     @CrossOrigin(origins = "*")
     @GetMapping(path = "/all")
