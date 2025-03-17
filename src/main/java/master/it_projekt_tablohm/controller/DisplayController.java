@@ -133,6 +133,56 @@ public class DisplayController {
         return displayRepository.findAll();
     }
 
+    private class FilenameEnd {
+        private String filename;
+        private LocalDateTime end;
+
+        public FilenameEnd(String filename, LocalDateTime end) {
+            this.filename = filename;
+            this.end = end;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+        public LocalDateTime getEnd() {
+            return end;
+        }
+    }
+    private FilenameEnd findCurrentEventEnd(List<Event> events, Config config, String mac) {
+        String filename = "";
+        LocalDateTime next = LocalDateTime.MAX;
+        for(Event e : events) {
+            for(DisplayImage di : e.getDisplayImages()) {
+                if (di.getdisplayMac().equals(mac)) {
+                    LocalDateTime start = e.getStart().minusMinutes(config.getLeadTime());
+                    LocalDateTime end = e.getEnd().plusMinutes(config.getFollowUpTime());
+                    if(start.isBefore(LocalDateTime.now()) && end.isAfter(LocalDateTime.now())) {
+                        filename = di.getImage();
+                        next = end;
+                    }
+                }
+            }
+        }
+        return new FilenameEnd(filename, next);
+    }
+
+    private LocalDateTime findNextEventStart(List<Event> events, Config config, String mac) {
+        LocalDateTime next = LocalDateTime.MAX;
+        for (Event e : events) {
+            for (DisplayImage di : e.getDisplayImages()) {
+                if (di.getdisplayMac().equals(mac)) {
+                    LocalDateTime start = e.getStart().minusMinutes(config.getLeadTime());
+                    if (start.isAfter(LocalDateTime.now()) && start.isBefore(next)) {
+                        next = start;
+                    }
+                }
+            }
+        }
+        return next;
+    }
+
     private LocalDateTime findNextInterval(Config config) {
         Map<String, WeekdayTime> weekdayTimes = config.getWeekdayTimes();
 
@@ -184,29 +234,12 @@ public class DisplayController {
         LocalDateTime next = LocalDateTime.MAX;
         String filename = "";
         if(!events.isEmpty()) {
-            // function: find current event and end time
-            for(Event e : events) {
-                for(DisplayImage di : e.getDisplayImages()) {
-                    if (di.getdisplayMac().equals(mac)) {
-                        if(e.getStart().minusMinutes(config.getLeadTime()).isBefore(LocalDateTime.now()) && e.getEnd().plusMinutes(config.getFollowUpTime()).isAfter(LocalDateTime.now())) {
-                            filename = di.getImage();
-                            next = e.getEnd().plusMinutes(config.getFollowUpTime());
-                        }
-                    }
-                }
-            }
+            FilenameEnd filenameEnd = findCurrentEventEnd(events, config, mac);
+            filename = filenameEnd.getFilename();
+            next = filenameEnd.getEnd();
 
             if(next == LocalDateTime.MAX) {
-                // function: find next event start time
-                for(Event e : events) {
-                    for(DisplayImage di : e.getDisplayImages()) {
-                        if (di.getdisplayMac().equals(mac)) {
-                            if(e.getStart().minusMinutes(config.getLeadTime()).isAfter(LocalDateTime.now())) {
-                                next = e.getStart().minusMinutes(config.getLeadTime());
-                            }
-                        }
-                    }
-                }
+                next = findNextEventStart(events, config, mac);
             }
         }
 
