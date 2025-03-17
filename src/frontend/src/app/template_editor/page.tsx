@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { fabric } from 'fabric';
 import { Button } from '@material-tailwind/react';
 import { getBackendApiUrl } from '@/utils/backendApiUrl';
@@ -16,7 +17,7 @@ const TemplateEditorPage: React.FC = () => {
     const [fontFamily, setFontFamily] = useState<string>('Arial');
     const [isBold, setIsBold] = useState<boolean>(false);
 
-    // State for background image upload
+    // State for background image upload and saving
     const [tempImageName, setTempImageName] = useState<string>('');
     const [showNamePopup, setShowNamePopup] = useState<boolean>(false);
     const [popupMessage, setPopupMessage] = useState<string | null>(null);
@@ -112,16 +113,11 @@ const TemplateEditorPage: React.FC = () => {
                         // Set canvas dimensions to match the image's natural dimensions
                         fabricCanvas.current.setWidth(img.width!);
                         fabricCanvas.current.setHeight(img.height!);
-
                         // Set the image as background without scaling
                         fabricCanvas.current.setBackgroundImage(
                             img,
                             fabricCanvas.current.renderAll.bind(fabricCanvas.current),
-                            {
-                                // No scaling: scaleX and scaleY set to 1
-                                scaleX: 1,
-                                scaleY: 1,
-                            }
+                            { scaleX: 1, scaleY: 1 }
                         );
                     }
                 });
@@ -130,8 +126,7 @@ const TemplateEditorPage: React.FC = () => {
         }
     };
 
-
-    // Original helper functions from your template editor
+    // Original helper functions for duplicate checking
     const checkFileNameExists = async (fileName: string): Promise<boolean> => {
         try {
             const response = await fetch(`${backendApiUrl}/image/exists?filename=${encodeURIComponent(fileName)}`);
@@ -157,47 +152,64 @@ const TemplateEditorPage: React.FC = () => {
         return finalName;
     };
 
+    // Helper: convert a dataURL to a Blob
+    const dataURLToBlob = (dataURL: string): Blob | null => {
+        const parts = dataURL.split(',');
+        if (parts.length < 2) return null;
+        const mimeMatch = parts[0].match(/:(.*?);/);
+        if (!mimeMatch) return null;
+        const mime = mimeMatch[1];
+        const bstr = atob(parts[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
+    };
+
+    // Save image using Fabric's toDataURL
     const saveImage = async () => {
         if (fabricCanvas.current) {
+            // Finalize the canvas: deselect objects and render all
             fabricCanvas.current.discardActiveObject();
             fabricCanvas.current.renderAll();
-            const canvasElement = fabricCanvas.current.lowerCanvasEl;
+
+            // Generate data URL of the canvas as PNG
+            const dataURL = fabricCanvas.current.toDataURL({
+                format: 'png',
+                quality: 1.0,
+            });
+
+            const blob = dataURLToBlob(dataURL);
+            if (!blob) return;
 
             let baseName = tempImageName.trim() !== '' ? tempImageName.trim() : 'output';
             baseName = baseName + '.png';
             const finalFileName = await getAvailableFileName(baseName);
 
-            // Delay export slightly if needed
-            setTimeout(() => {
-                canvasElement.toBlob(async (blob) => {
-                    if (!blob) return;
-                    const file = new File([blob], finalFileName, { type: 'image/png' });
-                    const formData = new FormData();
-                    formData.append('image', file);
+            const file = new File([blob], finalFileName, { type: 'image/png' });
+            const formData = new FormData();
+            formData.append('image', file);
 
-                    try {
-                        const response = await fetch(`${backendApiUrl}/image/upload`, {
-                            method: 'POST',
-                            body: formData
-                        });
-                        if (!response.ok) {
-                            throw new Error(`Upload fehlgeschlagen: ${response.status} ${response.statusText}`);
-                        }
-                        setPopupMessage(`Bild wurde unter dem Namen <strong>${finalFileName}</strong> erfolgreich hochgeladen.`);
-                        // Now hide the modal after export completes
-                        setShowNamePopup(false);
-                    } catch (error: any) {
-                        console.error('Fehler beim Hochladen des Bildes:', error.message || error);
-                        setPopupMessage('Fehler beim Hochladen des Bildes.');
-                        // Optionally hide the modal even on error
-                        setShowNamePopup(false);
-                    }
-                }, 'image/png');
-            }, 100); // You can adjust the delay as needed
+            try {
+                const response = await fetch(`${backendApiUrl}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    throw new Error(`Upload fehlgeschlagen: ${response.status} ${response.statusText}`);
+                }
+                setPopupMessage(`Bild wurde unter dem Namen <strong>${finalFileName}</strong> erfolgreich hochgeladen.`);
+                // Hide modal after saving
+                setShowNamePopup(false);
+            } catch (error: any) {
+                console.error('Fehler beim Hochladen des Bildes:', error.message || error);
+                setPopupMessage('Fehler beim Hochladen des Bildes.');
+                setShowNamePopup(false);
+            }
         }
     };
-
-
 
     // Handlers for modal popup
     const handleSaveClick = () => {
@@ -206,7 +218,6 @@ const TemplateEditorPage: React.FC = () => {
 
     const handlePopupSave = async () => {
         await saveImage();
-        // Do not call setShowNamePopup(false) here since it’s handled after export
     };
 
     const handlePopupCancel = () => {
@@ -275,15 +286,15 @@ const TemplateEditorPage: React.FC = () => {
                 </label>
             </div>
 
-            {/* Save Button (opens popup for file name) */}
+            {/* Save Button (opens modal for file naming) */}
             <div style={{ marginBottom: '16px' }}>
                 <Button variant="filled" className="bg-primary text-white" onClick={handleSaveClick}>
                     Bild Speichern
                 </Button>
             </div>
 
-            {/* Modal für die Benennung */}
-            {showNamePopup && (
+            {/* Render Modal in a Portal */}
+            {showNamePopup && ReactDOM.createPortal(
                 <div style={{
                     position: 'fixed',
                     top: 0,
@@ -294,7 +305,7 @@ const TemplateEditorPage: React.FC = () => {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    zIndex: 1000  // Hinzufügen eines hohen z-index
+                    zIndex: 1000
                 }}>
                     <div style={{
                         background: '#fff',
@@ -308,33 +319,26 @@ const TemplateEditorPage: React.FC = () => {
                             value={tempImageName}
                             onChange={(e) => setTempImageName(e.target.value)}
                             placeholder="Name eingeben"
-                            style={{width: '100%', padding: '8px', marginBottom: '16px'}}
+                            style={{ width: '100%', padding: '8px', marginBottom: '16px' }}
                         />
-                        <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-                            <Button variant={'outlined'}
-                                    className='text-primary border-primary'
-                                    onClick={handlePopupCancel} style={{marginRight: '8px'}}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <Button variant="outlined" className="text-primary border-primary" onClick={handlePopupCancel} style={{ marginRight: '8px' }}>
                                 Abbrechen
                             </Button>
-                            <Button variant={'filled'}
-                                    className={'bg-primary text-white'}
-                                    onClick={handlePopupSave} style={{
-
-                            }}>
+                            <Button variant="filled" className="bg-primary text-white" onClick={handlePopupSave}>
                                 Speichern
                             </Button>
-
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
-
 
             {/* Fabric Canvas */}
             <canvas ref={canvasRef} style={{ border: '1px solid #ccc' }} />
 
-            {/* Popup for notifications */}
-            {popupMessage && (
+            {/* Notification Popup */}
+            {popupMessage && ReactDOM.createPortal(
                 <div style={{
                     position: 'fixed',
                     top: 0,
@@ -359,7 +363,8 @@ const TemplateEditorPage: React.FC = () => {
                             Schließen
                         </Button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
