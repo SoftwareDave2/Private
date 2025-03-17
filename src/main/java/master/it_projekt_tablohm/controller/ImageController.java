@@ -172,8 +172,17 @@ public class ImageController {
     @CrossOrigin("*")
     @DeleteMapping(path = "/delete/{filename}")
     public @ResponseBody ResponseEntity<String> deleteImage(@PathVariable("filename") String filename) {
-        File file = new File(uploadsDirPath, filename);
+        // First, check if an image record exists in the database
+        Image imageToDelete = imageRepository.findByFilename(filename);
+        System.out.println(filename);
+        System.out.println(imageToDelete);
+        if (imageToDelete == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Kein Eintrag für Bild in Datenbank gefunden.");
+        }
 
+        // Now check if the file exists on the file system
+        File file = new File(uploadsDirPath, filename);
         if (!file.exists()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Das Bild das gelöscht werden soll existiert nicht.");
@@ -192,13 +201,7 @@ public class ImageController {
         }
 
         // Delete the image record from the database
-        Image imageToDelete = imageRepository.findByFilename(filename);
-        if (imageToDelete != null) {
-            imageRepository.delete(imageToDelete);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Image record not found in database.");
-        }
+        imageRepository.delete(imageToDelete);
 
         // Delete the file from the file system
         if (!file.delete()) {
@@ -208,6 +211,7 @@ public class ImageController {
 
         return ResponseEntity.ok("Bild erfolgreich gelöscht.");
     }
+
 
 
     @CrossOrigin(origins = "*")
