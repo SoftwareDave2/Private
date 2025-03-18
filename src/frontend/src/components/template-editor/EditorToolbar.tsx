@@ -28,7 +28,7 @@ export default function EditorToolbar({ fontFamily, fontSize, isBold, color, onF
     }
 
     return (
-        <div className={'border rounded p-4 shadow-sm mb-4 max-w-[45rem]'}>
+        <div className={'border  rounded p-4 shadow mb-4 max-w-[45rem]'}>
             <div className={'w-100 flex gap-2'}>
                 <Select label={'Schriftart'} value={fontFamily}
                         onChange={(val) => onFontFamilyChange(val ?? '')} className={'min-w-0'}>

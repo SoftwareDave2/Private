@@ -1,27 +1,25 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
 import { fabric } from 'fabric';
 import { Button } from '@material-tailwind/react';
 import { getBackendApiUrl } from '@/utils/backendApiUrl';
 import EditorToolbar from "@/components/template-editor/EditorToolbar";
+import NotificationDialog from "@/components/template-editor/NotificationDialog";
+import SetNameDialog from "@/components/template-editor/SetNameDialog";
 
 const TemplateEditorPage: React.FC = () => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const fabricCanvas = useRef<fabric.Canvas | null>(null);
-    const backendApiUrl = getBackendApiUrl();
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    const fabricCanvas = useRef<fabric.Canvas | null>(null)
+    const backendApiUrl = getBackendApiUrl()
 
-    // Toolbar state for text editing
-    const [textColor, setTextColor] = useState<string>('#000000');
-    const [fontSize, setFontSize] = useState<number>(24);
-    const [fontFamily, setFontFamily] = useState<string>('Arial');
-    const [isBold, setIsBold] = useState<boolean>(false);
-
-    // State for background image upload and saving
-    const [tempImageName, setTempImageName] = useState<string>('');
-    const [showNamePopup, setShowNamePopup] = useState<boolean>(false);
-    const [popupMessage, setPopupMessage] = useState<string | null>(null);
+    const [textColor, setTextColor] = useState<string>('#000000')
+    const [fontSize, setFontSize] = useState<number>(24)
+    const [fontFamily, setFontFamily] = useState<string>('Arial')
+    const [isBold, setIsBold] = useState<boolean>(false)
+    const [showNameDialog, setShowNameDialog] = useState<boolean>(false)
+    const [showNotificationDialog, setShowNotificationDialog] = useState<boolean>(false)
+    const [notificationMessage, setNotificationMessage] = useState<string | null>(null)
 
     // Initialize Fabric canvas
     useEffect(() => {
@@ -30,13 +28,13 @@ const TemplateEditorPage: React.FC = () => {
                 width: 800,
                 height: 600,
                 backgroundColor: '#f0f0f0'
-            });
+            })
 
             // On double-click, add a new IText object if no object is under the pointer
             fabricCanvas.current.on('mouse:dblclick', (opt) => {
-                const pointer = fabricCanvas.current?.getPointer(opt.e);
+                const pointer = fabricCanvas.current?.getPointer(opt.e)
                 if (pointer) {
-                    const target = fabricCanvas.current?.findTarget(opt.e, false);
+                    const target = fabricCanvas.current?.findTarget(opt.e, false)
                     if (!target) {
                         const text = new fabric.IText('Neuer Text', {
                             left: pointer.x,
@@ -46,65 +44,151 @@ const TemplateEditorPage: React.FC = () => {
                             fontSize: fontSize,
                             fontWeight: isBold ? 'bold' : 'normal',
                             editable: true
-                        });
-                        fabricCanvas.current?.add(text);
-                        fabricCanvas.current?.setActiveObject(text);
-                        text.enterEditing();
-                        text.selectAll();
-                        updateToolbarValues(text);
+                        })
+                        fabricCanvas.current?.add(text)
+                        fabricCanvas.current?.setActiveObject(text)
+                        text.enterEditing()
+                        text.selectAll()
+                        updateToolbarValues(text)
                     }
                 }
-            });
+            })
 
             // Update toolbar when a text object is selected
             fabricCanvas.current.on('selection:created', (e) => {
-                const activeObj = e.target;
+                const activeObj = e.target
                 if (activeObj && activeObj.type === 'i-text') {
-                    updateToolbarValues(activeObj as fabric.IText);
+                    updateToolbarValues(activeObj as fabric.IText)
                 }
-            });
+            })
             fabricCanvas.current.on('selection:updated', (e) => {
-                const activeObj = e.target;
+                const activeObj = e.target
                 if (activeObj && activeObj.type === 'i-text') {
-                    updateToolbarValues(activeObj as fabric.IText);
+                    updateToolbarValues(activeObj as fabric.IText)
                 }
-            });
+            })
         }
-        return () => {
-            fabricCanvas.current?.dispose();
-        };
-    }, []);
+        return () => fabricCanvas.current?.dispose()
+    }, [])
 
     // Update toolbar values from the active text object
     const updateToolbarValues = (textObj: fabric.IText) => {
-        setTextColor(textObj.fill as string);
-        setFontSize(textObj.fontSize || 24);
-        setFontFamily(textObj.fontFamily || 'Arial');
-        setIsBold(textObj.fontWeight === 'bold');
-    };
-
-    // Update active text object with toolbar properties
-    const updateActiveText = () => {
-        const activeObject = fabricCanvas.current?.getActiveObject();
-        if (activeObject && activeObject.type === 'i-text') {
-            const textObj = activeObject as fabric.IText;
-            textObj.set({
-                fill: textColor,
-                fontSize: fontSize,
-                fontFamily: fontFamily,
-                fontWeight: isBold ? 'bold' : 'normal'
-            });
-            fabricCanvas.current?.renderAll();
-        }
-    };
+        setTextColor(textObj.fill as string)
+        setFontSize(textObj.fontSize || 24)
+        setFontFamily(textObj.fontFamily || 'Arial')
+        setIsBold(textObj.fontWeight === 'bold')
+    }
 
     useEffect(() => {
         updateActiveText()
     }, [textColor, fontSize, fontFamily, isBold])
 
-    // Background image upload handler
+    // Update active text object with toolbar properties
+    const updateActiveText = () => {
+        const activeObject = fabricCanvas.current?.getActiveObject()
+        if (activeObject && activeObject.type === 'i-text') {
+            const textObj = activeObject as fabric.IText
+            textObj.set({
+                fill: textColor,
+                fontSize: fontSize,
+                fontFamily: fontFamily,
+                fontWeight: isBold ? 'bold' : 'normal'
+            })
+            fabricCanvas.current?.renderAll()
+        }
+    }
+
+    const saveImage = async (filename: string) => {
+        if (!fabricCanvas.current) {
+            return
+        }
+
+        // Finalize the canvas: deselect objects and render all
+        fabricCanvas.current.discardActiveObject()
+        fabricCanvas.current.renderAll()
+
+        // Generate data URL of the canvas as PNG
+        const dataURL = fabricCanvas.current.toDataURL({
+            format: 'png',
+            quality: 1.0,
+        })
+
+        const blob = dataURLToBlob(dataURL)
+        if (!blob) return
+
+        let baseName = filename.trim() !== '' ? filename.trim() : 'output'
+        baseName = baseName + '.png'
+        const finalFileName = await getAvailableFileName(baseName)
+
+        const file = new File([blob], finalFileName, { type: 'image/png' })
+        const formData = new FormData()
+        formData.append('image', file)
+
+        try {
+            const response = await fetch(`${backendApiUrl}/image/upload`, {
+                method: 'POST',
+                body: formData
+            })
+            if (!response.ok) {
+                throw new Error(`Upload fehlgeschlagen: ${response.status} ${response.statusText}`)
+            }
+            openNotificationDialog(`Bild wurde unter dem Namen ${finalFileName} erfolgreich hochgeladen.`)
+            setShowNameDialog(false)
+        } catch (error: any) {
+            console.error('Fehler beim Hochladen des Bildes:', error.message || error)
+            openNotificationDialog('Fehler beim Hochladen des Bildes.')
+            setShowNameDialog(false)
+        }
+
+    }
+
+    const dataURLToBlob = (dataURL: string): Blob | null => {
+        const parts = dataURL.split(',')
+        if (parts.length < 2) return null
+        const mimeMatch = parts[0].match(/:(.*?);/)
+        if (!mimeMatch) return null
+        const mime = mimeMatch[1]
+        const bstr = atob(parts[1])
+        let n = bstr.length
+        const u8arr = new Uint8Array(n)
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n)
+        }
+        return new Blob([u8arr], { type: mime })
+    }
+
+    const getAvailableFileName = async (baseName: string): Promise<string> => {
+        let finalName = baseName
+        let counter = 1
+        while (await checkFileNameExists(finalName)) {
+            const nameWithoutExt = baseName.substring(0, baseName.lastIndexOf('.'))
+            finalName = `${nameWithoutExt}_${counter}.png`
+            counter++
+        }
+        return finalName
+    }
+
+    const checkFileNameExists = async (fileName: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${backendApiUrl}/image/exists?filename=${encodeURIComponent(fileName)}`)
+            if (!response.ok) {
+                throw new Error('Fehler bei der Überprüfung des Dateinamens.')
+            }
+            const data = await response.json()
+            return data.exists
+        } catch (error) {
+            console.error('Fehler beim Prüfen des Dateinamens:', error)
+            return false
+        }
+    }
+
+    const handleFontFamilyChange = (fontFamily: string) => setFontFamily(fontFamily)
+    const handleFontSizeChange = (fontSize: number) => setFontSize(fontSize)
+    const handleBoldChange = (bold: boolean) => setIsBold(bold)
+    const handleColorChange = (color: string) => setTextColor(color)
+
     const handleBackgroundUpload = (file: File) => {
-        const reader = new FileReader();
+        const reader = new FileReader()
         reader.onload = (f) => {
             const data = f.target?.result
             fabric.Image.fromURL(data as string, (img) => {
@@ -124,200 +208,38 @@ const TemplateEditorPage: React.FC = () => {
         reader.readAsDataURL(file)
     }
 
-    // Original helper functions for duplicate checking
-    const checkFileNameExists = async (fileName: string): Promise<boolean> => {
-        try {
-            const response = await fetch(`${backendApiUrl}/image/exists?filename=${encodeURIComponent(fileName)}`);
-            if (!response.ok) {
-                throw new Error('Fehler bei der Überprüfung des Dateinamens.');
-            }
-            const data = await response.json();
-            return data.exists;
-        } catch (error) {
-            console.error('Fehler beim Prüfen des Dateinamens:', error);
-            return false;
-        }
-    };
+    const openNotificationDialog = (message: string) => {
+        setNotificationMessage(message)
+        setShowNotificationDialog(true)
+    }
 
-    const getAvailableFileName = async (baseName: string): Promise<string> => {
-        let finalName = baseName;
-        let counter = 1;
-        while (await checkFileNameExists(finalName)) {
-            const nameWithoutExt = baseName.substring(0, baseName.lastIndexOf('.'));
-            finalName = `${nameWithoutExt}_${counter}.png`;
-            counter++;
-        }
-        return finalName;
-    };
+    const openNameDialog = () => {
+        setShowNameDialog(true)
+    }
 
-    // Helper: convert a dataURL to a Blob
-    const dataURLToBlob = (dataURL: string): Blob | null => {
-        const parts = dataURL.split(',');
-        if (parts.length < 2) return null;
-        const mimeMatch = parts[0].match(/:(.*?);/);
-        if (!mimeMatch) return null;
-        const mime = mimeMatch[1];
-        const bstr = atob(parts[1]);
-        let n = bstr.length;
-        const u8arr = new Uint8Array(n);
-        while (n--) {
-            u8arr[n] = bstr.charCodeAt(n);
-        }
-        return new Blob([u8arr], { type: mime });
-    };
-
-    // Save image using Fabric's toDataURL
-    const saveImage = async () => {
-        if (fabricCanvas.current) {
-            // Finalize the canvas: deselect objects and render all
-            fabricCanvas.current.discardActiveObject();
-            fabricCanvas.current.renderAll();
-
-            // Generate data URL of the canvas as PNG
-            const dataURL = fabricCanvas.current.toDataURL({
-                format: 'png',
-                quality: 1.0,
-            });
-
-            const blob = dataURLToBlob(dataURL);
-            if (!blob) return;
-
-            let baseName = tempImageName.trim() !== '' ? tempImageName.trim() : 'output';
-            baseName = baseName + '.png';
-            const finalFileName = await getAvailableFileName(baseName);
-
-            const file = new File([blob], finalFileName, { type: 'image/png' });
-            const formData = new FormData();
-            formData.append('image', file);
-
-            try {
-                const response = await fetch(`${backendApiUrl}/image/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
-                if (!response.ok) {
-                    throw new Error(`Upload fehlgeschlagen: ${response.status} ${response.statusText}`);
-                }
-                setPopupMessage(`Bild wurde unter dem Namen <strong>${finalFileName}</strong> erfolgreich hochgeladen.`);
-                // Hide modal after saving
-                setShowNamePopup(false);
-            } catch (error: any) {
-                console.error('Fehler beim Hochladen des Bildes:', error.message || error);
-                setPopupMessage('Fehler beim Hochladen des Bildes.');
-                setShowNamePopup(false);
-            }
-        }
-    };
-
-    // Handlers for modal popup
-    const handleSaveClick = () => {
-        setShowNamePopup(true);
-    };
-
-    const handlePopupSave = async () => {
-        await saveImage();
-    };
-
-    const handlePopupCancel = () => {
-        setShowNamePopup(false);
-    };
-
-    // Toolbar handlers
-    const handleFontFamilyChange = (fontFamily: string) => setFontFamily(fontFamily)
-    const handleFontSizeChange = (fontSize: number) => setFontSize(fontSize)
-    const handleBoldChange = (bold: boolean) => setIsBold(bold)
-    const handleColorChange = (color: string) => setTextColor(color)
+    const handleCloseNameDialog = () => {
+        setShowNameDialog(false)
+    }
 
     return (
-        <div>
-
+        <>
             <EditorToolbar fontFamily={fontFamily} fontSize={fontSize} isBold={isBold} color={textColor}
                            onFontFamilyChange={handleFontFamilyChange} onFontSizeChange={handleFontSizeChange}
                            onSetBoldChange={handleBoldChange} onColorChange={handleColorChange}
                            onBackgroundUpload={handleBackgroundUpload} />
 
-            {/* Save Button (opens modal for file naming) */}
-            <div className={'mb-4'}>
-                <Button variant="filled" className="bg-primary text-white" onClick={handleSaveClick}>
-                    Bild Speichern
-                </Button>
-            </div>
-
-            {/* Render Modal in a Portal */}
-            {showNamePopup && ReactDOM.createPortal(
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        background: '#fff',
-                        padding: '24px',
-                        borderRadius: '8px',
-                        minWidth: '300px'
-                    }}>
-                        <h3>Bild benennen</h3>
-                        <input
-                            type="text"
-                            value={tempImageName}
-                            onChange={(e) => setTempImageName(e.target.value)}
-                            placeholder="Name eingeben"
-                            style={{ width: '100%', padding: '8px', marginBottom: '16px' }}
-                        />
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <Button variant="outlined" className="text-primary border-primary" onClick={handlePopupCancel} style={{ marginRight: '8px' }}>
-                                Abbrechen
-                            </Button>
-                            <Button variant="filled" className="bg-primary text-white" onClick={handlePopupSave}>
-                                Speichern
-                            </Button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {/* Fabric Canvas */}
             <canvas ref={canvasRef} style={{ border: '1px solid #ccc' }} />
 
-            {/* Notification Popup */}
-            {popupMessage && ReactDOM.createPortal(
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000,
-                }}>
-                    <div style={{
-                        background: '#fff',
-                        padding: '24px',
-                        borderRadius: '8px',
-                        minWidth: '300px',
-                        textAlign: 'center'
-                    }}>
-                        <h3 dangerouslySetInnerHTML={{ __html: popupMessage }} />
-                        <Button variant="filled" className="bg-primary text-white" onClick={() => setPopupMessage(null)}>
-                            Schließen
-                        </Button>
-                    </div>
-                </div>,
-                document.body
-            )}
-        </div>
-    );
-};
+            <Button variant="filled" className="bg-primary text-white mt-4" onClick={openNameDialog}>
+                Bild Speichern
+            </Button>
 
-export default TemplateEditorPage;
+            <SetNameDialog open={showNameDialog} onClose={handleCloseNameDialog} onSave={saveImage} />
+
+            <NotificationDialog open={showNotificationDialog} message={notificationMessage}
+                                onClose={() => setShowNotificationDialog(false)} />
+        </>
+    )
+}
+
+export default TemplateEditorPage
