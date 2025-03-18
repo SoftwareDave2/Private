@@ -230,6 +230,10 @@ const TemplateEditorPage: React.FC = () => {
 
             <canvas ref={canvasRef} style={{ border: '1px solid #ccc' }} />
 
+            <div className={'text-xs text-blue-gray-700 mt-1'}>
+                <span className={'font-bold'}>Hinweis: </span> Fügen Sie mit einem Doppelklick in dem Bild Text hinzu.
+            </div>
+
             <Button variant="filled" className="bg-primary text-white mt-4" onClick={openNameDialog}>
                 Bild Speichern
             </Button>
