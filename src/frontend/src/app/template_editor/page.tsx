@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom';
 import { fabric } from 'fabric';
 import { Button } from '@material-tailwind/react';
 import { getBackendApiUrl } from '@/utils/backendApiUrl';
+import EditorToolbar from "@/components/template-editor/EditorToolbar";
 
 const TemplateEditorPage: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -98,33 +99,30 @@ const TemplateEditorPage: React.FC = () => {
     };
 
     useEffect(() => {
-        updateActiveText();
-    }, [textColor, fontSize, fontFamily, isBold]);
+        updateActiveText()
+    }, [textColor, fontSize, fontFamily, isBold])
 
     // Background image upload handler
-    const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (f) => {
-                const data = f.target?.result;
-                fabric.Image.fromURL(data as string, (img) => {
-                    if (fabricCanvas.current) {
-                        // Set canvas dimensions to match the image's natural dimensions
-                        fabricCanvas.current.setWidth(img.width!);
-                        fabricCanvas.current.setHeight(img.height!);
-                        // Set the image as background without scaling
-                        fabricCanvas.current.setBackgroundImage(
-                            img,
-                            fabricCanvas.current.renderAll.bind(fabricCanvas.current),
-                            { scaleX: 1, scaleY: 1 }
-                        );
-                    }
-                });
-            };
-            reader.readAsDataURL(file);
+    const handleBackgroundUpload = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            const data = f.target?.result
+            fabric.Image.fromURL(data as string, (img) => {
+                if (fabricCanvas.current) {
+                    // Set canvas dimensions to match the image's natural dimensions
+                    fabricCanvas.current.setWidth(img.width!)
+                    fabricCanvas.current.setHeight(img.height!)
+                    // Set the image as background without scaling
+                    fabricCanvas.current.setBackgroundImage(
+                        img,
+                        fabricCanvas.current.renderAll.bind(fabricCanvas.current),
+                        { scaleX: 1, scaleY: 1 }
+                    )
+                }
+            })
         }
-    };
+        reader.readAsDataURL(file)
+    }
 
     // Original helper functions for duplicate checking
     const checkFileNameExists = async (fileName: string): Promise<boolean> => {
@@ -225,69 +223,21 @@ const TemplateEditorPage: React.FC = () => {
     };
 
     // Toolbar handlers
-    const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setTextColor(e.target.value);
-    };
-
-    const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFontSize(parseInt(e.target.value, 10));
-    };
-
-    const handleFontFamilyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setFontFamily(e.target.value);
-    };
-
-    const handleBoldToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setIsBold(e.target.checked);
-    };
+    const handleFontFamilyChange = (fontFamily: string) => setFontFamily(fontFamily)
+    const handleFontSizeChange = (fontSize: number) => setFontSize(fontSize)
+    const handleBoldChange = (bold: boolean) => setIsBold(bold)
+    const handleColorChange = (color: string) => setTextColor(color)
 
     return (
-        <div style={{ padding: '16px' }}>
-            <h1>Fabric.js Template Editor</h1>
+        <div>
 
-            {/* Toolbar for text editing */}
-            <div style={{
-                marginBottom: '16px',
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'flex',
-                gap: '12px',
-                alignItems: 'center'
-            }}>
-                <label>
-                    Text Color:
-                    <input type="color" value={textColor} onChange={handleColorChange} style={{ marginLeft: '4px' }} />
-                </label>
-                <label>
-                    Font Size:
-                    <input type="number" value={fontSize} onChange={handleFontSizeChange} style={{ width: '60px', marginLeft: '4px' }} />
-                </label>
-                <label>
-                    Font Family:
-                    <select value={fontFamily} onChange={handleFontFamilyChange} style={{ marginLeft: '4px' }}>
-                        <option value="Arial">Arial</option>
-                        <option value="Helvetica">Helvetica</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Courier New">Courier New</option>
-                    </select>
-                </label>
-                <label>
-                    Bold:
-                    <input type="checkbox" checked={isBold} onChange={handleBoldToggle} style={{ marginLeft: '4px' }} />
-                </label>
-            </div>
-
-            {/* Background Image Upload */}
-            <div style={{ marginBottom: '16px' }}>
-                <label>
-                    Upload Background Image:
-                    <input type="file" accept="image/*" onChange={handleBackgroundUpload} style={{ marginLeft: '4px' }} />
-                </label>
-            </div>
+            <EditorToolbar fontFamily={fontFamily} fontSize={fontSize} isBold={isBold} color={textColor}
+                           onFontFamilyChange={handleFontFamilyChange} onFontSizeChange={handleFontSizeChange}
+                           onSetBoldChange={handleBoldChange} onColorChange={handleColorChange}
+                           onBackgroundUpload={handleBackgroundUpload} />
 
             {/* Save Button (opens modal for file naming) */}
-            <div style={{ marginBottom: '16px' }}>
+            <div className={'mb-4'}>
                 <Button variant="filled" className="bg-primary text-white" onClick={handleSaveClick}>
                     Bild Speichern
                 </Button>
