@@ -15,9 +15,7 @@ import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 export default function Calendar() {
 
-    // const host = window.location.hostname;
-    // const backendApiUrl = 'http://' + host + ':8080';
-    const backendApiUrl = getBackendApiUrl();
+    const backendApiUrl = getBackendApiUrl()
 
     const calendarRef = useRef<FullCalendar | null>(null)
     const hasFetched = useRef(false)

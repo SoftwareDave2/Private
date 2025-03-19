@@ -5,7 +5,7 @@ import {
     DialogBody,
     DialogFooter,
     Input,
-    Checkbox
+    Checkbox, Option, Select
 } from "@material-tailwind/react"
 
 import React, { useState } from "react";
@@ -15,6 +15,8 @@ import { DeleteCalendarEventDialog } from "@/components/calendar/DeleteCalendarE
 import SaveEventErrorAlert from "@/components/calendar/SaveEventErrorAlert";
 import DisplayInputCards from "@/components/calendar/DisplayInputCards";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import * as wasi from "node:wasi";
+import WakeupErrorDialog from "@/components/calendar/WakeupErrorDialog";
 
 type CalendarEntryDialogProps = {
     open: boolean,
@@ -27,8 +29,6 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
 
     const COLLISION_DETECTED_ERROR_CODE = 569;
     const DISPLAY_DOES_NOT_WAKE_UP_ON_TIME = 541;
-    // const host = window.location.hostname;
-    // const backendApiUrl = 'http://' + host + ':8080';
     const backendApiUrl = getBackendApiUrl();
 
     // Initial State: Defaultwerte für Wiederholungsfelder setzen, falls nicht vorhanden.
@@ -41,10 +41,11 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
         recurrenceStartTime: eventDetails.recurrenceStartTime || "08:00",
         recurrenceEndTime: eventDetails.recurrenceEndTime || "09:30",
     });
-    const [errors, setErrors] = useState<string[] | null>(null);
-    const [collisionError, setCollisionError] = useState<boolean>(false);
-    const [wakeupError, setWakeupError] = useState<string | null>(null);
-    const [openDeleteEvent, setOpenDeleteEvent] = useState<boolean>(false);
+    const [errors, setErrors] = useState<string[] | null>(null)
+    const [collisionError, setCollisionError] = useState<boolean>(false)
+    const [showWakeupError, setShowWakeupError] = useState<boolean>(false)
+    const [wakeupErrorMessage, setWakeupErrorMessage] = useState<string | null>(null)
+    const [openDeleteEvent, setOpenDeleteEvent] = useState<boolean>(false)
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -61,11 +62,12 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
         }
     };
 
-    // Handler für das Dropdown zur Wiederholungsart
-    const handleRecurrenceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value as "keine" | "täglich" | "wöchentlich";
-        setData({ ...data, recurrenceType: value });
-    };
+    const handleRecurrenceChange = (val: string | undefined) => {
+        if (val) {
+            const value = val as "keine" | "täglich" | "wöchentlich"
+            setData({ ...data, recurrenceType: value })
+        }
+    }
 
     // Handler für die Änderung der Wochentags-Checkboxen (bei wöchentlicher Wiederholung)
     const handleWeekdayChange = (e: React.ChangeEvent<HTMLInputElement>, day: number) => {
@@ -174,7 +176,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                 } else if (response.status === DISPLAY_DOES_NOT_WAKE_UP_ON_TIME) {
                     console.log("wird nicht rechtzeitig aufgeweckt!");
                     const errorMsg = await response.text();
-                    setWakeupError(errorMsg || "Unbekannter Fehler");
+                    openWakeupError(errorMsg || "Unbekannter Fehler");
                 }
                 else {
                     if (response.status === COLLISION_DETECTED_ERROR_CODE) {
@@ -195,21 +197,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
             const floatingEnd   = data.recurrenceStartDate + 'T' + data.recurrenceEndTime + ':00';
 
             const localUntil = new Date(data.recurrenceEndDate + 'T' + data.recurrenceEndTime);
-            const isoUntil = localUntil.toISOString();
-            const absoluteUntil = isoUntil.replace(/[-:]/g, "").split('.')[0] + "Z";
-
-            let rrule = "";
-            if (data.recurrenceType === "täglich") {
-                rrule = "FREQ=DAILY;UNTIL=" + absoluteUntil;
-            } else if (data.recurrenceType === "wöchentlich") {
-                const weekdayMap: { [key: number]: string } = {
-                    0: "MO", 1: "TU", 2: "WE", 3: "TH", 4: "FR", 5: "SA", 6: "SU"
-                };
-                const byday = data.recurrenceWeekdays && data.recurrenceWeekdays.length > 0
-                    ? data.recurrenceWeekdays.map(day => weekdayMap[day]).join(",")
-                    : "";
-                rrule = "FREQ=WEEKLY;BYDAY=" + byday + ";UNTIL=" + absoluteUntil;
-            }
+            let rrule = buildRecurrenceRule(localUntil, data.recurrenceType, data.recurrenceWeekdays)
 
             const recurringEventPayload = {
                 title: data.title,
@@ -232,7 +220,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                 } else if (response.status === DISPLAY_DOES_NOT_WAKE_UP_ON_TIME) {
                     console.log("wird nicht rechtzeitig aufgeweckt!");
                     const errorMsg = await response.text();
-                    setWakeupError(errorMsg || "Unbekannter Fehler");
+                    openWakeupError(errorMsg || "Unbekannter Fehler");
                 }
                 else {
                     if (response.status === COLLISION_DETECTED_ERROR_CODE) {
@@ -249,6 +237,26 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
         }
     };
 
+    const buildRecurrenceRule = (recurrenceEnd: Date, recurrenceType?: string, recurrenceWeekdays?: number[]) => {
+        const isoEnd = recurrenceEnd.toISOString()
+        const absoluteEnd = isoEnd.replace(/[-:]/g, "").split('.')[0] + "Z"
+
+        let rrule = ''
+        if (recurrenceType === "täglich") {
+            rrule = "FREQ=DAILY;UNTIL=" + absoluteEnd
+        } else if (recurrenceType === "wöchentlich") {
+            const weekdayMap: { [key: number]: string } = {
+                0: "MO", 1: "TU", 2: "WE", 3: "TH", 4: "FR", 5: "SA", 6: "SU"
+            }
+            const byday = recurrenceWeekdays && recurrenceWeekdays.length > 0
+                ? recurrenceWeekdays.map(day => weekdayMap[day]).join(",")
+                : ""
+            rrule = "FREQ=WEEKLY;BYDAY=" + byday + ";UNTIL=" + absoluteEnd
+        }
+
+        return rrule
+    }
+
     const toggleOpenDeleteDialogHandler = () => {
         setOpenDeleteEvent(!openDeleteEvent);
     };
@@ -258,35 +266,15 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
         onDataUpdated(false);
     };
 
-    // Handler für den OK-Button im Fehlerdialog
-    const handleWakeupErrorOk = () => {
-        setWakeupError(null);
-        onClose();
-    };
+    const openWakeupError = (message: string) => {
+        setWakeupErrorMessage(message)
+        setShowWakeupError(true)
+    }
 
-    // Falls wakeupError gesetzt ist, wird ein spezieller Fehlerdialog angezeigt
-    if (wakeupError) {
-        onDataUpdated(true);
-        return (
-            <Dialog open={open} handler={onClose}>
-                <DialogHeader>Warnung</DialogHeader>
-                <DialogBody className={"text-black"}>
-                    Der Display-Aufweckfehler ist aufgetreten:
-                    <br></br>
-                    {wakeupError}
-                </DialogBody>
-                <DialogFooter>
-                    <Button
-                        type="button"
-                        variant="filled"
-                        className="bg-primary text-white"
-                        onClick={handleWakeupErrorOk}
-                    >
-                        OK
-                    </Button>
-                </DialogFooter>
-            </Dialog>
-        );
+    const closeWakeupErrorHandler = () => {
+        setWakeupErrorMessage(null)
+        setShowWakeupError(false)
+        onClose()
     }
 
     return (
@@ -306,13 +294,11 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                     </div>
                     {data.id === 0 &&
                         <div className={'mt-5'}>
-                            <label className="block text-sm font-medium text-gray-700">Wiederholung</label>
-                            <select name="recurrenceType" value={data.recurrenceType} onChange={handleRecurrenceChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="keine">keine</option>
-                                <option value="täglich">täglich</option>
-                                <option value="wöchentlich">wöchentlich</option>
-                            </select>
+                            <Select label='Wiederholung' value={data.recurrenceType} onChange={handleRecurrenceChange}>
+                                <Option value='keine'>Keine</Option>
+                                <Option value='täglich'>Täglich</Option>
+                                <Option value='wöchentlich'>Wöchentlich</Option>
+                            </Select>
                         </div>
                     }
 
@@ -355,6 +341,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                         </div>
                     )}
                     <DisplayInputCards displays={data.displayImages} onSetDisplays={setDisplaysHandler} />
+                    <WakeupErrorDialog open={showWakeupError} errorMessage={wakeupErrorMessage} onClose={closeWakeupErrorHandler} />
                 </DialogBody>
                 <DialogFooter className={'justify-between'}>
                     {data.id > 0 &&
