@@ -7,6 +7,8 @@ import { getBackendApiUrl } from '@/utils/backendApiUrl';
 import EditorToolbar from "@/components/template-editor/EditorToolbar";
 import NotificationDialog from "@/components/template-editor/NotificationDialog";
 import SetNameDialog from "@/components/template-editor/SetNameDialog";
+import PageHeaderButton from "@/components/layout/PageHeaderButton";
+import PageHeader from "@/components/layout/PageHeader";
 
 const TemplateEditorPage: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -222,7 +224,10 @@ const TemplateEditorPage: React.FC = () => {
     }
 
     return (
-        <>
+        <main>
+            <PageHeader title={'Template Editor'} info={''}>
+            </PageHeader>
+
             <EditorToolbar fontFamily={fontFamily} fontSize={fontSize} isBold={isBold} color={textColor}
                            onFontFamilyChange={handleFontFamilyChange} onFontSizeChange={handleFontSizeChange}
                            onSetBoldChange={handleBoldChange} onColorChange={handleColorChange}
@@ -242,7 +247,7 @@ const TemplateEditorPage: React.FC = () => {
 
             <NotificationDialog open={showNotificationDialog} message={notificationMessage}
                                 onClose={() => setShowNotificationDialog(false)} />
-        </>
+        </main>
     )
 }
 
