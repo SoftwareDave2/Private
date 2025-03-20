@@ -176,10 +176,18 @@ export default function Calendar() {
                                 image: "uploads/" + (evt.displayImages.length > 0 ? evt.displayImages[0].image : "")
                             }
                         }))}
+                        locale={'de'}
                         headerToolbar={{
                             left: "prev,today,next",
                             center: "title",
                             right: "dayGridMonth,timeGridWeek,timeGridDay",
+                        }}
+                        buttonText={{
+                            today: 'Heute',
+                            month: 'Monat',
+                            week: 'Woche',
+                            day: 'Tag',
+                            list: 'Liste'
                         }}
                         dateClick={handleDateClicked}
                         ref={calendarRef}
