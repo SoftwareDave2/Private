@@ -158,10 +158,9 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                 recurrenceEndDate: data.recurrenceEndDate,
                 recurrenceStartTime: data.recurrenceStartTime,
                 recurrenceEndTime: data.recurrenceEndTime,
-                recurrenceWeekdays: data.recurrenceWeekdays
+                recurrenceWeekdays: data.recurrenceWeekdays,
+                groupId: '',
             };
-
-            console.log(event)
 
             const isUpdate = data.id > 0;
             const path = isUpdate ? ('/event/update/' + data.id) : '/event/add';
@@ -177,6 +176,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                     console.log("wird nicht rechtzeitig aufgeweckt!");
                     const errorMsg = await response.text();
                     openWakeupError(errorMsg || "Unbekannter Fehler");
+                    onDataUpdated(true)
                 }
                 else {
                     if (response.status === COLLISION_DETECTED_ERROR_CODE) {
@@ -216,11 +216,12 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
                     body: JSON.stringify(recurringEventPayload)
                 });
                 if (response.status === 200) {
-                    onDataUpdated(false);
+                    onDataUpdated(false)
                 } else if (response.status === DISPLAY_DOES_NOT_WAKE_UP_ON_TIME) {
                     console.log("wird nicht rechtzeitig aufgeweckt!");
                     const errorMsg = await response.text();
                     openWakeupError(errorMsg || "Unbekannter Fehler");
+                    onDataUpdated(true)
                 }
                 else {
                     if (response.status === COLLISION_DETECTED_ERROR_CODE) {
