@@ -8,6 +8,7 @@ import { MediaContentItemData } from "@/types/mediaContentItemData";
 import MediaContentItems from "@/components/media/MediaContentItems";
 import { getBackendApiUrl } from "@/utils/backendApiUrl";
 import { Select, Option, Dialog, DialogHeader, DialogBody, DialogFooter, Button } from "@material-tailwind/react";
+import ImageDeleteResultDialog from "@/components/media/ImageDeleteResultDialog";
 
 export default function Media() {
     const backendApiUrl = getBackendApiUrl();
@@ -79,11 +80,8 @@ export default function Media() {
             </PageHeader>
 
             <div className="mb-4 flex justify-center">
-                <Select
-                    label="Sortieren nach"
-                    value={sortOption}
-                    onChange={(value) => setSortOption(value as "filename" | "uploadDate")}
-                >
+                <Select label="Sortieren nach" value={sortOption}
+                    onChange={(value) => setSortOption(value as "filename" | "uploadDate")}>
                     <Option value="filename">Dateiname</Option>
                     <Option value="uploadDate">Upload Datum</Option>
                 </Select>
@@ -92,22 +90,11 @@ export default function Media() {
             <MediaContentItems
                 images={images}
                 onImageDeleted={handleImageDeleted}
-                onDeleteResult={showDeletePopup}
-            />
+                onDeleteResult={showDeletePopup} />
 
-            {/* UploadMediaDialog – onSaved wird mit dem finalen Dateinamen aufgerufen */}
             <UploadMediaDialog open={dialogOpen} onCancel={handleDialogOpen} onSaved={handleUploadComplete} />
 
-            {/* Popup zur Anzeige des Lösch-Ergebnisses */}
-            <Dialog open={deletePopup.open} handler={closeDeletePopup}>
-                <DialogHeader>Löschen</DialogHeader>
-                <DialogBody>{deletePopup.message}</DialogBody>
-                <DialogFooter>
-                    <Button variant="filled" color="primary" onClick={closeDeletePopup}>
-                        OK
-                    </Button>
-                </DialogFooter>
-            </Dialog>
+            <ImageDeleteResultDialog open={deletePopup.open} message={deletePopup.message} onClose={closeDeletePopup} />
 
             {/* Popup zur Anzeige der Upload-Bestätigung */}
             <Dialog open={uploadPopup.open} handler={closeUploadPopup}>

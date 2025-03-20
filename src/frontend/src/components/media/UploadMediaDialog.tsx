@@ -124,8 +124,10 @@ export default function UploadMediaDialog({ open, onCancel, onSaved }: UploadMed
                 )}
             </DialogBody>
             <DialogFooter className='space-x-2'>
-                <Button variant='outlined' className='text-primary border-primary' onClick={() => { resetFiles(); onCancel(); }}>Cancel</Button>
-                <UploadMediaButton file={file} onClick={handleUpload} />
+                <Button variant='outlined' className='text-primary border-primary'
+                        onClick={() => { resetFiles(); onCancel(); }}>Cancel</Button>
+                <Button variant={'filled'} className={'bg-primary text-white'}
+                        onClick={handleUpload}>Hochladen</Button>
             </DialogFooter>
         </Dialog>
     );
