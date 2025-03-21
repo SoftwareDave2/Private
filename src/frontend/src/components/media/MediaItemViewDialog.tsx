@@ -9,39 +9,16 @@ type MediaItemViewDialogProps = {
     open: boolean,
     filename: string,
     onClose: () => void,
-    onDeleted: () => void,
-    onDeleteResult: (message: string) => void,
 }
 
-export default function MediaItemViewDialog({ open, filename, onClose, onDeleted, onDeleteResult }: MediaItemViewDialogProps) {
+export default function MediaItemViewDialog({ open, filename, onClose }: MediaItemViewDialogProps) {
 
-    const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
     const [width, setWidth] = useState<number | undefined>();
     const [height, setHeight] = useState<number | undefined>();
 
     const loadedHandler = (imgWidth: number, imgHeight: number) => {
         setWidth(imgWidth);
         setHeight(imgHeight);
-    };
-
-    const toggleShowConfirmDeleteDialog = () => setShowConfirmDeleteDialog(!showConfirmDeleteDialog);
-
-    const deletedHandler = async () => {
-        const backendApiUrl = getBackendApiUrl();
-        try {
-            const response = await fetch(backendApiUrl + '/image/delete/' + filename, {
-                method: 'DELETE'
-            });
-            const responseText = await response.text();
-            console.log(responseText);
-            onDeleteResult( responseText);
-            onDeleted();
-        } catch (err) {
-            console.error(err);
-            onDeleteResult(err);
-            onClose();
-        }
-        setShowConfirmDeleteDialog(false);
     };
 
     return (
@@ -57,17 +34,8 @@ export default function MediaItemViewDialog({ open, filename, onClose, onDeleted
                         onImageLoaded={loadedHandler}
                     />
                 </div>
-                <ConfirmDeleteImageDialog
-                    open={showConfirmDeleteDialog}
-                    filename={filename}
-                    onClose={toggleShowConfirmDeleteDialog}
-                    onDeleted={deletedHandler}
-                />
             </DialogBody>
             <DialogFooter className={'justify-between'}>
-                <Button variant={'filled'} className={'bg-primary text-white'} onClick={toggleShowConfirmDeleteDialog}>
-                    Löschen
-                </Button>
                 <Button variant={'outlined'} className={'text-primary border-primary'} onClick={onClose}>
                     Close
                 </Button>

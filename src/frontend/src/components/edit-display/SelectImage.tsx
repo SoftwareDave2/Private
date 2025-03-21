@@ -20,8 +20,6 @@ type SelectImageProps = {
 
 export default function SelectImage({selectedFilename, screenWidth, screenHeight, screenOrientation, onSelect, onUnselect}: SelectImageProps) {
 
-    // const host = window.location.hostname;
-    // const backendApiUrl = 'http://' + host + ':8080';
     const backendApiUrl = getBackendApiUrl();
 
     const hasFetched = useRef(false)
@@ -53,23 +51,13 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
         updateFilteredImages()
     }, [screenWidth, screenHeight]);
 
-    // const fetchImages = async () => {
-    //     const response = await fetch(backendApiUrl + '/image/download/all')
-    //     const filenames = (await response.json()) as string[]
-    //     updateImageData(filenames)
-    // }
-
     const fetchImages = async () => {
         // Use the appropriate endpoint based on sortOption.
         const endpoint =  '/image/listByFilename';
         const response = await fetch(backendApiUrl + endpoint);
         const data = (await response.json()) as MediaContentItemData[];
-        //setImages(data);
         updateImageData(data)
     };
-
-
-
 
     const updateImageData = (contentItemData: MediaContentItemData[]) => {
         const newImages: ImageData[] = []
@@ -124,9 +112,9 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
     const updateFilteredImages = () => {
         if (!screenWidth || !screenHeight) {
             setFilteredImages(images)
-            console.log("width"+ screenWidth + "height" + screenHeight+ "images" + images)
+            //console.log("width"+ screenWidth + "height" + screenHeight+ "images" + images)
         } else {
-            console.log("filtered: width"+ screenWidth + "height" + screenHeight+ "images" + images)
+            //console.log("filtered: width"+ screenWidth + "height" + screenHeight+ "images" + images)
             const filtered: ImageData[] = []
             images.forEach(i => {
                 if (isResolutionMatch(i.width, i.height)) {

@@ -15,9 +15,7 @@ import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 export default function Calendar() {
 
-    // const host = window.location.hostname;
-    // const backendApiUrl = 'http://' + host + ':8080';
-    const backendApiUrl = getBackendApiUrl();
+    const backendApiUrl = getBackendApiUrl()
 
     const calendarRef = useRef<FullCalendar | null>(null)
     const hasFetched = useRef(false)
@@ -178,10 +176,18 @@ export default function Calendar() {
                                 image: "uploads/" + (evt.displayImages.length > 0 ? evt.displayImages[0].image : "")
                             }
                         }))}
+                        locale={'de'}
                         headerToolbar={{
                             left: "prev,today,next",
                             center: "title",
                             right: "dayGridMonth,timeGridWeek,timeGridDay",
+                        }}
+                        buttonText={{
+                            today: 'Heute',
+                            month: 'Monat',
+                            week: 'Woche',
+                            day: 'Tag',
+                            list: 'Liste'
                         }}
                         dateClick={handleDateClicked}
                         ref={calendarRef}

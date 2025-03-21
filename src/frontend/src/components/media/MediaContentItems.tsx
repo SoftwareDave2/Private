@@ -66,13 +66,10 @@ export default function MediaContentItems({ images, onImageDeleted, onDeleteResu
                         <div className={styles.imageContainer} onClick={() => imageClickHandler(image.filename)}>
                             <Image
                                 filename={image.filename}
-                                className={styles.image}
-                            />
+                                className={styles.image} />
                             {/* "X"-Button als Overlay */}
-                            <button
-                                className={styles.deleteButton}
-                                onClick={(e) => openDeleteConfirmation(e, image.filename)}
-                            >
+                            <button className={styles.deleteButton}
+                                    onClick={(e) => openDeleteConfirmation(e, image.filename)}>
                                 X
                             </button>
                         </div>
@@ -80,21 +77,19 @@ export default function MediaContentItems({ images, onImageDeleted, onDeleteResu
                     </div>
                 ))}
             </div>
+
             <MediaItemViewDialog
                 open={showImgView}
                 filename={imgViewFilename}
-                onClose={closeImgViewHandler}
-                onDeleted={closeImgViewHandler} // Nach Schließen der Detailansicht wird ggf. die Bildliste aktualisiert
-                onDeleteResult={onDeleteResult}
+                onClose={closeImgViewHandler} />
+
+
+            <ConfirmDeleteImageDialog
+                open={showDeleteConfirm}
+                filename={imageToDelete ?? ""}
+                onClose={cancelDelete}
+                onDeleted={handleDeleteConfirmed}
             />
-            {showDeleteConfirm && imageToDelete && (
-                <ConfirmDeleteImageDialog
-                    open={showDeleteConfirm}
-                    filename={imageToDelete}
-                    onClose={cancelDelete}
-                    onDeleted={handleDeleteConfirmed}
-                />
-            )}
         </>
     );
 }
