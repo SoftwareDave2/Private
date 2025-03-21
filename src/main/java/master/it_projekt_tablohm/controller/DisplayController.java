@@ -134,54 +134,115 @@ public class DisplayController {
         return displayRepository.findAll();
     }
 
-    private class FilenameEnd {
+    private class WakeTimeFilename {
+        private LocalDateTime wakeTime;
         private String filename;
-        private LocalDateTime end;
 
-        public FilenameEnd(String filename, LocalDateTime end) {
+        public WakeTimeFilename(LocalDateTime wakeTime, String filename) {
+            this.wakeTime = wakeTime;
             this.filename = filename;
-            this.end = end;
+        }
+
+        public LocalDateTime getWakeTime() {
+            return wakeTime;
         }
 
         public String getFilename() {
             return filename;
         }
-
-        public LocalDateTime getEnd() {
-            return end;
-        }
-    }
-    private FilenameEnd findCurrentEventEnd(List<Event> events, Config config, String mac) {
-        String filename = "";
-        LocalDateTime next = LocalDateTime.MAX;
-        for(Event e : events) {
-            for(DisplayImage di : e.getDisplayImages()) {
-                if (di.getdisplayMac().equals(mac)) {
-                    LocalDateTime start = e.getStart().minusMinutes(config.getLeadTime());
-                    LocalDateTime end = e.getEnd().plusMinutes(config.getFollowUpTime());
-                    if(start.isBefore(LocalDateTime.now()) && end.isAfter(LocalDateTime.now())) {
-                        filename = di.getImage();
-                        next = end;
-                    }
-                }
-            }
-        }
-        return new FilenameEnd(filename, next);
     }
 
-    private LocalDateTime findNextEventStart(List<Event> events, Config config, String mac) {
-        LocalDateTime next = LocalDateTime.MAX;
+    private LocalDateTime leadStart(Config config, Event event) {
+        return event.getStart().minusMinutes(config.getLeadTime());
+    }
+
+    private LocalDateTime followEnd(Config config, Event event) {
+        return event.getEnd().plusMinutes(config.getFollowUpTime());
+    }
+
+    private WakeTimeFilename findNextWakeTime(Config config, List<Event> events, String mac) {
+        Event leadFollowCurrent = null;
+        String leadFollowCurrentFilename = "";
+
+        Event current = null;
+        String currentFilename = "";
+
+        LocalDateTime nextStart = LocalDateTime.MAX;
+        Event next = null;
+
+        LocalDateTime nextnextStart = LocalDateTime.MAX;
+        Event nextnext = null;
+
+        LocalDateTime now = LocalDateTime.now();
+
         for (Event e : events) {
             for (DisplayImage di : e.getDisplayImages()) {
                 if (di.getdisplayMac().equals(mac)) {
-                    LocalDateTime start = e.getStart().minusMinutes(config.getLeadTime());
-                    if (start.isAfter(LocalDateTime.now()) && start.isBefore(next)) {
-                        next = start;
+
+                    LocalDateTime leadStart = leadStart(config, e);
+                    LocalDateTime followEnd = followEnd(config, e);
+                    if (now.isAfter(leadStart) && now.isBefore(followEnd)) {
+                        leadFollowCurrent = e;
+                        leadFollowCurrentFilename = di.getImage();
                     }
+
+                    LocalDateTime start = e.getStart();
+                    LocalDateTime end = e.getEnd();
+                    if (now.isAfter(start) && now.isBefore(end)) {
+                        current = e;
+                        currentFilename = di.getImage();
+                    }
+                    else if (now.isBefore(start)) {
+                        if (start.isBefore(nextStart)) {
+                            nextnextStart = start;
+                            nextnext = next;
+
+                            nextStart = start;
+                            next = e;
+                        }
+                        else if (start.isBefore(nextnextStart)) {
+                            nextnextStart = start;
+                            nextnext = e;
+                        }
+                    }
+
                 }
             }
         }
-        return next;
+
+        if (current == null && leadFollowCurrent != null) {
+            current = leadFollowCurrent;
+            currentFilename = leadFollowCurrentFilename;
+            System.out.println("cur = curLF");
+
+            if (current != next) {
+                System.out.println("cur != next");
+            }
+
+            next = nextnext;
+        }
+
+        LocalDateTime wakeTime = LocalDateTime.MAX;
+        if (current != null) {
+            LocalDateTime currentFollowEnd = followEnd(config, current);
+            wakeTime = currentFollowEnd;
+            System.out.println("normal");
+
+            if (next != null) {
+                LocalDateTime nextLeadStart = leadStart(config, next);
+                long diff = Duration.between(currentFollowEnd, nextLeadStart).getSeconds();
+                if (diff <= 2 * 60) {
+                    wakeTime = next.getStart();
+                    System.out.println("diff");
+                }
+            }
+        }
+        else if (next != null) {
+            wakeTime = leadStart(config, next);
+            System.out.println("next");
+        }
+
+        return new WakeTimeFilename(wakeTime, currentFilename);
     }
 
     private LocalDateTime findNextInterval(Config config) {
@@ -235,13 +296,9 @@ public class DisplayController {
         LocalDateTime next = LocalDateTime.MAX;
         String filename = "";
         if(!events.isEmpty()) {
-            FilenameEnd filenameEnd = findCurrentEventEnd(events, config, mac);
-            filename = filenameEnd.getFilename();
-            next = filenameEnd.getEnd();
-
-            if(next == LocalDateTime.MAX) {
-                next = findNextEventStart(events, config, mac);
-            }
+            WakeTimeFilename wakeTimeFilename = findNextWakeTime(config, events, mac);
+            next = wakeTimeFilename.getWakeTime();
+            filename = wakeTimeFilename.getFilename();
         }
 
         LocalDateTime intervalNext = findNextInterval(config);
