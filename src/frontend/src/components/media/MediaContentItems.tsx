@@ -73,7 +73,7 @@ export default function MediaContentItems({ images, onImageDeleted, onDeleteResu
                                 X
                             </button>
                         </div>
-                        <span className={styles.filenameText}>{image.filename}</span>
+                        <span className={`w-full text-wrap break-words ${styles.filenameText}`}>{image.filename}</span>
                     </div>
                 ))}
             </div>
