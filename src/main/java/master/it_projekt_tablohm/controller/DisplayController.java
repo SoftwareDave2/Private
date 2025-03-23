@@ -194,7 +194,7 @@ public class DisplayController {
                     }
                     else if (now.isBefore(start)) {
                         if (start.isBefore(nextStart)) {
-                            nextnextStart = start;
+                            nextnextStart = nextStart;
                             nextnext = next;
 
                             nextStart = start;
@@ -213,7 +213,6 @@ public class DisplayController {
         if (current == null && leadFollowCurrent != null) {
             current = leadFollowCurrent;
             currentFilename = leadFollowCurrentFilename;
-            System.out.println("cur = curLF");
 
             if (current != next) {
                 System.out.println("cur != next");
@@ -226,21 +225,20 @@ public class DisplayController {
         if (current != null) {
             LocalDateTime currentFollowEnd = followEnd(config, current);
             wakeTime = currentFollowEnd;
-            System.out.println("normal");
 
             if (next != null) {
                 LocalDateTime nextLeadStart = leadStart(config, next);
                 long diff = Duration.between(currentFollowEnd, nextLeadStart).getSeconds();
                 if (diff <= 2 * 60) {
-                    wakeTime = next.getStart();
-                    System.out.println("diff");
+                    if (nextLeadStart.isBefore(current.getEnd()))
+                        wakeTime = current.getEnd();
+                    else
+                        wakeTime = nextLeadStart;
                 }
             }
         }
-        else if (next != null) {
+        else if (next != null)
             wakeTime = leadStart(config, next);
-            System.out.println("next");
-        }
 
         return new WakeTimeFilename(wakeTime, currentFilename);
     }
