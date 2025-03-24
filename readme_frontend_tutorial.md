@@ -21,7 +21,7 @@ Das Dashboard bietet dir einen schnellen Überblick über alle Displays.
 - **Fehlermeldungen** – Auf dem Dashboard erscheinen Hinweise, wenn Fehler aufgetreten sind. 
 
 ![Dashboard Screenshot](pictures_readme_frontend/dashboard.png)
-<img src="pictures_readme_frontend/dashboard.png" alt="Dashboard Screenshot" style="max-width: 600px; height: auto;">
+<img src="pictures_readme_frontend/dashboard.png" alt="Dashboard Screenshot" style="max-width: 100%; height: auto;">
 
 > **Hinweis:** Über das "Sortieren nach" Drop-Down Menü lässt sich einstellen, ob die Displays nach ihrem Namen soertiert werden, 
 > oder ob man die Sortierung manuell per drag and drop vornehmen möchte.".
@@ -42,7 +42,9 @@ in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialo
 - Höhe: Die Displayhöhe (wird in der Regel schon von dem Display selber bei der Registrierung angegeben)
 - Standardbild: Hier kann man das Bild auswählen, das angezeigt werden soll, wenn gerade kein Termin stattfindet.
 
-![Edit_Display](pictures_readme_frontend/edit-display.png)
+
+<img src="pictures_readme_frontend/edit-display.png" alt="Edit_Display" style="max-width: 100%; height: auto;">
+
 > **Hinweis:** Bei der Bilderauswahl werden automatisch die jenigen Bilder aus der Mediathek angezeigt, deren Seitenverhältnis zu dem des Displays passt.
 
 ### Fehlermeldungen:
@@ -50,8 +52,9 @@ in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialo
 Dieses Warn-Symbol ist nur im Dashboard zu sehen, nicht aber auf den tatsächlichen physischen Displays.
 - Nach einem Klick auf das entsprechende Display öffnet sich das Display Informationsmenü. In diesem stehen kurze beschreibungen aller aktuellen Fehler, die dieses display betreffen.
 
+<img src="pictures_readme_frontend/display-error-info.png" alt="Display_error_info" style="max-width: 100%; height: auto;">
 
-![Display_error_info](pictures_readme_frontend/display-error-info.png)
+
 
 
 
@@ -60,16 +63,21 @@ Dieses Warn-Symbol ist nur im Dashboard zu sehen, nicht aber auf den tatsächlic
 ## 📅 Kalender <a name="kalender"></a>
 Diese Seite dient der Anzeige und Verwaltung von Terminen.
 
-![Kalender Screenshot](pictures_readme_frontend/kalender.png)
+<img src="pictures_readme_frontend/kalender.png" alt="Kalender" style="max-width: 100%; height: auto;">
+
 
 ### Funktionen:
 - **Termine filtern** – Termine werden im Kalender dargestellt. Über die Checkboxen lassen sich Termine nach zugeteilten Displays filtern. 
 - **Erstellen neuer Termine** – Nach einem klick auf ein beliebiges Feld in den Kalender, öffnet sich ein Menü zum erstellen eines neuen Termines. 
 
-  ![NTermin_erstellen](pictures_readme_frontend/termin-erstellen.png)
+
+<img src="pictures_readme_frontend/termin-erstellen.png" alt="Termin_erstellen" style="max-width: 100%; height: auto;">
+
 
 - **Löschen & Bearbeiten von Terminen** – Nach einem klick auf einen Termin, öffnet sich ein Menü, über welches diser gelöscht oder bearbeitet werden kann.
-  ![NTermin_erstellen](pictures_readme_frontend/termin-bearbeiten.png)
+
+  <img src="pictures_readme_frontend/termin-bearbeiten.png" alt="Termin_bearbeiten" style="max-width: 100%; height: auto;">
+
 > **Hinweis:** Sich wiederholende Termine können entweder einzeln oder gemeinsam gelöscht werden, aber nur einzeln bearbeitet werden.
 
 ---
@@ -83,7 +91,8 @@ Verwalte die Bilder der Mediathek. Bevor ein Bild als Standardbild oder in einem
 - **Löschen von Bildern** – Wenn man mit der Maus über ein bild hovert, erschein ein "X" in der oberen rechten Ecke. 
 Klickt man auf dieses "X" öffnet sich ein Dialog zur Bestätigung das dieses Bild gelöscht werden soll.
 
-![Mediathek Screenshot](pictures_readme_frontend/mediathek.png)
+  <img src="pictures_readme_frontend/mediathek.png" alt="Mediathek_Screenshot" style="max-width: 100%; height: auto;">
+
 
 > **Hinweis:** Die maximal zulässige Dateigröße für den Upload beträgt 10 MB.
 
@@ -99,8 +108,8 @@ Der Template Editor dient zur Erstellung von neuen Bildern für die Mediathek.
 - **Schriftart, Schriftgröße und Schriftfarbe einstellbar** – Nach dem das gewünschte Textfeld angeklickt wurde, können Schriftart (Arial, Helvetica, Times New Roman, Courier New) Schriftgröße und Schriftfarbe verändert werden. Außerdem lässt sich die Schriftgröße auch verändern, indem das Textfeld größer gezogen wird.
 - **Editiertes Bild in Mediathek speichern** – Nach dem das Bild editiert wurde, kann es nach einem Klick auf den "Bild speichern" Button gespeichert werden. Dieser befindet sich unter dem Bild. Anschließend erscheint ein kleiner Dialog zur Benennung des Bildes.
 
+<img src="pictures_readme_frontend/template-editor.png" alt="Template_Editor_Screenshot" style="max-width: 100%; height: auto;">
 
-![Template Editor Screenshot](pictures_readme_frontend/template-editor.png)
 
 ---
 
@@ -115,7 +124,9 @@ Hier lassen sich diverse Konfigurationseinstellungen treffen. Nach einem klick a
 - **Nachlaufzeit** – Die Anzahl in Minuten, die der Bildwechsel nach der Beendigung des Termines stattfinden soll 
 - **Tage bis zur Löschung ungenutzter Bilder auf den Displays** – Die verwendeten Bilder werden jeweils auch lokal auf den Displays gespeichert, damit diese angzeigt werden können. Nach der hier angegebenen Anzahl an Tagen werden ungenutzte Bilder wieder von den Displays entfernt, damit der Speicher nicht volläuft. (In der Mediathek bleiben hochgeladene Bilder selbstverständlich erhalten)
 
-![Config Screenshot](pictures_readme_frontend/config.png)
+
+<img src="pictures_readme_frontend/config.png" alt="Config_Screenshot" style="max-width: 100%; height: auto;">
+
 
 💡 **Hinweis:** Die Vor-und Nachlaufzeiten werden ignoriert bzw. gekürzt, wenn zwei aufeinander folgenden Termine so nahe hintereinander liegen, dass die Vor- und Nachlaufzeit nicht vollständig ausgeführt werden können!
 
