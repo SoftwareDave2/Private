@@ -56,24 +56,46 @@ const TemplateEditorPage: React.FC = () => {
                 }
             })
 
-            // Update toolbar when a text object is selected
             fabricCanvas.current.on('selection:created', (e) => {
-                const activeObj = e.target
+                const activeObj = fabricCanvas.current.getActiveObject()
                 if (activeObj && activeObj.type === 'i-text') {
                     updateToolbarValues(activeObj as fabric.IText)
                 }
             })
+
             fabricCanvas.current.on('selection:updated', (e) => {
-                const activeObj = e.target
+                const activeObj = fabricCanvas.current.getActiveObject()
                 if (activeObj && activeObj.type === 'i-text') {
                     updateToolbarValues(activeObj as fabric.IText)
+                }
+            })
+
+            fabricCanvas.current.on('selection:cleared', (e) => {
+                resetToolbarValues()
+            })
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Delete') {
+                    const activeObjects = fabricCanvas.current.getActiveObjects();
+                    if (activeObjects.length > 0) {
+                        activeObjects.forEach((obj) => fabricCanvas.current.remove(obj))
+                    }
                 }
             })
         }
         return () => fabricCanvas.current?.dispose()
     }, [])
 
-    // Update toolbar values from the active text object
+    const resetToolbarValues = () => {
+        const textObj = new fabric.IText('', {
+            fill: '#000000',
+            fontSize: 24,
+            fontFamily: 'Arial',
+            fontWeight: 'normal',
+        })
+        updateToolbarValues(textObj)
+    }
+
     const updateToolbarValues = (textObj: fabric.IText) => {
         setTextColor(textObj.fill as string)
         setFontSize(textObj.fontSize || 24)
