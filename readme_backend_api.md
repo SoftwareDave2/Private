@@ -1,7 +1,6 @@
-### **API Documentation: DisplayController**
-
-This API allows you to interact with the `Display` resource, enabling operations such as adding, deleting, and retrieving displays.
-
+# REST-API Dokumentation
+Mit dieser API können Sie mit der Ressource `Display` interagieren und Vorgänge wie das Hinzufügen, Löschen
+und Abrufen von Anzeigen ermöglichen.
 ---
 
 #### **1. Add a Display**
