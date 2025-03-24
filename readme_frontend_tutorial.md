@@ -21,6 +21,7 @@ Das Dashboard bietet dir einen schnellen Überblick über alle Displays.
 - **Fehlermeldungen** – Auf dem Dashboard erscheinen Hinweise, wenn Fehler aufgetreten sind. 
 
 ![Dashboard Screenshot](pictures_readme_frontend/dashboard.png)
+<img src="pictures_readme_frontend/dashboard.png" alt="Dashboard Screenshot" style="max-width: 600px; height: auto;">
 
 > **Hinweis:** Über das "Sortieren nach" Drop-Down Menü lässt sich einstellen, ob die Displays nach ihrem Namen soertiert werden, 
 > oder ob man die Sortierung manuell per drag and drop vornehmen möchte.".
