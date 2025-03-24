@@ -62,7 +62,6 @@ public class EventController {
         for (Display display : existingDisplays) {
             LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalDateTime
             LocalDateTime eventStart = eventRequest.getStart();
-            System.out.println(LocalDateTime.now());
             if (wakeTime != null && (eventStart.isBefore(wakeTime) || wakeTime.isBefore(LocalDateTime.now()))) {
                 affectedDisplays.add(display);
                 affectedDisplayMacs.add(display.getMacAddress());
@@ -149,7 +148,6 @@ public class EventController {
         for (Display display : existingDisplays) {
             LocalDateTime wakeTime = display.getWakeTime(); // Assuming wakeTime is LocalDateTime
             LocalDateTime eventStart = eventRequest.getStart();
-            System.out.println(LocalDateTime.now());
             if (wakeTime != null && (eventStart.isBefore(wakeTime) || wakeTime.isBefore(LocalDateTime.now()))) {
                 affectedDisplays.add(display);
                 affectedDisplayMacs.add(display.getMacAddress());

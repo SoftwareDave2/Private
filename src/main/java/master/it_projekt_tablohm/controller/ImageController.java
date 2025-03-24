@@ -174,8 +174,6 @@ public class ImageController {
     public @ResponseBody ResponseEntity<String> deleteImage(@PathVariable("filename") String filename) {
         // First, check if an image record exists in the database
         Image imageToDelete = imageRepository.findByFilename(filename);
-        System.out.println(filename);
-        System.out.println(imageToDelete);
         if (imageToDelete == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Kein Eintrag für Bild in Datenbank gefunden.");
