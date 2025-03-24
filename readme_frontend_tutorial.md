@@ -43,7 +43,7 @@ in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialo
 - Standardbild: Hier kann man das Bild auswählen, das angezeigt werden soll, wenn gerade kein Termin stattfindet.
 
 
-<img src="pictures_readme_frontend/edit-display.png" alt="Edit_Display" style="max-width: 50%; height: auto; display: block; margin: auto;">
+<img src="pictures_readme_frontend/edit-display.png" alt="Edit_Display" style="max-width: 10%; height: auto; display: block; margin: auto;">
 
 > **Hinweis:** Bei der Bilderauswahl werden automatisch die jenigen Bilder aus der Mediathek angezeigt, deren Seitenverhältnis zu dem des Displays passt.
 
@@ -52,7 +52,7 @@ in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialo
 Dieses Warn-Symbol ist nur im Dashboard zu sehen, nicht aber auf den tatsächlichen physischen Displays.
 - Nach einem Klick auf das entsprechende Display öffnet sich das Display Informationsmenü. In diesem stehen kurze beschreibungen aller aktuellen Fehler, die dieses display betreffen.
 
-<img src="pictures_readme_frontend/display-error-info.png" alt="Display_error_info" style="max-width: 50%; height: auto; display: block; margin: auto;">
+<img src="pictures_readme_frontend/display-error-info.png" alt="Display_error_info" style="max-width: 10%; height: auto; display: block; margin: auto;">
 
 
 
