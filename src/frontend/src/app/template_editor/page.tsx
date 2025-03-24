@@ -1,14 +1,15 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react';
-import { fabric } from 'fabric';
-import { Button } from '@material-tailwind/react';
-import { getBackendApiUrl } from '@/utils/backendApiUrl';
-import EditorToolbar from "@/components/template-editor/EditorToolbar";
-import NotificationDialog from "@/components/template-editor/NotificationDialog";
-import SetNameDialog from "@/components/template-editor/SetNameDialog";
-import PageHeaderButton from "@/components/layout/PageHeaderButton";
-import PageHeader from "@/components/layout/PageHeader";
+import React, {useEffect, useRef, useState} from 'react'
+import {fabric} from 'fabric'
+import {Button} from '@material-tailwind/react'
+import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import EditorToolbar from '@/components/template-editor/EditorToolbar'
+import NotificationDialog from '@/components/template-editor/NotificationDialog'
+import SetNameDialog from '@/components/template-editor/SetNameDialog'
+import PageHeaderButton from '@/components/layout/PageHeaderButton'
+import PageHeader from '@/components/layout/PageHeader'
+import {checkFileNameExists} from '@/utils/checkFileNameExists'
 
 const TemplateEditorPage: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -29,7 +30,7 @@ const TemplateEditorPage: React.FC = () => {
             fabricCanvas.current = new fabric.Canvas(canvasRef.current, {
                 width: 800,
                 height: 600,
-                backgroundColor: '#f0f0f0'
+                backgroundColor: '#f0f0f0',
             })
 
             // On double-click, add a new IText object if no object is under the pointer
@@ -45,7 +46,7 @@ const TemplateEditorPage: React.FC = () => {
                             fill: textColor,
                             fontSize: fontSize,
                             fontWeight: isBold ? 'bold' : 'normal',
-                            editable: true
+                            editable: true,
                         })
                         fabricCanvas.current?.add(text)
                         fabricCanvas.current?.setActiveObject(text)
@@ -76,7 +77,7 @@ const TemplateEditorPage: React.FC = () => {
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Delete') {
-                    const activeObjects = fabricCanvas.current.getActiveObjects();
+                    const activeObjects = fabricCanvas.current.getActiveObjects()
                     if (activeObjects.length > 0) {
                         activeObjects.forEach((obj) => fabricCanvas.current.remove(obj))
                     }
@@ -116,7 +117,7 @@ const TemplateEditorPage: React.FC = () => {
                 fill: textColor,
                 fontSize: fontSize,
                 fontFamily: fontFamily,
-                fontWeight: isBold ? 'bold' : 'normal'
+                fontWeight: isBold ? 'bold' : 'normal',
             })
             fabricCanvas.current?.renderAll()
         }
@@ -144,19 +145,19 @@ const TemplateEditorPage: React.FC = () => {
         baseName = baseName + '.png'
         const finalFileName = await getAvailableFileName(baseName)
 
-        const file = new File([blob], finalFileName, { type: 'image/png' })
+        const file = new File([blob], finalFileName, {type: 'image/png'})
         const formData = new FormData()
         formData.append('image', file)
 
         try {
             const response = await fetch(`${backendApiUrl}/image/upload`, {
                 method: 'POST',
-                body: formData
+                body: formData,
             })
             if (!response.ok) {
                 throw new Error(`Upload fehlgeschlagen: ${response.status} ${response.statusText}`)
             }
-            openNotificationDialog(`Bild wurde unter dem Namen ${finalFileName} erfolgreich hochgeladen.`)
+            openNotificationDialog(`Das Bild wurde unter dem Namen ${finalFileName} erfolgreich hochgeladen.`)
             setShowNameDialog(false)
         } catch (error: any) {
             console.error('Fehler beim Hochladen des Bildes:', error.message || error)
@@ -178,7 +179,7 @@ const TemplateEditorPage: React.FC = () => {
         while (n--) {
             u8arr[n] = bstr.charCodeAt(n)
         }
-        return new Blob([u8arr], { type: mime })
+        return new Blob([u8arr], {type: mime})
     }
 
     const getAvailableFileName = async (baseName: string): Promise<string> => {
@@ -190,20 +191,6 @@ const TemplateEditorPage: React.FC = () => {
             counter++
         }
         return finalName
-    }
-
-    const checkFileNameExists = async (fileName: string): Promise<boolean> => {
-        try {
-            const response = await fetch(`${backendApiUrl}/image/exists?filename=${encodeURIComponent(fileName)}`)
-            if (!response.ok) {
-                throw new Error('Fehler bei der Überprüfung des Dateinamens.')
-            }
-            const data = await response.json()
-            return data.exists
-        } catch (error) {
-            console.error('Fehler beim Prüfen des Dateinamens:', error)
-            return false
-        }
     }
 
     const handleFontFamilyChange = (fontFamily: string) => setFontFamily(fontFamily)
@@ -224,7 +211,7 @@ const TemplateEditorPage: React.FC = () => {
                     fabricCanvas.current.setBackgroundImage(
                         img,
                         fabricCanvas.current.renderAll.bind(fabricCanvas.current),
-                        { scaleX: 1, scaleY: 1 }
+                        {scaleX: 1, scaleY: 1},
                     )
                 }
             })
@@ -253,9 +240,9 @@ const TemplateEditorPage: React.FC = () => {
             <EditorToolbar fontFamily={fontFamily} fontSize={fontSize} isBold={isBold} color={textColor}
                            onFontFamilyChange={handleFontFamilyChange} onFontSizeChange={handleFontSizeChange}
                            onSetBoldChange={handleBoldChange} onColorChange={handleColorChange}
-                           onBackgroundUpload={handleBackgroundUpload} />
+                           onBackgroundUpload={handleBackgroundUpload}/>
 
-            <canvas ref={canvasRef} style={{ border: '1px solid #ccc' }} />
+            <canvas ref={canvasRef} style={{border: '1px solid #ccc'}}/>
 
             <div className={'text-xs text-blue-gray-700 mt-1'}>
                 <span className={'font-bold'}>Hinweis: </span> Fügen Sie mit einem Doppelklick in dem Bild Text hinzu.
@@ -265,10 +252,10 @@ const TemplateEditorPage: React.FC = () => {
                 Bild Speichern
             </Button>
 
-            <SetNameDialog open={showNameDialog} onClose={handleCloseNameDialog} onSave={saveImage} />
+            <SetNameDialog open={showNameDialog} onClose={handleCloseNameDialog} onSave={saveImage}/>
 
             <NotificationDialog open={showNotificationDialog} message={notificationMessage}
-                                onClose={() => setShowNotificationDialog(false)} />
+                                onClose={() => setShowNotificationDialog(false)}/>
         </main>
     )
 }

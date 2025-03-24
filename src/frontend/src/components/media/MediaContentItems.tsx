@@ -1,10 +1,10 @@
-import { MediaContentItemData } from "@/types/mediaContentItemData";
-import styles from "./MediaContentItems.module.css";
-import Image from "@/components/shared/Image";
-import { useState } from "react";
-import MediaItemViewDialog from "@/components/media/MediaItemViewDialog";
-import { getBackendApiUrl } from "@/utils/backendApiUrl";
-import { ConfirmDeleteImageDialog } from "@/components/media/ConfirmDeleteImageDialog";
+import {MediaContentItemData} from '@/types/mediaContentItemData'
+import styles from './MediaContentItems.module.css'
+import Image from '@/components/shared/Image'
+import {useState} from 'react'
+import MediaItemViewDialog from '@/components/media/MediaItemViewDialog'
+import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import {ConfirmDeleteImageDialog} from '@/components/media/ConfirmDeleteImageDialog'
 
 type MediaContentItemProps = {
     images: MediaContentItemData[];
@@ -12,51 +12,51 @@ type MediaContentItemProps = {
     onDeleteResult: (message: string) => void;
 };
 
-export default function MediaContentItems({ images, onImageDeleted, onDeleteResult }: MediaContentItemProps) {
-    const [showImgView, setShowImgView] = useState<boolean>(false);
-    const [imgViewFilename, setImgViewFilename] = useState<string>("");
-    const [imageToDelete, setImageToDelete] = useState<string | null>(null);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+export default function MediaContentItems({images, onImageDeleted, onDeleteResult}: MediaContentItemProps) {
+    const [showImgView, setShowImgView] = useState<boolean>(false)
+    const [imgViewFilename, setImgViewFilename] = useState<string>('')
+    const [imageToDelete, setImageToDelete] = useState<string | null>(null)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false)
 
     const imageClickHandler = (filename: string) => {
-        setImgViewFilename(filename);
-        setShowImgView(true);
-    };
+        setImgViewFilename(filename)
+        setShowImgView(true)
+    }
 
     const closeImgViewHandler = () => {
-        setShowImgView(false);
-        setImgViewFilename("");
-    };
+        setShowImgView(false)
+        setImgViewFilename('')
+    }
 
     const openDeleteConfirmation = (e: React.MouseEvent, filename: string) => {
-        e.stopPropagation(); // Verhindert, dass die Detailansicht geöffnet wird
-        setImageToDelete(filename);
-        setShowDeleteConfirm(true);
-    };
+        e.stopPropagation() // Verhindert, dass die Detailansicht geöffnet wird
+        setImageToDelete(filename)
+        setShowDeleteConfirm(true)
+    }
 
     const handleDeleteConfirmed = async () => {
-        if (!imageToDelete) return;
-        const backendApiUrl = getBackendApiUrl();
+        if (!imageToDelete) return
+        const backendApiUrl = getBackendApiUrl()
         try {
             const response = await fetch(backendApiUrl + '/image/delete/' + imageToDelete, {
-                method: 'DELETE'
-            });
-            const responseText = await response.text();
-            console.log(responseText);
-            onDeleteResult( responseText);
-            onImageDeleted(imageToDelete);
+                method: 'DELETE',
+            })
+            const responseText = await response.text()
+            console.log(responseText)
+            onDeleteResult(responseText)
+            onImageDeleted(imageToDelete)
         } catch (err) {
-            console.error(err);
-            onDeleteResult(err);
+            console.error(err)
+            onDeleteResult(err)
         }
-        setShowDeleteConfirm(false);
-        setImageToDelete(null);
-    };
+        setShowDeleteConfirm(false)
+        setImageToDelete(null)
+    }
 
     const cancelDelete = () => {
-        setShowDeleteConfirm(false);
-        setImageToDelete(null);
-    };
+        setShowDeleteConfirm(false)
+        setImageToDelete(null)
+    }
 
     return (
         <>
@@ -66,7 +66,7 @@ export default function MediaContentItems({ images, onImageDeleted, onDeleteResu
                         <div className={styles.imageContainer} onClick={() => imageClickHandler(image.filename)}>
                             <Image
                                 filename={image.filename}
-                                className={styles.image} />
+                                className={styles.image}/>
                             {/* "X"-Button als Overlay */}
                             <button className={styles.deleteButton}
                                     onClick={(e) => openDeleteConfirmation(e, image.filename)}>
@@ -81,15 +81,15 @@ export default function MediaContentItems({ images, onImageDeleted, onDeleteResu
             <MediaItemViewDialog
                 open={showImgView}
                 filename={imgViewFilename}
-                onClose={closeImgViewHandler} />
+                onClose={closeImgViewHandler}/>
 
 
             <ConfirmDeleteImageDialog
                 open={showDeleteConfirm}
-                filename={imageToDelete ?? ""}
+                filename={imageToDelete ?? ''}
                 onClose={cancelDelete}
                 onDeleted={handleDeleteConfirmed}
             />
         </>
-    );
+    )
 }

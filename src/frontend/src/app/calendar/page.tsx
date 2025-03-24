@@ -1,17 +1,17 @@
-"use client";
+'use client'
 
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin, {DateClickArg} from "@fullcalendar/interaction";
-import React, { useRef, useState } from "react";
-import {CalendarEntryDialog} from "@/components/calendar/CalendarEntryDialog";
-import {EventDetails} from "@/types/eventDetails";
-import {  useEffect } from 'react';
-import PageHeader from "@/components/layout/PageHeader";
-import {EventClickArg} from "@fullcalendar/core";
-import DisplayFilters from "@/components/calendar/DisplayFilters";
-import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import FullCalendar from '@fullcalendar/react'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import interactionPlugin, {DateClickArg} from '@fullcalendar/interaction'
+import React, {useRef, useState} from 'react'
+import {CalendarEntryDialog} from '@/components/calendar/CalendarEntryDialog'
+import {EventDetails} from '@/types/eventDetails'
+import {useEffect} from 'react'
+import PageHeader from '@/components/layout/PageHeader'
+import {EventClickArg} from '@fullcalendar/core'
+import DisplayFilters from '@/components/calendar/DisplayFilters'
+import {getBackendApiUrl} from '@/utils/backendApiUrl'
 
 export default function Calendar() {
 
@@ -22,7 +22,7 @@ export default function Calendar() {
     const [events, setEvents] = useState<EventDetails[]>([])
     const [openCalendarEntry, setOpenCalendarEntry] = useState<boolean>(false)
     const [eventDetailsForEdit, setEventDetailsForEdit] = useState<EventDetails | null>(null)
-    const [selectedMACs, setSelectedMACs] = useState<string[]>([]);
+    const [selectedMACs, setSelectedMACs] = useState<string[]>([])
 
     useEffect(() => {
         if (hasFetched.current) return
@@ -48,10 +48,10 @@ export default function Calendar() {
     }
 
     const getSelectedDisplaysFromStorage = () =>
-        JSON.parse(localStorage.getItem("selectedMACs") || "[]")
+        JSON.parse(localStorage.getItem('selectedMACs') || '[]')
 
     const setSelectedDisplaysOnStorage = (macs: string[]) => {
-        localStorage.setItem("selectedMACs", JSON.stringify(macs))
+        localStorage.setItem('selectedMACs', JSON.stringify(macs))
     }
 
     const formatDateToString = (date: Date, onlyDate: boolean) => {
@@ -76,7 +76,7 @@ export default function Calendar() {
     }
 
     const handleDateClicked = (info: DateClickArg) => {
-        const dateStr = formatDatetimeLocal(info.date , info.allDay)
+        const dateStr = formatDatetimeLocal(info.date, info.allDay)
         let start: string, end: string
 
         if (info.allDay) {
@@ -92,8 +92,8 @@ export default function Calendar() {
 
         const event: EventDetails = {
             id: 0,
-            groupId: "",
-            title: "",
+            groupId: '',
+            title: '',
             start: start,
             end: end,
             allDay: info.allDay,
@@ -105,17 +105,17 @@ export default function Calendar() {
     }
 
     const formatDatetimeLocal = (date: Date, allday: boolean) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Monat muss 2-stellig sein
-        const day = String(date.getDate()).padStart(2, '0'); // Tag muss 2-stellig sein
-        const hours = String(date.getHours()).padStart(2, '0'); // Stunden 2-stellig
-        const minutes = String(date.getMinutes()).padStart(2, '0'); // Minuten 2-stellig
-        const seconds = String(date.getSeconds()).padStart(2, '0') // Seconds
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')  // Monat muss 2-stellig sein
+        const day = String(date.getDate()).padStart(2, '0')         // Tag muss 2-stellig sein
+        const hours = String(date.getHours()).padStart(2, '0')      // Stunden 2-stellig
+        const minutes = String(date.getMinutes()).padStart(2, '0')  // Minuten 2-stellig
+        const seconds = String(date.getSeconds()).padStart(2, '0')  // Seconds
 
         return allday
             ? `${year}-${month}-${day}`
             : `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-    };
+    }
 
     const handleEventClicked = (evt: EventClickArg) => {
         // Find event.
@@ -152,7 +152,7 @@ export default function Calendar() {
         updateEvents()
             .then(() => console.log('Events successfully updated!'))
             .catch(err => console.error(err))
-        if(!wasWakeupError){
+        if (!wasWakeupError) {
             closeCalendarEditEntryHandler()
         }
     }
@@ -162,7 +162,7 @@ export default function Calendar() {
         <>
             <PageHeader title={'Kalender'} info={''}></PageHeader>
             <div className={'flex gap-7'}>
-                <DisplayFilters selectedMacs={selectedMACs} onSelectedMacsChanged={selectedMacsChanged} />
+                <DisplayFilters selectedMacs={selectedMACs} onSelectedMacsChanged={selectedMacsChanged}/>
                 <div className={'flex-1'}>
                     <FullCalendar
                         plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
@@ -173,29 +173,29 @@ export default function Calendar() {
                             end: evt.end,
                             allDay: evt.allDay,
                             extendedProps: {
-                                image: "uploads/" + (evt.displayImages.length > 0 ? evt.displayImages[0].image : "")
-                            }
+                                image: 'uploads/' + (evt.displayImages.length > 0 ? evt.displayImages[0].image : ''),
+                            },
                         }))}
                         locale={'de'}
                         headerToolbar={{
-                            left: "prev,today,next",
-                            center: "title",
-                            right: "dayGridMonth,timeGridWeek,timeGridDay",
+                            left: 'prev,today,next',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay',
                         }}
                         buttonText={{
                             today: 'Heute',
                             month: 'Monat',
                             week: 'Woche',
                             day: 'Tag',
-                            list: 'Liste'
+                            list: 'Liste',
                         }}
                         dateClick={handleDateClicked}
                         ref={calendarRef}
                         initialView="dayGridMonth"
                         eventContent={(info) => {
-                            let displayTitle = info.event.title;
+                            let displayTitle = info.event.title
                             if (displayTitle.length > 15) {
-                                displayTitle = displayTitle.substring(0, 15) + "...";
+                                displayTitle = displayTitle.substring(0, 15) + '...'
                             }
                             return (
                                 <div>
@@ -204,11 +204,11 @@ export default function Calendar() {
                                         <img
                                             src={info.event.extendedProps.image}
                                             alt="Event"
-                                            style={{ maxWidth: "50px", marginTop: "5px" }}
+                                            style={{maxWidth: '50px', marginTop: '5px'}}
                                         />
                                     )}
                                 </div>
-                            );
+                            )
                         }}
                         eventClick={handleEventClicked}
                     />
@@ -218,7 +218,7 @@ export default function Calendar() {
             {eventDetailsForEdit &&
                 <CalendarEntryDialog open={openCalendarEntry} eventDetails={eventDetailsForEdit}
                                      onClose={closeCalendarEditEntryHandler}
-                                     onDataUpdated={handleDisplayDataUpdated} />}
+                                     onDataUpdated={handleDisplayDataUpdated}/>}
         </>
-    );
+    )
 }

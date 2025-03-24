@@ -1,155 +1,149 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
-import PageHeader from "@/components/layout/PageHeader";
-import DisplayFrame from "@/components/dashboard/DisplayFrame";
-import { DisplayData } from "@/types/displayData"
-import DisplayInfoDialog from "@/components/dashboard/DisplayInfoDialog";
-import { getBackendApiUrl } from "@/utils/backendApiUrl";
+import React, {useState, useEffect, useMemo} from 'react'
+import PageHeader from '@/components/layout/PageHeader'
+import DisplayFrame from '@/components/dashboard/DisplayFrame'
+import {DisplayData} from '@/types/displayData'
+import DisplayInfoDialog from '@/components/dashboard/DisplayInfoDialog'
+import {getBackendApiUrl} from '@/utils/backendApiUrl'
 
 // Material Tailwind Select-Komponenten
-import { Select, Option } from "@material-tailwind/react";
+import {Select, Option} from '@material-tailwind/react'
 
 export default function Home() {
-    const backendApiUrl = useMemo(() => getBackendApiUrl(), []);
-    const [displays, setDisplays] = useState<DisplayData[]>([]);
-    const [displayDialogOpen, setDisplayDialogOpen] = useState<boolean>(false);
-    const [selectedDisplay, setSelectedDisplay] = useState<DisplayData | null>(null);
+    const backendApiUrl = useMemo(() => getBackendApiUrl(), [])
+    const [displays, setDisplays] = useState<DisplayData[]>([])
+    const [displayDialogOpen, setDisplayDialogOpen] = useState<boolean>(false)
+    const [selectedDisplay, setSelectedDisplay] = useState<DisplayData | null>(null)
 
     // Auswahl zwischen 'name' (alphabetisch) und 'custom' (freie Sortierung)
-    const [sortingMode, setSortingMode] = useState<'name' | 'custom'>('name');
+    const [sortingMode, setSortingMode] = useState<'name' | 'custom'>('name')
     // Enthält die Reihenfolge (Liste der Display-IDs) bei freier Sortierung
-    const [customOrder, setCustomOrder] = useState<number[]>([]);
+    const [customOrder, setCustomOrder] = useState<number[]>([])
     // Speichert den Index, an dem aktuell der Platzhalter (Drop Target) angezeigt wird
-    const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+    const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null)
 
     // Beim ersten Laden: Sortiermodus aus dem Local Storage laden
     useEffect(() => {
-        const storedMode = localStorage.getItem('sortingMode');
+        const storedMode = localStorage.getItem('sortingMode')
         if (storedMode === 'custom' || storedMode === 'name') {
-            setSortingMode(storedMode);
+            setSortingMode(storedMode)
         }
-    }, []);
+    }, [])
 
     // Immer wenn sich der Sortiermodus ändert, im Local Storage speichern
     useEffect(() => {
-        localStorage.setItem('sortingMode', sortingMode);
-    }, [sortingMode]);
+        localStorage.setItem('sortingMode', sortingMode)
+    }, [sortingMode])
 
     // Daten vom Backend laden
     const fetchDisplays = async () => {
-        const data = await fetch(backendApiUrl + '/display/all');
-        const json = await data.json();
-        setDisplays(json);
-    };
+        const data = await fetch(backendApiUrl + '/display/all')
+        const json = await data.json()
+        setDisplays(json)
+    }
 
-    const fetchDisplay = async (macAddress: string) => {
-        const data = await fetch(backendApiUrl + '/display/get/' + macAddress);
-        const display = (await data.json()) as DisplayData;
-        setDisplays(displays.map(d => d.macAddress === display.macAddress ? display : d));
-    };
-
-    const displayDialogHandler = () => setDisplayDialogOpen(!displayDialogOpen);
+    const displayDialogHandler = () => setDisplayDialogOpen(!displayDialogOpen)
 
     useEffect(() => {
         fetchDisplays()
             .then(() => console.log('Displays updated!'))
-            .catch((err) => console.error('No connection to backend!', err));
-    }, []);
+            .catch((err) => console.error('No connection to backend!', err))
+    }, [])
 
     const displayClickHandler = (id: number) => {
-        const display = displays.find(d => d.id === id);
+        const display = displays.find(d => d.id === id)
         if (!display) {
-            console.log(`Selected display with id ${id} not found.`);
-            return;
+            console.log(`Selected display with id ${id} not found.`)
+            return
         }
-        setSelectedDisplay(display);
-        displayDialogHandler();
-    };
+        setSelectedDisplay(display)
+        displayDialogHandler()
+    }
 
     const displayUpdatedHandler = async (macAddress: string) => {
         try {
-            await fetchDisplays();
+            await fetchDisplays()
         } catch (err) {
-            console.error(err);
+            console.error(err)
         }
-        displayDialogHandler();
-    };
+        displayDialogHandler()
+    }
 
     // Automatische Sortierung (alphabetisch) – falls displayName null oder "" ist, wird "" verwendet
     const sortedDisplays = useMemo(() => {
         return [...displays].sort((a, b) =>
-            (a.displayName || "").localeCompare(b.displayName || "")
-        );
-    }, [displays]);
+            (a.displayName || '').localeCompare(b.displayName || ''),
+        )
+    }, [displays])
 
     // Benutzerdefinierte Reihenfolge basierend auf customOrder
     const customOrderedDisplays = useMemo(() => {
         if (customOrder.length > 0) {
-            const ordered = customOrder.map(id => displays.find(d => d.id === id)).filter(Boolean) as DisplayData[];
-            const unordered = displays.filter(d => !customOrder.includes(d.id));
-            return [...ordered, ...unordered];
+            const ordered = customOrder.map(id => displays.find(d => d.id === id)).filter(Boolean) as DisplayData[]
+            const unordered = displays.filter(d => !customOrder.includes(d.id))
+            return [...ordered, ...unordered]
         }
-        return displays;
-    }, [displays, customOrder]);
+        return displays
+    }, [displays, customOrder])
 
     // Beim Wechsel in den "custom"-Modus: Reihenfolge aus Local Storage laden bzw. initialisieren
     useEffect(() => {
         if (sortingMode === 'custom') {
-            const storedOrder = localStorage.getItem('customDisplayOrder');
+            const storedOrder = localStorage.getItem('customDisplayOrder')
             if (storedOrder) {
-                setCustomOrder(JSON.parse(storedOrder));
+                setCustomOrder(JSON.parse(storedOrder))
             } else {
-                setCustomOrder(displays.map(d => d.id));
+                setCustomOrder(displays.map(d => d.id))
             }
         }
-    }, [sortingMode, displays]);
+    }, [sortingMode, displays])
 
     // Synchronisation: Neue oder entfernte Displays in customOrder aufnehmen
     useEffect(() => {
         if (sortingMode === 'custom') {
             setCustomOrder(prevOrder => {
-                const displayIds = displays.map(d => d.id);
-                const newOrder = [...prevOrder];
+                const displayIds = displays.map(d => d.id)
+                const newOrder = [...prevOrder]
                 // Fehlende IDs ergänzen
                 displayIds.forEach(id => {
                     if (!newOrder.includes(id)) {
-                        newOrder.push(id);
+                        newOrder.push(id)
                     }
-                });
+                })
                 // IDs entfernen, die es nicht mehr gibt
-                return newOrder.filter(id => displayIds.includes(id));
-            });
+                return newOrder.filter(id => displayIds.includes(id))
+            })
         }
-    }, [displays, sortingMode]);
+    }, [displays, sortingMode])
 
     // HTML5 Drag & Drop Handler
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-        e.dataTransfer.setData("text/plain", index.toString());
-    };
+        e.dataTransfer.setData('text/plain', index.toString())
+    }
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-        e.preventDefault();
-        setDropTargetIndex(index);
-    };
+        e.preventDefault()
+        setDropTargetIndex(index)
+    }
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, dropIndex: number) => {
-        e.preventDefault();
-        const dragIndexStr = e.dataTransfer.getData("text/plain");
-        const dragIndex = parseInt(dragIndexStr, 10);
-        if (isNaN(dragIndex)) return;
-        const newOrder = Array.from(customOrder);
-        const [removed] = newOrder.splice(dragIndex, 1);
-        newOrder.splice(dropIndex, 0, removed);
-        setCustomOrder(newOrder);
-        localStorage.setItem('customDisplayOrder', JSON.stringify(newOrder));
-        setDropTargetIndex(null);
-    };
+        e.preventDefault()
+        const dragIndexStr = e.dataTransfer.getData('text/plain')
+        const dragIndex = parseInt(dragIndexStr, 10)
+        if (isNaN(dragIndex)) return
+        const newOrder = Array.from(customOrder)
+        const [removed] = newOrder.splice(dragIndex, 1)
+        newOrder.splice(dropIndex, 0, removed)
+        setCustomOrder(newOrder)
+        localStorage.setItem('customDisplayOrder', JSON.stringify(newOrder))
+        setDropTargetIndex(null)
+    }
 
     const handleDragEnd = () => {
-        setDropTargetIndex(null);
-    };
+        setDropTargetIndex(null)
+    }
 
     return (
         <main>
@@ -176,15 +170,16 @@ export default function Home() {
                 <div
                     className="flex gap-4 flex-wrap"
                     onDragOver={(e) => {
-                        e.preventDefault();
-                        setDropTargetIndex(customOrderedDisplays.length);
+                        e.preventDefault()
+                        setDropTargetIndex(customOrderedDisplays.length)
                     }}
                     onDrop={(e) => handleDrop(e, customOrderedDisplays.length)}
                 >
                     {customOrderedDisplays.map((display, index) => (
                         <React.Fragment key={display.id}>
                             {dropTargetIndex === index && (
-                                <div className="w-[100px] h-[100px] border-2 border-dashed border-blue-500 flex items-center justify-center">
+                                <div
+                                    className="w-[100px] h-[100px] border-2 border-dashed border-blue-500 flex items-center justify-center">
                                     Hier einfügen
                                 </div>
                             )}
@@ -204,7 +199,8 @@ export default function Home() {
                         </React.Fragment>
                     ))}
                     {dropTargetIndex === customOrderedDisplays.length && (
-                        <div className="w-[100px] h-[100px] border-2 border-dashed border-blue-500 flex items-center justify-center">
+                        <div
+                            className="w-[100px] h-[100px] border-2 border-dashed border-blue-500 flex items-center justify-center">
                             Hier einfügen
                         </div>
                     )}
@@ -231,5 +227,5 @@ export default function Home() {
                 />
             )}
         </main>
-    );
+    )
 }

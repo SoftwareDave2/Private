@@ -1,4 +1,4 @@
-import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from "@material-tailwind/react";
+import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from '@material-tailwind/react'
 
 type ImageDeleteResultDialogProps = {
     open: boolean,
@@ -14,7 +14,7 @@ export default function ImageDeleteResultDialog({open, message, onClose}: ImageD
                 <p>{message}</p>
             </DialogBody>
             <DialogFooter>
-                <Button variant={'filled'} className={'bg-primary text-white'} onClick={onClose}>OK</Button>
+                <Button className={'bg-primary text-white'} onClick={onClose}>OK</Button>
             </DialogFooter>
         </Dialog>
     )

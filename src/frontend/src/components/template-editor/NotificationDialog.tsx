@@ -1,4 +1,4 @@
-import {Button, Dialog, DialogBody, DialogFooter} from "@material-tailwind/react";
+import {Button, Dialog, DialogBody, DialogFooter} from '@material-tailwind/react'
 
 type NotificationDialogProps = {
     open: boolean,
@@ -13,7 +13,7 @@ export default function NotificationDialog({open, message, onClose}: Notificatio
                 <p>{message}</p>
             </DialogBody>
             <DialogFooter>
-                <Button variant={'filled'} className={'bg-primary text-white'} onClick={onClose}>Schließen</Button>
+                <Button variant={'filled'} className={'bg-primary text-white'} onClick={onClose}>OK</Button>
             </DialogFooter>
         </Dialog>
     )

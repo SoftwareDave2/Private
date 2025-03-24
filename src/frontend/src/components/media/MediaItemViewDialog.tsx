@@ -1,9 +1,9 @@
-import { Button, Dialog, DialogBody, DialogFooter, DialogHeader } from "@material-tailwind/react";
-import Image from "@/components/shared/Image";
-import styles from "./MediaItemViewDialog.module.css";
-import { useState } from "react";
-import { ConfirmDeleteImageDialog } from "@/components/media/ConfirmDeleteImageDialog";
-import { getBackendApiUrl } from "@/utils/backendApiUrl";
+import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from '@material-tailwind/react'
+import Image from '@/components/shared/Image'
+import styles from './MediaItemViewDialog.module.css'
+import {useState} from 'react'
+import {ConfirmDeleteImageDialog} from '@/components/media/ConfirmDeleteImageDialog'
+import {getBackendApiUrl} from '@/utils/backendApiUrl'
 
 type MediaItemViewDialogProps = {
     open: boolean,
@@ -11,15 +11,15 @@ type MediaItemViewDialogProps = {
     onClose: () => void,
 }
 
-export default function MediaItemViewDialog({ open, filename, onClose }: MediaItemViewDialogProps) {
+export default function MediaItemViewDialog({open, filename, onClose}: MediaItemViewDialogProps) {
 
-    const [width, setWidth] = useState<number | undefined>();
-    const [height, setHeight] = useState<number | undefined>();
+    const [width, setWidth] = useState<number | undefined>()
+    const [height, setHeight] = useState<number | undefined>()
 
     const loadedHandler = (imgWidth: number, imgHeight: number) => {
-        setWidth(imgWidth);
-        setHeight(imgHeight);
-    };
+        setWidth(imgWidth)
+        setHeight(imgHeight)
+    }
 
     return (
         <Dialog open={open} size={'xl'} handler={onClose} className={'!w-auto !min-w-min'}>
@@ -41,5 +41,5 @@ export default function MediaItemViewDialog({ open, filename, onClose }: MediaIt
                 </Button>
             </DialogFooter>
         </Dialog>
-    );
+    )
 }

@@ -1,13 +1,9 @@
-import {Alert, Typography} from "@material-tailwind/react";
-import ExclamationIcon from "@/components/shared/ExclamationIcon";
-
-type InvalidFileAlertProps = {
-
-}
+import {Alert, Typography} from '@material-tailwind/react'
+import ExclamationIcon from '@/components/shared/ExclamationIcon'
 
 export default function InvalidFileAlert() {
     return (
-        <Alert color={'amber'} icon={<ExclamationIcon />} className={'mb-4'}>
+        <Alert color={'amber'} icon={<ExclamationIcon/>} className={'mb-4'}>
             <Typography>
                 Das ausgewählte Bild ist leider nicht im korrekten Format! Bitte beachten Sie folgende Vorgaben:
             </Typography>

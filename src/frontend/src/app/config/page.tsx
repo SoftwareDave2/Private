@@ -1,97 +1,80 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect, FormEvent } from "react";
+import React, {useState, useEffect, FormEvent} from 'react'
 import {
     Input,
     Button,
     Checkbox,
-    Dialog,
-    DialogBody,
-    DialogFooter,
-} from "@material-tailwind/react";
-import PageHeader from "@/components/layout/PageHeader";
-import {getBackendApiUrl} from "@/utils/backendApiUrl";
-
-interface DayTimeConfig {
-    enabled: boolean;
-    startTime: string;
-    endTime: string;
-}
-
-interface Config {
-    displayIntervalDay: string;
-    vorlaufzeit: string;
-    nachlaufzeit: string;
-    deleteAfterDays: string;
-    weekdayTimes: { [day: string]: DayTimeConfig };
-}
+} from '@material-tailwind/react'
+import PageHeader from '@/components/layout/PageHeader'
+import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import SaveDialog from '@/components/config/SaveDialog'
+import { DayTimeConfig, Config } from '@/types/config'
 
 export default function ConfigPage() {
     const defaultWeekdayTimes: { [day: string]: DayTimeConfig } = {
-        Montag: { enabled: true, startTime: "08:00", endTime: "18:00" },
-        Dienstag: { enabled: true, startTime: "08:00", endTime: "18:00" },
-        Mittwoch: { enabled: true, startTime: "08:00", endTime: "18:00" },
-        Donnerstag: { enabled: true, startTime: "08:00", endTime: "18:00" },
-        Freitag: { enabled: true, startTime: "08:00", endTime: "18:00" },
-        Samstag: { enabled: false, startTime: "08:00", endTime: "18:00" },
-        Sonntag: { enabled: false, startTime: "08:00", endTime: "18:00" },
-    };
+        Montag: {enabled: true, startTime: '08:00', endTime: '18:00'},
+        Dienstag: {enabled: true, startTime: '08:00', endTime: '18:00'},
+        Mittwoch: {enabled: true, startTime: '08:00', endTime: '18:00'},
+        Donnerstag: {enabled: true, startTime: '08:00', endTime: '18:00'},
+        Freitag: {enabled: true, startTime: '08:00', endTime: '18:00'},
+        Samstag: {enabled: false, startTime: '08:00', endTime: '18:00'},
+        Sonntag: {enabled: false, startTime: '08:00', endTime: '18:00'},
+    }
 
-    const [config, setConfig] = useState<Config | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [saveStatus, setSaveStatus] = useState("");
+    const [config, setConfig] = useState<Config | null>(null)
+    const [showSaveDialog, setShowSaveDialog] = useState(false)
+    const [saveMessage, setSaveMessage] = useState('')
 
     const days = [
-        "Montag",
-        "Dienstag",
-        "Mittwoch",
-        "Donnerstag",
-        "Freitag",
-        "Samstag",
-        "Sonntag",
-    ];
+        'Montag',
+        'Dienstag',
+        'Mittwoch',
+        'Donnerstag',
+        'Freitag',
+        'Samstag',
+        'Sonntag',
+    ]
 
     useEffect(() => {
         const fetchConfig = async () => {
-            // const host = window.location.hostname;
-            // const backendApiUrl = 'http://' + host + ':8080';
-            const backendApiUrl = getBackendApiUrl();
+            const backendApiUrl = getBackendApiUrl()
             try {
-                const response = await fetch(backendApiUrl+ "/config/get");
+                const response = await fetch(backendApiUrl + '/config/get')
                 if (response.ok) {
-                    const data = await response.json();
-                    const weekdayTimes = data.weekdayTimes || defaultWeekdayTimes;
-                    const mergedWeekdayTimes = { ...defaultWeekdayTimes, ...weekdayTimes };
+                    const data = await response.json()
+                    const weekdayTimes = data.weekdayTimes || defaultWeekdayTimes
+                    const mergedWeekdayTimes = {...defaultWeekdayTimes, ...weekdayTimes}
                     setConfig({
                         displayIntervalDay: data.wakeIntervalDay.toString(),
                         vorlaufzeit: data.leadTime.toString(),
                         nachlaufzeit: data.followUpTime.toString(),
                         deleteAfterDays: data.deleteAfterDays.toString(),
                         weekdayTimes: mergedWeekdayTimes,
-                    });
+                    })
                 } else if (response.status === 404) {
-                    console.error("Keine Konfiguration gefunden. Es werden Standardwerte verwendet.");
+                    console.error('Keine Konfiguration gefunden. Es werden Standardwerte verwendet.')
                     setConfig({
-                        displayIntervalDay: "30",
-                        vorlaufzeit: "10",
-                        nachlaufzeit: "5",
-                        deleteAfterDays: "30",
+                        displayIntervalDay: '30',
+                        vorlaufzeit: '10',
+                        nachlaufzeit: '5',
+                        deleteAfterDays: '30',
                         weekdayTimes: defaultWeekdayTimes,
-                    });
+                    })
                 } else {
-                    console.error("Fehler beim Abrufen der Konfiguration:", response.statusText);
+                    console.error('Fehler beim Abrufen der Konfiguration:', response.statusText)
                 }
             } catch (error) {
-                console.error("Fehler beim Abrufen der Konfiguration:", error);
+                console.error('Fehler beim Abrufen der Konfiguration:', error)
             }
-        };
+        }
 
-        fetchConfig();
-    }, []);
+        fetchConfig()
+    }, [])
 
     const toggleWeekday = (day: string) => {
-        if (!config) return;
-        const currentDayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day];
+        if (!config) return
+        const currentDayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day]
         setConfig({
             ...config,
             weekdayTimes: {
@@ -101,16 +84,16 @@ export default function ConfigPage() {
                     enabled: !currentDayConfig.enabled,
                 },
             },
-        });
-    };
+        })
+    }
 
     const handleDayTimeChange = (
         day: string,
-        field: "startTime" | "endTime",
-        value: string
+        field: 'startTime' | 'endTime',
+        value: string,
     ) => {
-        if (!config) return;
-        const currentDayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day];
+        if (!config) return
+        const currentDayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day]
         setConfig({
             ...config,
             weekdayTimes: {
@@ -120,19 +103,19 @@ export default function ConfigPage() {
                     [field]: value,
                 },
             },
-        });
-    };
+        })
+    }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!config) return;
+        e.preventDefault()
+        if (!config) return
 
         for (const day of days) {
-            const dayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day];
+            const dayConfig = config.weekdayTimes?.[day] || defaultWeekdayTimes[day]
             if (dayConfig.enabled && dayConfig.startTime >= dayConfig.endTime) {
-                setSaveStatus(`Fehler: Bei ${day} muss die Startzeit vor der Endzeit liegen.`);
-                setIsModalOpen(true);
-                return;
+                setSaveMessage(`Fehler: Bei ${day} muss die Startzeit vor der Endzeit liegen.`)
+                setShowSaveDialog(true)
+                return
             }
         }
 
@@ -142,52 +125,52 @@ export default function ConfigPage() {
             followUpTime: parseFloat(config.nachlaufzeit),
             deleteAfterDays: parseInt(config.deleteAfterDays, 10),
             weekdayTimes: config.weekdayTimes,
-        };
+        }
 
-        console.log("Neue Konfiguration:", updatedConfig);
+        console.log('Neue Konfiguration:', updatedConfig)
 
         try {
-            const response = await fetch("http://" + window.location.hostname + ":8080/config/post", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            const response = await fetch('http://' + window.location.hostname + ':8080/config/post', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(updatedConfig),
-            });
+            })
 
             if (response.ok) {
-                const data = await response.json();
-                const weekdayTimes = data.weekdayTimes || config.weekdayTimes;
-                const mergedWeekdayTimes = { ...defaultWeekdayTimes, ...weekdayTimes };
+                const data = await response.json()
+                const weekdayTimes = data.weekdayTimes || config.weekdayTimes
+                const mergedWeekdayTimes = {...defaultWeekdayTimes, ...weekdayTimes}
                 setConfig({
                     displayIntervalDay: data.wakeIntervalDay.toString(),
                     vorlaufzeit: data.leadTime.toString(),
                     nachlaufzeit: data.followUpTime.toString(),
                     deleteAfterDays: data.deleteAfterDays.toString(),
                     weekdayTimes: mergedWeekdayTimes,
-                });
-                setSaveStatus("Konfiguration erfolgreich gespeichert!");
+                })
+                setSaveMessage('Konfiguration erfolgreich gespeichert!')
             } else {
-                setSaveStatus("Fehler beim Speichern der Konfiguration!");
+                setSaveMessage('Fehler beim Speichern der Konfiguration!')
             }
         } catch (error) {
-            console.error("Fehler beim Speichern der Konfiguration:", error);
-            setSaveStatus("Fehler beim Speichern der Konfiguration!");
+            console.error('Fehler beim Speichern der Konfiguration:', error)
+            setSaveMessage('Fehler beim Speichern der Konfiguration!')
         }
 
-        setIsModalOpen(true);
-    };
+        setShowSaveDialog(true)
+    }
 
     if (config === null) {
         return (
             <main>
-                <PageHeader title="Konfiguration" info="" />
+                <PageHeader title="Konfiguration" info=""/>
                 <div className="max-w-xl mx-auto p-4">Lade Konfiguration...</div>
             </main>
-        );
+        )
     }
 
     return (
         <main>
-            <PageHeader title="Konfiguration" info="" />
+            <PageHeader title="Konfiguration" info=""/>
             <div className="max-w-4xl mx-auto p-4">
                 <form onSubmit={handleSubmit}>
                     <div className="flex flex-col md:flex-row gap-4">
@@ -197,7 +180,7 @@ export default function ConfigPage() {
                             <ul>
                                 {days.map((day) => {
                                     const dayConfig =
-                                        config.weekdayTimes?.[day] || defaultWeekdayTimes[day];
+                                        config.weekdayTimes?.[day] || defaultWeekdayTimes[day]
                                     return (
                                         <li key={day} className="mb-2 border rounded p-4">
                                             <div className="flex items-center">
@@ -218,7 +201,7 @@ export default function ConfigPage() {
                                                         required
                                                         value={dayConfig.startTime}
                                                         onChange={(e) =>
-                                                            handleDayTimeChange(day, "startTime", e.target.value)
+                                                            handleDayTimeChange(day, 'startTime', e.target.value)
                                                         }
                                                     />
                                                     <Input
@@ -229,13 +212,13 @@ export default function ConfigPage() {
                                                         required
                                                         value={dayConfig.endTime}
                                                         onChange={(e) =>
-                                                            handleDayTimeChange(day, "endTime", e.target.value)
+                                                            handleDayTimeChange(day, 'endTime', e.target.value)
                                                         }
                                                     />
                                                 </div>
                                             )}
                                         </li>
-                                    );
+                                    )
                                 })}
                             </ul>
                         </div>
@@ -286,29 +269,14 @@ export default function ConfigPage() {
                         </div>
                     </div>
                     <div className="mt-4">
-                    <Button
-                            type="submit"
-                            variant="filled"
-                            className="bg-primary text-white"
-                            fullWidth
-                        >
+                        <Button type="submit" className="bg-primary text-white" fullWidth>
                             Speichern
                         </Button>
                     </div>
                 </form>
             </div>
-            <Dialog open={isModalOpen} handler={() => setIsModalOpen(false)}>
-                <DialogBody className="text-center">{saveStatus}</DialogBody>
-                <DialogFooter>
-                    <Button
-                        variant="filled"
-                        className="bg-primary text-white"
-                        onClick={() => setIsModalOpen(false)}
-                    >
-                        OK
-                    </Button>
-                </DialogFooter>
-            </Dialog>
+
+            <SaveDialog open={showSaveDialog} message={saveMessage} onClose={() => setShowSaveDialog(false)}/>
         </main>
-    );
+    )
 }
