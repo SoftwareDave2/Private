@@ -43,7 +43,7 @@ in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialo
 - Standardbild: Hier kann man das Bild auswählen, das angezeigt werden soll, wenn gerade kein Termin stattfindet.
 
 
-<img src="pictures_readme_frontend/edit-display.png" alt="Edit_Display" style="max-width: 10%; height: auto; display: block; margin: auto;">
+<img src="pictures_readme_frontend/edit-display.png" alt="Edit_Display" style="max-width: 40%; height: auto;">
 
 > **Hinweis:** Bei der Bilderauswahl werden automatisch die jenigen Bilder aus der Mediathek angezeigt, deren Seitenverhältnis zu dem des Displays passt.
 
@@ -52,7 +52,7 @@ in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialo
 Dieses Warn-Symbol ist nur im Dashboard zu sehen, nicht aber auf den tatsächlichen physischen Displays.
 - Nach einem Klick auf das entsprechende Display öffnet sich das Display Informationsmenü. In diesem stehen kurze beschreibungen aller aktuellen Fehler, die dieses display betreffen.
 
-<img src="pictures_readme_frontend/display-error-info.png" alt="Display_error_info" style="max-width: 10%; height: auto; display: block; margin: auto;">
+<img src="pictures_readme_frontend/display-error-info.png" alt="Display_error_info" style="max-width: 40%; height: auto;">
 
 
 
@@ -71,12 +71,15 @@ Diese Seite dient der Anzeige und Verwaltung von Terminen.
 - **Erstellen neuer Termine** – Nach einem klick auf ein beliebiges Feld in den Kalender, öffnet sich ein Menü zum erstellen eines neuen Termines. 
 
 
-<img src="pictures_readme_frontend/termin-erstellen.png" alt="Termin_erstellen" style="max-width: 30%; height: auto;">
+<img src="pictures_readme_frontend/termin-erstellen.png" alt="Termin_erstellen" style="max-width: 60%; height: auto;">
 
 
-- **Löschen & Bearbeiten von Terminen** – Nach einem klick auf einen Termin, öffnet sich ein Menü, über welches diser gelöscht oder bearbeitet werden kann.
+- **Löschen & Bearbeiten von Terminen** – Nach einem klick auf einen Termin, öffnet sich ein Menü, über welches 
+dieser gelöscht oder bearbeitet werden kann. Nach einem Klick auf den "Löschen" Button öffnet sich zunächst ein 
+Bestätigungs-Dialog. Bei sich wiederholenden Terminen findet man hier neben der klassichen "Event Löschen" Option auch 
+die Option "Alle Löschen", mit der alle Termine dieser Gruppe gelöscht werden.
 
-  <img src="pictures_readme_frontend/termin-bearbeiten.png" alt="Termin_bearbeiten" style="max-width: 30%; height: auto;">
+  <img src="pictures_readme_frontend/termin-bearbeiten.png" alt="Termin_bearbeiten" style="max-width: 60%; height: auto;">
 
 > **Hinweis:** Sich wiederholende Termine können entweder einzeln oder gemeinsam gelöscht werden, aber nur einzeln bearbeitet werden.
 
@@ -128,6 +131,6 @@ Hier lassen sich diverse Konfigurationseinstellungen treffen. Nach einem klick a
 <img src="pictures_readme_frontend/config.png" alt="Config_Screenshot" style="max-width: 100%; height: auto;">
 
 
-💡 **Hinweis:** Die Vor-und Nachlaufzeiten werden ignoriert bzw. gekürzt, wenn zwei aufeinander folgenden Termine so nahe hintereinander liegen, dass die Vor- und Nachlaufzeit nicht vollständig ausgeführt werden können!
+> **Hinweis:** Die Vor-und Nachlaufzeiten werden ignoriert bzw. gekürzt, wenn zwei aufeinander folgenden Termine so nahe hintereinander liegen, dass die Vor- und Nachlaufzeit nicht vollständig ausgeführt werden können!
 
 ---
