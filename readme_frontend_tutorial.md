@@ -15,31 +15,61 @@ Dieses Tutorial bietet einen Überblick über die Website und erklärt wie die e
 Das Dashboard bietet dir einen schnellen Überblick über alle Displays.
 
 ### Funktionen:
-- **Bild-Anzeige** – Auf dem Dashboard werden die aktuellen Bilder auf den Displays angezeigt.      
-- **Display-Setup** – Das Dashboard bietet die Möglichkeit neue Displays zu konfigurieren.   
+- **Bild-Anzeige** – Auf dem Dashboard werden die aktuellen Bilder auf den Displays angezeigt.   
+- **Display Informationen** – Nach einem Klick auf ein Display öffnet sich ein Menü auf dem diverse Informationen wie der Akkustand, der Aufweckzeitpunkt, der Zeitpunkt des nächsten Events usw. dargestellt werden.
+- **Display Setup** – Das Dashboard bietet die Möglichkeit neue Displays zu konfigurieren.   
 - **Fehlermeldungen** – Auf dem Dashboard erscheinen Hinweise, wenn Fehler aufgetreten sind. 
-
 
 ![Dashboard Screenshot](pictures_readme_frontend/dashboard.png)
 
 > **Hinweis:** Über das "Sortieren nach" Drop-Down Menü lässt sich einstellen, ob die Displays nach ihrem Namen soertiert werden, 
 > oder ob man die Sortierung manuell per drag and drop vornehmen möchte.".
 
+
+
+
+### Display-Setup:
+- **Display-Registrierung** – Neue Displays regsitrieren sich automatisch von selbst bei dem Server. 
+Anschließend sind sie auf der Dashboard-Seite neben den bereits bestehenden Displays zu sehen.  
+- **Display-Koniguration** – Klicken Sie zunächst auf das zu konfigurierende Display. Klicken Sie anschließend 
+in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialog über den das Display Konfiguriert werden kann.
+- Name: Der Name des Displays
+- Displaymarke: Die Marke des Display
+- Displaymodell: Das Modell
+- Orientierung: Die Orientierung, wie das Display aufgehängt wurde (vertikal oder horizontal)
+- Breite: Die Displaybreite (wird in der Regel schon von dem Display selber bei der Registrierung angegeben)
+- Höhe: Die Displayhöhe (wird in der Regel schon von dem Display selber bei der Registrierung angegeben)
+- Standardbild: Hier kann man das Bild auswählen, das angezeigt werden soll, wenn gerade kein Termin stattfindet.
+
+![Edit_Display](pictures_readme_frontend/edit-display.png)
+> **Hinweis:** Bei der Bilderauswahl werden automatisch die jenigen Bilder aus der Mediathek angezeigt, deren Seitenverhältnis zu dem des Displays passt.
+
+### Fehlermeldungen:
+- Wenn ein Fehler bei einem Display vorliegt, wird in der rechten oberen Ecke ein gelbes Warndreieck eingebelendet. 
+Dieses Warn-Symbol ist nur im Dashboard zu sehen, nicht aber auf den tatsächlichen physischen Displays.
+- Nach einem Klick auf das entsprechende Display öffnet sich das Display Informationsmenü. In diesem stehen kurze beschreibungen aller aktuellen Fehler, die dieses display betreffen.
+
+
+![Display_error_info](pictures_readme_frontend/display-error-info.png)
+
+
+
 ---
 
 ## 📅 Kalender <a name="kalender"></a>
 Diese Seite dient der Anzeige und Verwaltung von Terminen.
 
-### Funktionen:
-- **Termine filtern** – Termine werden im Kalender dargestellt. Über die Checkboxen lassen sich Termine nach zugeteilten Displays filtern. 
-- **Erstellen neuer Termine** – Neue Einträge im Kalender erstellen  
-- **Bearbeiten von Terminen** – Nach einem klick auf einen Termin, öffnet sich ein Menü, über welches diser bearbeitet werden kann.
-- **Löschen von Terminen** – Bestehende Termine lassen sich löschen. Bei widerholenden Terminen bietet sich die Option entweder nur den Einzeltermin zu löchen, oder alle zugehörigen Termine. 
-
-
 ![Kalender Screenshot](pictures_readme_frontend/kalender.png)
 
+### Funktionen:
+- **Termine filtern** – Termine werden im Kalender dargestellt. Über die Checkboxen lassen sich Termine nach zugeteilten Displays filtern. 
+- **Erstellen neuer Termine** – Nach einem klick auf ein beliebiges Feld in den Kalender, öffnet sich ein Menü zum erstellen eines neuen Termines. 
 
+  ![NTermin_erstellen](pictures_readme_frontend/termin-erstellen.png)
+
+- **Löschen & Bearbeiten von Terminen** – Nach einem klick auf einen Termin, öffnet sich ein Menü, über welches diser gelöscht oder bearbeitet werden kann.
+  ![NTermin_erstellen](pictures_readme_frontend/termin-bearbeiten.png)
+> **Hinweis:** Sich wiederholende Termine können entweder einzeln oder gemeinsam gelöscht werden, aber nur einzeln bearbeitet werden.
 
 ---
 
@@ -48,7 +78,7 @@ Verwalte die Bilder der Mediathek. Bevor ein Bild als Standardbild oder in einem
 
 ### Funktionen:
 - **Hochladen von Bildern** – Nach einem klick auf den "Hochladen" Button öffnet sich ein entsprechendes Dialog-Menü 
-- **Sorteiern von Bildern** – Die Bilder lassen sich nach dateiname oder nach uploaddatum sortieren.
+- **Sortieren von Bildern** – Die Bilder lassen sich nach dateiname oder nach uploaddatum sortieren.
 - **Löschen von Bildern** – Wenn man mit der Maus über ein bild hovert, erschein ein "X" in der oberen rechten Ecke. 
 Klickt man auf dieses "X" öffnet sich ein Dialog zur Bestätigung das dieses Bild gelöscht werden soll.
 
