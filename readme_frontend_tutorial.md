@@ -52,7 +52,7 @@ Verwalte deine Medien und Dateien bequem in der Mediathek.
 ![Mediathek Screenshot](pictures_readme_frontend/mediathek.png)
 
 ---
-
+ 
 ## 🎨 Template Editor <a name="template-editor"></a>
 Hier kannst du eigene Vorlagen für Dokumente und Designs erstellen.
 
