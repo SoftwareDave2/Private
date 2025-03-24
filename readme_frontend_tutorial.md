@@ -20,7 +20,7 @@ Das Dashboard bietet dir einen schnellen Überblick über alle Displays.
 - **Display Setup** – Das Dashboard bietet die Möglichkeit neue Displays zu konfigurieren.   
 - **Fehlermeldungen** – Auf dem Dashboard erscheinen Hinweise, wenn Fehler aufgetreten sind. 
 
-![Dashboard Screenshot](pictures_readme_frontend/dashboard.png)
+
 <img src="pictures_readme_frontend/dashboard.png" alt="Dashboard Screenshot" style="max-width: 100%; height: auto;">
 
 > **Hinweis:** Über das "Sortieren nach" Drop-Down Menü lässt sich einstellen, ob die Displays nach ihrem Namen soertiert werden, 
@@ -43,7 +43,7 @@ in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialo
 - Standardbild: Hier kann man das Bild auswählen, das angezeigt werden soll, wenn gerade kein Termin stattfindet.
 
 
-<img src="pictures_readme_frontend/edit-display.png" alt="Edit_Display" style="max-width: 100%; height: auto;">
+<img src="pictures_readme_frontend/edit-display.png" alt="Edit_Display" style="max-width: 50%; height: auto;">
 
 > **Hinweis:** Bei der Bilderauswahl werden automatisch die jenigen Bilder aus der Mediathek angezeigt, deren Seitenverhältnis zu dem des Displays passt.
 
@@ -52,7 +52,7 @@ in dem Informations Menü auf den "Edit Display" Button. Nun erscheint ein Dialo
 Dieses Warn-Symbol ist nur im Dashboard zu sehen, nicht aber auf den tatsächlichen physischen Displays.
 - Nach einem Klick auf das entsprechende Display öffnet sich das Display Informationsmenü. In diesem stehen kurze beschreibungen aller aktuellen Fehler, die dieses display betreffen.
 
-<img src="pictures_readme_frontend/display-error-info.png" alt="Display_error_info" style="max-width: 100%; height: auto;">
+<img src="pictures_readme_frontend/display-error-info.png" alt="Display_error_info" style="max-width: 50%; height: auto;">
 
 
 
@@ -71,12 +71,12 @@ Diese Seite dient der Anzeige und Verwaltung von Terminen.
 - **Erstellen neuer Termine** – Nach einem klick auf ein beliebiges Feld in den Kalender, öffnet sich ein Menü zum erstellen eines neuen Termines. 
 
 
-<img src="pictures_readme_frontend/termin-erstellen.png" alt="Termin_erstellen" style="max-width: 100%; height: auto;">
+<img src="pictures_readme_frontend/termin-erstellen.png" alt="Termin_erstellen" style="max-width: 50%; height: auto;">
 
 
 - **Löschen & Bearbeiten von Terminen** – Nach einem klick auf einen Termin, öffnet sich ein Menü, über welches diser gelöscht oder bearbeitet werden kann.
 
-  <img src="pictures_readme_frontend/termin-bearbeiten.png" alt="Termin_bearbeiten" style="max-width: 100%; height: auto;">
+  <img src="pictures_readme_frontend/termin-bearbeiten.png" alt="Termin_bearbeiten" style="max-width: 50%; height: auto;">
 
 > **Hinweis:** Sich wiederholende Termine können entweder einzeln oder gemeinsam gelöscht werden, aber nur einzeln bearbeitet werden.
 
