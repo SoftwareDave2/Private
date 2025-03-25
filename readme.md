@@ -70,6 +70,11 @@ Starten von Docker Desktop, das Bereinigen und Erstellen des Backends mit Maven 
 Das Skript überwacht außerdem die Eingabe der Taste `q`, um alle laufenden Prozesse zu stoppen und zurück zum
 Root-Verzeichnis zu wechseln.
 
+### Option 3: Start mit IntelliJ IDE
+Um die Debuggung-Funktionen der IntelliJ IDE verwenden zu können, kann die Anwendung auch direkt aus der
+Entwicklungsumgebung gestartet werden. Dazu muss das Spring Boot-Backend über den Run-Befehl der IDE gestartet werden
+(`Umschalt`+`F10`). Das Next.js Frontend kann wie bei Option 1 über das Terminal gestartet werden.
+
 
 ## 📂 Ordnerstruktur
 
