@@ -4,8 +4,10 @@
 1. [Projektbeschreibung](#-projektbeschreibung)
 2. [Einrichtung der Entwicklungsumgebung](#-einrichtung-der-entwicklungsumgebung)
 3. [Anwendung Starten](#-anwendung-starten)
-    - [Option 1: Manueller Start](#option-1-manueller-start)
-    - [Option 2: Start-Skript](#option-2-start-skript)
+    - [Option 1: Starten als Dockercontainer](#option-1-starten-als-dockercontainer)
+    - [Option 2: Manueller Start](#option-1-manueller-start)
+    - [Option 3: Start-Skript](#option-2-start-skript)
+    - [Option 4: Start mit IntelliJ IDE](#option-4-start-mit-intellij-ide)
 4. [Ordnerstruktur](#-ordnerstruktur)
     - [Backend](#backend)
     - [Frontend](#frontend)
@@ -43,7 +45,15 @@ Als Entwicklungsumgebung für dieses Projekt eignet sich z.B. die [IntelliJ IDE]
 
 ## ▶️ Anwendung Starten
 
-### Option 1: Manueller Start
+### Option 1: Starten als Dockercontainer
+   - Wechseln Sie im Terminal in das Root-Verzeichnis des Projekts.
+   - Verwenden Sie docker compose, um den Webservice zu starten:
+     ```bash
+     docker compose up -d
+     ```
+   - Dies startet die Spring Boot-Anwendung mit der Backend-API und der Datenbank.
+
+### Option 2: Manueller Start
 #### 1. Starten des Spring Boot Backends
    - Wechseln Sie im Terminal in das Root-Verzeichnis des Projekts.
    - Verwenden Sie Maven, um das Backend zu bauen und zu starten:
@@ -64,13 +74,13 @@ Als Entwicklungsumgebung für dieses Projekt eignet sich z.B. die [IntelliJ IDE]
      ```
    - Dies startet die Frontend-Anwendung unter [http://localhost:3000](http://localhost:3000).
 
-### Option 2: Start-Skript
+### Option 3: Start-Skript
 Das PowerShell-Skript `start_script.ps1` wurde entwickelt, um den Start eines Webservice-Umfelds zu automatisieren. Es umfasst das
 Starten von Docker Desktop, das Bereinigen und Erstellen des Backends mit Maven und die Verwaltung des Frontends mit npm.
 Das Skript überwacht außerdem die Eingabe der Taste `q`, um alle laufenden Prozesse zu stoppen und zurück zum
 Root-Verzeichnis zu wechseln.
 
-### Option 3: Start mit IntelliJ IDE
+### Option 4: Start mit IntelliJ IDE
 Um die Debuggung-Funktionen der IntelliJ IDE verwenden zu können, kann die Anwendung auch direkt aus der
 Entwicklungsumgebung gestartet werden. Dazu muss das Spring Boot-Backend über den Run-Befehl der IDE gestartet werden
 (`Umschalt`+`F10`). Das Next.js Frontend kann wie bei Option 1 über das Terminal gestartet werden.
