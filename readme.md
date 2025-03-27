@@ -87,22 +87,23 @@ Entwicklungsumgebung gestartet werden. Dazu muss das Spring Boot-Backend über d
 
 
 ## 📂 Ordnerstruktur
+Im Folgenden wird eine Übersicht über die wichtigsten Ordner und Dateien des Backends und Frontends gegeben.
+
 
 ### Backend
 ```
-src
-├── main
-│ ├── java
-│ │ ├── master.it_projekt_tablohm
-│ │ │ ├── controller # REST-Controller für API-Endpunkte
-│ │ │ ├── dto # Datentransferobjekte
-│ │ │ ├── model # Datenmodelle und Entity-Klassen
-│ │ │ ├── repositories # JPA Repositories für DB-Interaktionen
-│ │ │ └── services # Geschäftslogik und Services
-│ ├── resources
-│ │ ├── static
-│ │ │ └── api_test.http # Testen der REST-Schnittstelle
-│ │ ├── application.properties # Globale Parameter und Logging Parameter
+src/main
+├── java
+│ ├── master.it_projekt_tablohm
+│ │ ├── controller # REST-Controller für API-Endpunkte
+│ │ ├── dto # Datentransferobjekte
+│ │ ├── model # Datenmodelle und Entity-Klassen
+│ │ ├── repositories # JPA Repositories für DB-Interaktionen
+│ │ └── services # Geschäftslogik und Services
+├── resources
+│ ├── static
+│ │ └── api_test.http # Testen der REST-Schnittstelle
+│ ├── application.properties # Globale Parameter und Logging Parameter
 ```
 
 ### Frontend
@@ -111,8 +112,18 @@ src/frontend
 ├── public
 │ └── uploads # Upload-Ordner der Mediathek
 ├── src
-│ ├── app # 
-│ ├── components #
-│ ├── types #
-│ └── utils # 
+│ ├── app # Page-Komponenten für Seiten
+│ │ ├── calendar # Page-Komponente für Kalender
+│ │ ├── config # Page-Komponente für Konfigurationsseite
+│ │ ├── media # Page-Komponente für Mediathek
+│ │ ├── template_editor # Page-Komponente für Template Editor
+│ │ ├── globals.css # Globales CSS-File (gültig für alle Komponenten)
+│ │ ├── layout.tsx # Layout-Komponente
+│ │ └── page.tsx # Dashboard
+│ ├── components # Verwendete Komponenten der jeweiligen Seiten
+│ │ └── shared # Geteilte Komponenten
+│ ├── types # Datenstrukturen
+│ └── utils # Globale Funktionen
+├── next.config.ts # Globale Konfiguration für next.js
+├── package.json # Verwendete Pake 
 ```
