@@ -53,6 +53,17 @@ Als Entwicklungsumgebung für dieses Projekt eignet sich z.B. die [IntelliJ IDE]
      ```
    - Dies startet die Spring Boot-Anwendung mit der Backend-API und der Datenbank.
 
+   - Wenn das Docker image noch nicht gebaut ist:
+      - Build the backend
+        ```
+        mvn clean package -D skipTests
+        ```
+      - Build the docker container:
+        ```
+        docker compose build
+        ```
+
+
 ### Option 2: Manueller Start
 #### 1. Starten des Spring Boot Backends
    - Wechseln Sie im Terminal in das Root-Verzeichnis des Projekts.
