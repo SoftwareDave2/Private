@@ -58,7 +58,7 @@ Als Entwicklungsumgebung für dieses Projekt eignet sich z.B. die [IntelliJ IDE]
    - Wechseln Sie im Terminal in das Root-Verzeichnis des Projekts.
    - Verwenden Sie Maven, um das Backend zu bauen und zu starten:
      ```bash
-     mvn clean install
+     mvn clean install -D skipTests
      mvn spring-boot:run
      ```
    - Dies startet die Spring Boot-Anwendung mit der Backend-API und den erforderlichen Endpunkten.
