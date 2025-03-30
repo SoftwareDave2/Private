@@ -128,11 +128,45 @@ const TemplateEditorPage: React.FC = () => {
             return
         }
 
-        // Finalize the canvas: deselect objects and render all
+        // Temporarily remove scaling of the background image and canvas.
+        const bgImage = fabricCanvas.current.backgroundImage as fabric.Image
+        let bgScaleX = 1
+        let bgScaleY = 1
+        const originalCanvasWidth = fabricCanvas.current.width
+        const originalCanvasHeight = fabricCanvas.current.height
+        let scaleFactorX = 1
+        let scaleFactorY = 1
+        if (bgImage) {
+            bgScaleX = bgImage.scaleX
+            bgScaleY = bgImage.scaleY
+            bgImage.scaleX = 1
+            bgImage.scaleY = 1
+
+            // Calculate scale factor (new size / current size)
+            scaleFactorX = bgImage.width / fabricCanvas.current.width
+            scaleFactorY = bgImage.height / fabricCanvas.current.height
+
+            // Scale canvas.
+            fabricCanvas.current.setWidth(bgImage.width)
+            fabricCanvas.current.setHeight(bgImage.height)
+
+            // Scale all objects in canvas.
+            fabricCanvas.current.getObjects().forEach((obj) => {
+                obj.set({
+                    left: obj.left! * scaleFactorX,
+                    top: obj.top! * scaleFactorY,
+                    scaleX: obj.scaleX! * scaleFactorX,
+                    scaleY: obj.scaleY! * scaleFactorY,
+                })
+                obj.setCoords()
+            });
+        }
+
+        // Finalize the canvas: deselect objects and render all.
         fabricCanvas.current.discardActiveObject()
         fabricCanvas.current.renderAll()
 
-        // Generate data URL of the canvas as PNG
+        // Generate data URL of the canvas as PNG.
         const dataURL = fabricCanvas.current.toDataURL({
             format: 'png',
             quality: 1.0,
@@ -149,6 +183,25 @@ const TemplateEditorPage: React.FC = () => {
         const formData = new FormData()
         formData.append('image', file)
 
+        // Restore scaling of background image and canvas.
+        if (bgImage) {
+            fabricCanvas.current.setWidth(originalCanvasWidth)
+            fabricCanvas.current.setHeight(originalCanvasHeight)
+            fabricCanvas.current.getObjects().forEach((obj) => {
+                obj.set({
+                    left: obj.left! / scaleFactorX,
+                    top: obj.top! / scaleFactorY,
+                    scaleX: obj.scaleX! / scaleFactorX,
+                    scaleY: obj.scaleY! / scaleFactorY,
+                })
+                obj.setCoords()
+            })
+            bgImage.scaleX = bgScaleX
+            bgImage.scaleY = bgScaleY
+            fabricCanvas.current.renderAll()
+        }
+
+        // Upload image.
         try {
             const response = await fetch(`${backendApiUrl}/image/upload`, {
                 method: 'POST',
@@ -164,7 +217,6 @@ const TemplateEditorPage: React.FC = () => {
             openNotificationDialog('Fehler beim Hochladen des Bildes.')
             setShowNameDialog(false)
         }
-
     }
 
     const dataURLToBlob = (dataURL: string): Blob | null => {
@@ -205,13 +257,26 @@ const TemplateEditorPage: React.FC = () => {
             fabric.Image.fromURL(data as string, (img) => {
                 if (fabricCanvas.current) {
                     // Set canvas dimensions to match the image's natural dimensions
-                    fabricCanvas.current.setWidth(img.width!)
-                    fabricCanvas.current.setHeight(img.height!)
+                    //fabricCanvas.current.setWidth(img.width!)
+                    //fabricCanvas.current.setHeight(img.height!)
                     // Set the image as background without scaling
+                    const scaleX = fabricCanvas.current.width! / img.width!
+                    const scaleY = fabricCanvas.current.height! / img.height!
+                    const scale = Math.max(scaleX, scaleY)
+                    img.scaleToWidth(fabricCanvas.current.width!)
+                    //img.scaleToHeight(fabricCanvas.current.height!)
+                    //console.log(img.getScaledWidth())
+                    fabricCanvas.current.setWidth(img.getScaledWidth())
+                    fabricCanvas.current.setHeight(img.getScaledHeight())
+                    img.set({
+                        left: 0,
+                        top: 0,
+                        selectable: false
+                    })
+
                     fabricCanvas.current.setBackgroundImage(
                         img,
                         fabricCanvas.current.renderAll.bind(fabricCanvas.current),
-                        {scaleX: 1, scaleY: 1},
                     )
                 }
             })
