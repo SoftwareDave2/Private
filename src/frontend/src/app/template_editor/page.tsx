@@ -1,328 +1,376 @@
 'use client'
+import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
+import PageHeader from "@/components/layout/PageHeader";
 
-import React, {useEffect, useRef, useState} from 'react'
-import {fabric} from 'fabric'
-import {Button} from '@material-tailwind/react'
-import {getBackendApiUrl} from '@/utils/backendApiUrl'
-import EditorToolbar from '@/components/template-editor/EditorToolbar'
-import NotificationDialog from '@/components/template-editor/NotificationDialog'
-import SetNameDialog from '@/components/template-editor/SetNameDialog'
-import PageHeaderButton from '@/components/layout/PageHeaderButton'
-import PageHeader from '@/components/layout/PageHeader'
-import {checkFileNameExists} from '@/utils/checkFileNameExists'
-
-const TemplateEditorPage: React.FC = () => {
-    const canvasRef = useRef<HTMLCanvasElement>(null)
-    const fabricCanvas = useRef<fabric.Canvas | null>(null)
-    const backendApiUrl = getBackendApiUrl()
-
-    const [textColor, setTextColor] = useState<string>('#000000')
-    const [fontSize, setFontSize] = useState<number>(24)
-    const [fontFamily, setFontFamily] = useState<string>('Arial')
-    const [isBold, setIsBold] = useState<boolean>(false)
-    const [showNameDialog, setShowNameDialog] = useState<boolean>(false)
-    const [showNotificationDialog, setShowNotificationDialog] = useState<boolean>(false)
-    const [notificationMessage, setNotificationMessage] = useState<string | null>(null)
-
-    // Initialize Fabric canvas
-    useEffect(() => {
-        if (canvasRef.current) {
-            fabricCanvas.current = new fabric.Canvas(canvasRef.current, {
-                width: 800,
-                height: 600,
-                backgroundColor: '#f0f0f0',
-            })
-
-            // On double-click, add a new IText object if no object is under the pointer
-            fabricCanvas.current.on('mouse:dblclick', (opt) => {
-                const pointer = fabricCanvas.current?.getPointer(opt.e)
-                if (pointer) {
-                    const target = fabricCanvas.current?.findTarget(opt.e, false)
-                    if (!target) {
-                        const text = new fabric.IText('Neuer Text', {
-                            left: pointer.x,
-                            top: pointer.y,
-                            fontFamily: fontFamily,
-                            fill: textColor,
-                            fontSize: fontSize,
-                            fontWeight: isBold ? 'bold' : 'normal',
-                            editable: true,
-                        })
-                        fabricCanvas.current?.add(text)
-                        fabricCanvas.current?.setActiveObject(text)
-                        text.enterEditing()
-                        text.selectAll()
-                        updateToolbarValues(text)
-                    }
-                }
-            })
-
-            fabricCanvas.current.on('selection:created', (e) => {
-                const activeObj = fabricCanvas.current.getActiveObject()
-                if (activeObj && activeObj.type === 'i-text') {
-                    updateToolbarValues(activeObj as fabric.IText)
-                }
-            })
-
-            fabricCanvas.current.on('selection:updated', (e) => {
-                const activeObj = fabricCanvas.current.getActiveObject()
-                if (activeObj && activeObj.type === 'i-text') {
-                    updateToolbarValues(activeObj as fabric.IText)
-                }
-            })
-
-            fabricCanvas.current.on('selection:cleared', (e) => {
-                resetToolbarValues()
-            })
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Delete') {
-                    const activeObjects = fabricCanvas.current.getActiveObjects()
-                    if (activeObjects.length > 0) {
-                        activeObjects.forEach((obj) => fabricCanvas.current.remove(obj))
-                    }
-                }
-            })
-        }
-        return () => fabricCanvas.current?.dispose()
-    }, [])
-
-    const resetToolbarValues = () => {
-        const textObj = new fabric.IText('', {
-            fill: '#000000',
-            fontSize: 24,
-            fontFamily: 'Arial',
-            fontWeight: 'normal',
-        })
-        updateToolbarValues(textObj)
-    }
-
-    const updateToolbarValues = (textObj: fabric.IText) => {
-        setTextColor(textObj.fill as string)
-        setFontSize(textObj.fontSize || 24)
-        setFontFamily(textObj.fontFamily || 'Arial')
-        setIsBold(textObj.fontWeight === 'bold')
-    }
-
-    useEffect(() => {
-        updateActiveText()
-    }, [textColor, fontSize, fontFamily, isBold])
-
-    // Update active text object with toolbar properties
-    const updateActiveText = () => {
-        const activeObject = fabricCanvas.current?.getActiveObject()
-        if (activeObject && activeObject.type === 'i-text') {
-            const textObj = activeObject as fabric.IText
-            textObj.set({
-                fill: textColor,
-                fontSize: fontSize,
-                fontFamily: fontFamily,
-                fontWeight: isBold ? 'bold' : 'normal',
-            })
-            fabricCanvas.current?.renderAll()
-        }
-    }
-
-    const saveImage = async (filename: string) => {
-        if (!fabricCanvas.current) {
-            return
-        }
-
-        // Temporarily remove scaling of the background image and canvas.
-        const bgImage = fabricCanvas.current.backgroundImage as fabric.Image
-        let bgScaleX = 1
-        let bgScaleY = 1
-        const originalCanvasWidth = fabricCanvas.current.width
-        const originalCanvasHeight = fabricCanvas.current.height
-        let scaleFactorX = 1
-        let scaleFactorY = 1
-        if (bgImage) {
-            bgScaleX = bgImage.scaleX
-            bgScaleY = bgImage.scaleY
-            bgImage.scaleX = 1
-            bgImage.scaleY = 1
-
-            // Calculate scale factor (new size / current size)
-            scaleFactorX = bgImage.width / fabricCanvas.current.width
-            scaleFactorY = bgImage.height / fabricCanvas.current.height
-
-            // Scale canvas.
-            fabricCanvas.current.setWidth(bgImage.width)
-            fabricCanvas.current.setHeight(bgImage.height)
-
-            // Scale all objects in canvas.
-            fabricCanvas.current.getObjects().forEach((obj) => {
-                obj.set({
-                    left: obj.left! * scaleFactorX,
-                    top: obj.top! * scaleFactorY,
-                    scaleX: obj.scaleX! * scaleFactorX,
-                    scaleY: obj.scaleY! * scaleFactorY,
-                })
-                obj.setCoords()
-            });
-        }
-
-        // Finalize the canvas: deselect objects and render all.
-        fabricCanvas.current.discardActiveObject()
-        fabricCanvas.current.renderAll()
-
-        // Generate data URL of the canvas as PNG.
-        const dataURL = fabricCanvas.current.toDataURL({
-            format: 'png',
-            quality: 1.0,
-        })
-
-        const blob = dataURLToBlob(dataURL)
-        if (!blob) return
-
-        let baseName = filename.trim() !== '' ? filename.trim() : 'output'
-        baseName = baseName + '.png'
-        const finalFileName = await getAvailableFileName(baseName)
-
-        const file = new File([blob], finalFileName, {type: 'image/png'})
-        const formData = new FormData()
-        formData.append('image', file)
-
-        // Restore scaling of background image and canvas.
-        if (bgImage) {
-            fabricCanvas.current.setWidth(originalCanvasWidth)
-            fabricCanvas.current.setHeight(originalCanvasHeight)
-            fabricCanvas.current.getObjects().forEach((obj) => {
-                obj.set({
-                    left: obj.left! / scaleFactorX,
-                    top: obj.top! / scaleFactorY,
-                    scaleX: obj.scaleX! / scaleFactorX,
-                    scaleY: obj.scaleY! / scaleFactorY,
-                })
-                obj.setCoords()
-            })
-            bgImage.scaleX = bgScaleX
-            bgImage.scaleY = bgScaleY
-            fabricCanvas.current.renderAll()
-        }
-
-        // Upload image.
-        try {
-            const response = await fetch(`${backendApiUrl}/image/upload`, {
-                method: 'POST',
-                body: formData,
-            })
-            if (!response.ok) {
-                throw new Error(`Upload fehlgeschlagen: ${response.status} ${response.statusText}`)
-            }
-            openNotificationDialog(`Das Bild wurde unter dem Namen ${finalFileName} erfolgreich hochgeladen.`)
-            setShowNameDialog(false)
-        } catch (error: any) {
-            console.error('Fehler beim Hochladen des Bildes:', error.message || error)
-            openNotificationDialog('Fehler beim Hochladen des Bildes.')
-            setShowNameDialog(false)
-        }
-    }
-
-    const dataURLToBlob = (dataURL: string): Blob | null => {
-        const parts = dataURL.split(',')
-        if (parts.length < 2) return null
-        const mimeMatch = parts[0].match(/:(.*?);/)
-        if (!mimeMatch) return null
-        const mime = mimeMatch[1]
-        const bstr = atob(parts[1])
-        let n = bstr.length
-        const u8arr = new Uint8Array(n)
-        while (n--) {
-            u8arr[n] = bstr.charCodeAt(n)
-        }
-        return new Blob([u8arr], {type: mime})
-    }
-
-    const getAvailableFileName = async (baseName: string): Promise<string> => {
-        let finalName = baseName
-        let counter = 1
-        while (await checkFileNameExists(finalName)) {
-            const nameWithoutExt = baseName.substring(0, baseName.lastIndexOf('.'))
-            finalName = `${nameWithoutExt}_${counter}.png`
-            counter++
-        }
-        return finalName
-    }
-
-    const handleFontFamilyChange = (fontFamily: string) => setFontFamily(fontFamily)
-    const handleFontSizeChange = (fontSize: number) => setFontSize(fontSize)
-    const handleBoldChange = (bold: boolean) => setIsBold(bold)
-    const handleColorChange = (color: string) => setTextColor(color)
-
-    const handleBackgroundUpload = (file: File) => {
-        const reader = new FileReader()
-        reader.onload = (f) => {
-            const data = f.target?.result
-            fabric.Image.fromURL(data as string, (img) => {
-                if (fabricCanvas.current) {
-                    // Set canvas dimensions to match the image's natural dimensions
-                    //fabricCanvas.current.setWidth(img.width!)
-                    //fabricCanvas.current.setHeight(img.height!)
-                    // Set the image as background without scaling
-                    const scaleX = fabricCanvas.current.width! / img.width!
-                    const scaleY = fabricCanvas.current.height! / img.height!
-                    const scale = Math.max(scaleX, scaleY)
-                    img.scaleToWidth(fabricCanvas.current.width!)
-                    //img.scaleToHeight(fabricCanvas.current.height!)
-                    //console.log(img.getScaledWidth())
-                    fabricCanvas.current.setWidth(img.getScaledWidth())
-                    fabricCanvas.current.setHeight(img.getScaledHeight())
-                    img.set({
-                        left: 0,
-                        top: 0,
-                        selectable: false
-                    })
-
-                    fabricCanvas.current.setBackgroundImage(
-                        img,
-                        fabricCanvas.current.renderAll.bind(fabricCanvas.current),
-                    )
-                }
-            })
-        }
-        reader.readAsDataURL(file)
-    }
-
-    const openNotificationDialog = (message: string) => {
-        setNotificationMessage(message)
-        setShowNotificationDialog(true)
-    }
-
-    const openNameDialog = () => {
-        setShowNameDialog(true)
-    }
-
-    const handleCloseNameDialog = () => {
-        setShowNameDialog(false)
-    }
-
-    return (
-        <main>
-            <PageHeader title={'Template Editor'} info={''}>
-            </PageHeader>
-
-            <EditorToolbar fontFamily={fontFamily} fontSize={fontSize} isBold={isBold} color={textColor}
-                           onFontFamilyChange={handleFontFamilyChange} onFontSizeChange={handleFontSizeChange}
-                           onSetBoldChange={handleBoldChange} onColorChange={handleColorChange}
-                           onBackgroundUpload={handleBackgroundUpload}/>
-
-            <canvas ref={canvasRef} style={{border: '1px solid #ccc'}}/>
-
-            <div className={'text-xs text-blue-gray-700 mt-1'}>
-                <span className={'font-bold'}>Hinweis: </span> Fügen Sie mit einem Doppelklick in dem Bild Text hinzu.
-            </div>
-
-            <Button variant="filled" className="bg-primary text-white mt-4" onClick={openNameDialog}>
-                Bild Speichern
-            </Button>
-
-            <SetNameDialog open={showNameDialog} onClose={handleCloseNameDialog} onSave={saveImage}/>
-
-            <NotificationDialog open={showNotificationDialog} message={notificationMessage}
-                                onClose={() => setShowNotificationDialog(false)}/>
-        </main>
-    )
+// Erweitertes Interface mit relativen Positionen
+interface FieldConfig {
+    id: string;
+    xPercent: number; // X-Position als Prozentwert (z.B. 0.1 für 10% der Bildbreite)
+    yPercent: number; // Y-Position als Prozentwert
+    widthPercent: number; // Breite als Prozentwert
+    heightPercent: number; // Höhe als Prozentwert
+    placeholder: string;
+    defaultText?: string;
+    fontSizePercent?: number; // Schriftgröße relativ zur Bildhöhe
+    bold?: boolean;
+    defaultColor?: string;
 }
 
-export default TemplateEditorPage
+const baseTemplateConfig: FieldConfig[] = [
+    {
+        id: 'field1',
+        xPercent: 0.04,
+        yPercent: 0.145,
+        widthPercent: 0.8,
+        heightPercent: 0.05,
+        placeholder: "Textfeld 1",
+        defaultText: "Überschrift",
+        fontSizePercent: 0.045,
+        bold: true
+    },
+    {
+        id: 'field2',
+        xPercent: 0.04,
+        yPercent: 0.198,
+        widthPercent: 0.8,
+        heightPercent: 0.02,
+        placeholder: "Textfeld 2",
+        defaultText: "Datum",
+        fontSizePercent: 0.02,
+        bold: true
+    },
+    {
+        id: 'field3',
+        xPercent: 0.04,
+        yPercent: 0.245,
+        widthPercent: 0.8,
+        heightPercent: 0.02,
+        placeholder: "Textfeld 3",
+        defaultText: "Unterthema",
+        fontSizePercent: 0.02,
+        bold: true
+    },
+    {
+        id: 'field4',
+        xPercent: 0.05,
+        yPercent: 0.37,
+        widthPercent: 0.8,
+        heightPercent: 0.045,
+        placeholder: "Textfeld 4",
+        defaultText: "Themen:",
+        fontSizePercent: 0.045,
+        bold: true
+    },
+    {
+        id: 'field5',
+        xPercent: 0.05,
+        yPercent: 0.48,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 5",
+        defaultText: "Name",
+        fontSizePercent: 0.02,
+        bold: false
+    },
+    {
+        id: 'field6',
+        xPercent: 0.05,
+        yPercent: 0.51,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 6",
+        defaultText: "Thema",
+        fontSizePercent: 0.025,
+        bold: true
+    },
+    {
+        id: 'field7',
+        xPercent: 0.05,
+        yPercent: 0.57,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 7",
+        defaultText: "Name",
+        fontSizePercent: 0.02,
+        bold: false
+    },
+    {
+        id: 'field8',
+        xPercent: 0.05,
+        yPercent: 0.60,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 8",
+        defaultText: "Thema",
+        fontSizePercent: 0.025,
+        bold: true
+    },
+    {
+        id: 'field9',
+        xPercent: 0.05,
+        yPercent: 0.66,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 9",
+        defaultText: "Name",
+        fontSizePercent: 0.02,
+        bold: false
+    },
+    {
+        id: 'field10',
+        xPercent: 0.05,
+        yPercent: 0.69,
+        widthPercent: 0.8,
+        heightPercent: 0.025,
+        placeholder: "Textfeld 10",
+        defaultText: "Thema",
+        fontSizePercent: 0.025,
+        bold: true
+    },
+];
+
+const templateConfig: Record<string, FieldConfig[]> = {
+    "template_1_links.png": [
+        ...baseTemplateConfig,
+    ],
+    "template_1_rechts.png": [
+        ...baseTemplateConfig,
+    ],
+    "template_2_links.png": [
+        ...baseTemplateConfig,
+    ],
+    "template_2_rechts.png": [
+        ...baseTemplateConfig,
+    ],
+    "template_3_links.png": [
+        ...baseTemplateConfig,
+    ],
+    "template_3_rechts.png": [
+        ...baseTemplateConfig,
+    ],
+};
+
+const host = window.location.hostname;
+const backendApiUrl = 'http://' + host + ':8080';;
+
+const TemplateEditorPage: React.FC = () => {
+    const [selectedTemplate, setSelectedTemplate] = useState<string>("template_1_links.png");
+    const [inputValues, setInputValues] = useState<Record<string, string>>({});
+    const [textColors, setTextColors] = useState<Record<string, string>>({});
+    const [canvasDimensions, setCanvasDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
+    const [showNamePopup, setShowNamePopup] = useState<boolean>(false);
+    const [tempImageName, setTempImageName] = useState<string>('');
+    const [popupMessage, setPopupMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+        const img = new Image();
+        img.src = `/templates/${selectedTemplate}`;
+        img.onload = () => {
+            setBgImage(img);
+            const canvas = canvasRef.current;
+            if (canvas) {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                setCanvasDimensions({ width: img.width, height: img.height });
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                }
+            }
+            const fields = templateConfig[selectedTemplate] || [];
+            const initialValues: Record<string, string> = {};
+            const initialColors: Record<string, string> = {};
+            fields.forEach(field => {
+                initialValues[field.id] = field.defaultText || "";
+                initialColors[field.id] = field.defaultColor || "#000000";
+            });
+            setInputValues(initialValues);
+            setTextColors(initialColors);
+        };
+    }, [selectedTemplate]);
+
+    const handleTemplateChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        setSelectedTemplate(e.target.value);
+    };
+
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement>, id: string) => {
+        setInputValues(prev => ({
+            ...prev,
+            [id]: e.target.value
+        }));
+    };
+
+    const handleColorChange = (e: ChangeEvent<HTMLInputElement>, id: string) => {
+        setTextColors(prev => ({
+            ...prev,
+            [id]: e.target.value,
+        }));
+    };
+
+    const drawTextOnCanvas = () => {
+        const canvas = canvasRef.current;
+        if (!canvas || !bgImage) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bgImage, 0, 0);
+
+        const fields = templateConfig[selectedTemplate] || [];
+        fields.forEach(field => {
+            const text = inputValues[field.id] || field.defaultText || "";
+            const fontSize = field.fontSizePercent ? field.fontSizePercent * canvas.height : 16;
+            const fontWeight = field.bold ? 'bold' : 'normal';
+            ctx.font = `${fontWeight} ${fontSize}px Arial`;
+            ctx.fillStyle = textColors[field.id] || "#000000";
+            const x = field.xPercent * canvas.width;
+            const y = field.yPercent * canvas.height + (field.heightPercent * canvas.height) - 5;
+            ctx.fillText(text, x, y);
+        });
+    };
+
+    const saveImage = () => {
+        drawTextOnCanvas();
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const finalFileName = tempImageName.trim() !== ''
+            ? `${tempImageName.trim()}_output_${Date.now()}.png`
+            : `output_${Date.now()}.png`;
+        canvas.toBlob(async (blob) => {
+            if (!blob) return;
+            const file = new File([blob], finalFileName, { type: 'image/png' });
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(backendApiUrl + '/image/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+                }
+                setPopupMessage('Bild wurde erfolgreich hochgeladen.');
+            } catch (error: any) {
+                console.error('Error on uploading file.', error.message || error);
+                setPopupMessage('Fehler beim Hochladen des Bildes.');
+            }
+        }, 'image/png');
+    };
+
+    const handleSaveClick = () => {
+        setShowNamePopup(true);
+    };
+
+    const handlePopupSave = () => {
+        setShowNamePopup(false);
+        saveImage();
+    };
+
+    const handlePopupCancel = () => {
+        setShowNamePopup(false);
+    };
+
+    return (
+        <div style={{ padding: '16px' }}>
+            <PageHeader title={'Template Editor'} info={''}></PageHeader>
+            <div style={{ marginBottom: '16px' }}>
+                <label htmlFor="templateSelect">Wähle ein Template: </label>
+                <select id="templateSelect" value={selectedTemplate} onChange={handleTemplateChange}>
+                    <option value="template_1_links.png">template_1_links</option>
+                    <option value="template_1_rechts.png">template_1_rechts</option>
+                    <option value="template_2_links.png">template_2_links</option>
+                    <option value="template_2_rechts.png">template_2_rechts</option>
+                    <option value="template_3_links.png">template_3_links</option>
+                    <option value="template_3_rechts.png">template_3_rechts</option>
+
+                </select>
+            </div>
+
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px'}}>
+                <div style={{position: 'relative', width: canvasDimensions.width, height: canvasDimensions.height}}>
+                    <canvas ref={canvasRef} style={{ border: '1px solid #000', display: 'block' }} />
+                    {(templateConfig[selectedTemplate] || []).map(field => (
+                        <div
+                            key={field.id}
+                            style={{
+                                position: 'absolute',
+                                left: `${field.xPercent * 100}%`,
+                                top: `${field.yPercent * 100}%`,
+                                width: `${field.widthPercent * 100}%`,
+                                height: `${field.heightPercent * 100}%`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                background: 'rgba(255,255,255,0.7)'
+                            }}
+                        >
+                            <input
+                                type="text"
+                                value={inputValues[field.id] || ""}
+                                placeholder={field.placeholder}
+                                onChange={(e) => handleInputChange(e, field.id)}
+                                style={{
+                                    width: 'calc(100% - 40px)',
+                                    height: '100%',
+                                    border: '1px solid #ccc',
+                                    fontSize: field.fontSizePercent ? `${field.fontSizePercent * canvasDimensions.height}px` : '16px',
+                                    fontWeight: field.bold ? 'bold' : 'normal',
+                                    color: textColors[field.id] || "#000000"
+                                }}
+                            />
+                            <input
+                                type="color"
+                                value={textColors[field.id] || "#000000"}
+                                onChange={(e) => handleColorChange(e, field.id)}
+                                style={{
+                                    width: '35px',
+                                    height: '100%',
+                                    border: 'none',
+                                    marginLeft: '5px'
+                                }}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <button onClick={handleSaveClick}>Bild speichern</button>
+
+            {popupMessage && <div style={{ marginTop: '16px', color: 'green' }}>{popupMessage}</div>}
+
+            {showNamePopup && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <div style={{ background: '#fff', padding: '24px', borderRadius: '8px', minWidth: '300px' }}>
+                        <h3>Bild benennen</h3>
+                        <input
+                            type="text"
+                            value={tempImageName}
+                            onChange={(e) => setTempImageName(e.target.value)}
+                            placeholder="Name eingeben"
+                            style={{ width: '100%', padding: '8px', marginBottom: '16px' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button onClick={handlePopupCancel} style={{ marginRight: '8px' }}>Abbrechen</button>
+                            <button onClick={handlePopupSave}>Speichern</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default TemplateEditorPage;
