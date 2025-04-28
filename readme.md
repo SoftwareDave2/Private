@@ -42,6 +42,16 @@ Stellen Sie sicher, dass die folgenden Programme auf Ihrem System installiert si
 
 Als Entwicklungsumgebung für dieses Projekt eignet sich z.B. die [IntelliJ IDE](https://www.jetbrains.com/de-de/idea/) von JetBrains.
 
+⚠️ **Wichtiger Hinweis zur Entwicklung**
+
+Für die lokale Entwicklung **muss** die Datei `docker-compose-development.yml` genutzt werden – insbesondere, wenn du das Startskript (z. B. `./start.sh`) aufrufst.  
+
+1. Lege zunächst ein Backup aller vorhandenen Compose-Dateien an (z. B. `docker-compose.yml`, `docker-compose.prod.yml` usw.).  
+2. Benenne anschließend **`docker-compose-development.yml` zu `docker-compose.yml`** um.  
+
+Nur so stellt das Startskript sicher, dass die Container mit den richtigen Entwicklungs-Einstellungen gebaut und ausgeführt werden, ohne die produktiven Konfigurationen zu beeinträchtigen.
+
+
 
 ## ▶️ Anwendung Starten
 
@@ -90,6 +100,14 @@ Das PowerShell-Skript `start_script.ps1` wurde entwickelt, um den Start eines We
 Starten von Docker Desktop, das Bereinigen und Erstellen des Backends mit Maven und die Verwaltung des Frontends mit npm.
 Das Skript überwacht außerdem die Eingabe der Taste `q`, um alle laufenden Prozesse zu stoppen und zurück zum
 Root-Verzeichnis zu wechseln.
+
+⚠️ **Wichtiger Hinweis zur Entwicklung**
+
+Für die lokale Entwicklung **muss** die Datei `docker-compose-development.yml` genutzt werden – insbesondere, wenn du das Startskript (z. B. `./start.sh`) aufrufst.  
+
+1. Lege zunächst ein Backup der vorhandenen Compose-Datei an (z. B. `docker-compose.yml` zu `docker-compose-production.yml`).  
+2. Benenne anschließend **`docker-compose-development.yml` zu `docker-compose.yml`** um.  
+
 
 ### Option 4: Start mit IntelliJ IDE
 Um die Debuggung-Funktionen der IntelliJ IDE verwenden zu können, kann die Anwendung auch direkt aus der
