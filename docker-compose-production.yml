@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .  # This assumes your Dockerfile for Spring Boot is at the root of the project
+    container_name: tablohm-backend
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/tablohm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: winkler
+      SPRING_DATASOURCE_PASSWORD: tablohm
+    volumes:
+      - ./src/frontend/public/uploads:/app/src/frontend/public/uploads
+
+  frontend:
+    build:
+      context: ./src/frontend  # Path to the frontend directory
+    container_name: tablohm-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"  # Exposing frontend port
+    command: ["npm", "run", "dev"]
+    volumes:
+      - ./src/frontend/public/uploads:/app/src/frontend/public/uploads  # Persist uploads
+
+  mysql:
+    container_name: guide-mysql
+    image: mysql:latest
+    restart: always
+    environment:
+      - MYSQL_DATABASE=tablohm
+      - MYSQL_PASSWORD=tablohm
+      - MYSQL_ROOT_PASSWORD=tablohm
+      - MYSQL_USER=winkler
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
