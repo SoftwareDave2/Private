@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -24,17 +24,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-start justify-center p-2 sm:p-4 pt-8 sm:pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-start justify-center p-2 sm:p-4 pt-4 sm:pt-8">
       <div className="w-full max-w-md">
-        {/* Zurück-Button */}
-        <Link
-          href="/"
-          className="inline-flex items-center text-slate-600 hover:text-slate-900 mb-4 sm:mb-6 group transition-colors duration-200 p-2 -ml-2"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-          Zurück zur Startseite
-        </Link>
-
         {/* Login Card */}
         <div className="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
           <div className="p-6 sm:p-8 pt-6">
@@ -149,9 +140,12 @@ export default function LoginPage() {
             <div className="text-center mt-6">
               <p className="text-slate-600 text-sm">
                 Noch kein Konto?{" "}
-                <button className="text-red-600 hover:text-red-800 font-semibold underline transition-colors duration-200 p-1">
+                <Link
+                  href="/register"
+                  className="text-red-600 hover:text-red-800 font-semibold underline transition-colors duration-200 p-1"
+                >
                   Jetzt registrieren
-                </button>
+                </Link>
               </p>
             </div>
           </div>

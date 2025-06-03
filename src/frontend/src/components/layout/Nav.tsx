@@ -3,6 +3,7 @@
 import NavLinks from "./NavLinks";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 
 export default function Nav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -13,9 +14,11 @@ export default function Nav() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-red-600">
-              Tablohm
-            </h1>
+            <Link href="/">
+              <h1 className="text-2xl sm:text-3xl font-bold text-red-600 hover:text-red-700 transition-colors duration-200 cursor-pointer">
+                Tablohm
+              </h1>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
