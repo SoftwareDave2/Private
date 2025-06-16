@@ -1,158 +1,123 @@
-# IT-Projekt Digitale Schilder
+# 📺 Display-Buchungs- und Content-System
 
-### 📌 Inhaltsverzeichnis
-1. [Projektbeschreibung](#-projektbeschreibung)
-2. [Einrichtung der Entwicklungsumgebung](#-einrichtung-der-entwicklungsumgebung)
-3. [Anwendung Starten](#-anwendung-starten)
-    - [Option 1: Starten als Dockercontainer](#option-1-starten-als-dockercontainer)
-    - [Option 2: Manueller Start](#option-1-manueller-start)
-    - [Option 3: Start-Skript](#option-2-start-skript)
-    - [Option 4: Start mit IntelliJ IDE](#option-4-start-mit-intellij-ide)
-4. [Ordnerstruktur](#-ordnerstruktur)
-    - [Backend](#backend)
-    - [Frontend](#frontend)
+Dieses Projekt ist eine Webanwendung zur Verwaltung von Inhalten auf öffentlichen Displays. Es bietet Nutzern die Möglichkeit, Inhalte zu erstellen und zu buchen, während Administratoren diese moderieren und verwalten können. Technologiestack: **Next.js**, **Tailwind CSS**, **Supabase**, **Railway/Vercel/Netlify**.
 
+---
 
-## 📑 Projektbeschreibung
-Die Webanwendung **Digitale Schilder** ermöglicht die Verwaltung und Steuerung von E-Paper Displays über eine
-benutzerfreundliche Weboberfläche. Die Anwendung wurde entwickelt, um mehrere Displays zentral zu verwalten und
-Bilder schnell und einfach auf die gewünschten Displays zu übertragen. Über einen Kalender können Ereignisse
-geplant werden, um Bilder zu einem bestimmten Zeitpunkt in der Zukunft anzuzeigen. Außerdem können mit dem
-integrierten Editor eigene Inhalte generiert werden, die anschließend auf den Displays angezeigt werden können.
+## 🚀 PHASE 1 – Setup & Infrastruktur
 
+### 🔧 #01 - Projekt-Repo & Struktur aufsetzen
+- ✅ Frontend- und Backend-Ordnerstruktur anlegen
+- ✅ NPM-Projekte initialisieren
+- ✅ README mit Projektbeschreibung schreiben
 
-## ⚙️ Einrichtung der Entwicklungsumgebung
-Stellen Sie sicher, dass die folgenden Programme auf Ihrem System installiert sind, bevor Sie die Anwendung ausführen.
+### 🔧 #02 - Deployment für Frontend & Backend einrichten
+- Vercel (Next.js) & Supabase oder Netlify + Railway einrichten
+- Einfaches „Hello World“ deployen
 
-#### 1. Node.js
-- Node.js wird benötigt, da das Frontend mit Next.js entwickelt wurde.
-- Sie können die neueste Version von Node.js von der [offiziellen Node.js-Website](https://nodejs.org/) herunterladen und installieren.
+---
 
-#### 2. Docker Desktop
-- Docker Desktop wird benötigt, um den Datenbank-Container auszuführen.
-- Laden Sie Docker Desktop von der [offiziellen Docker-Website](https://www.docker.com/products/docker-desktop) herunter und installieren Sie es.
+## ✍️ PHASE 2 – Nutzer & Authentifizierung
 
-#### 3. Java 17
-- Das Backend wurde mit Spring Boot entwickelt und benötigt Java 17.
-- Sie können Java 17 von [OpenJDK](https://adoptium.net/) oder anderen Anbietern Ihrer Wahl herunterladen und installieren.
+### 🔐 #03 - Supabase/Backend Auth einrichten (Login + Registrierung)
+- ✅ Registrierung mit E-Mail + Passwort
+- ✅ Login über UI
+- ✅ Logout-Funktion
+- ⏱ Tests mit zwei Dummy-Accounts
 
-#### 4. Maven (Build Tool)
-- Für das Backend-Projekt wird Maven als Build-Tool verwendet. Stellen Sie sicher, dass Maven auf Ihrem System installiert ist.
-- Sie können Maven von der [offiziellen Maven-Website](https://maven.apache.org/) herunterladen und installieren.
+### 🔐 #04 - Rollenmodell umsetzen (Public / Admin)
+- ✅ Bei Registrierung → Standardrolle „public“
+- ✅ Manuelle Änderung auf „admin“ im Backend
+- ✅ API-Absicherung: nur Admins dürfen Inhalte freigeben
 
-Als Entwicklungsumgebung für dieses Projekt eignet sich z.B. die [IntelliJ IDE](https://www.jetbrains.com/de-de/idea/) von JetBrains.
+---
 
-⚠️ **Wichtiger Hinweis zur Entwicklung**
+## 📅 PHASE 3 – Kalender & Buchungssystem
 
-Für die lokale Entwicklung **muss** die Datei `docker-compose-development.yml` genutzt werden – insbesondere, wenn du das Startskript (z. B. `./start.sh`) aufrufst.  
+### 📆 #05 - Datenbankstruktur: Displays, Buchungen modellieren
+- Tabellen: `displays`, `bookings` (mit Relationen)
+- Dummy-Displays einfügen (Name + Standort)
 
-1. Lege zunächst ein Backup aller vorhandenen Compose-Dateien an (z. B. `docker-compose.yml`, `docker-compose.prod.yml` usw.).  
-2. Benenne anschließend **`docker-compose-development.yml` zu `docker-compose.yml`** um.  
+### 📆 #06 - Kalenderkomponente mit Verfügbarkeit bauen
+- Kalender-Komponente anzeigen
+- API ruft verfügbare Displays & Zeiträume ab
+- 7 oder 14 Tage auswählbar
 
-Nur so stellt das Startskript sicher, dass die Container mit den richtigen Entwicklungs-Einstellungen gebaut und ausgeführt werden, ohne die produktiven Konfigurationen zu beeinträchtigen.
+### 📆 #07 - Buchungslogik + Prüfung auf Konflikte
+- Beim Absenden: Prüfung, ob Zeitraum frei ist
+- Bei Kollision → Fehler anzeigen
+- Buchung in Datenbank speichern
 
+---
 
+## 📝 PHASE 4 – Content-Erstellung
 
-## ▶️ Anwendung Starten
+### ✍️ #08 - Content-Formular implementieren
+- Felder: Titel, Text, Link
+- Validierung: max. 25 / 400 Zeichen
+- Auswahl: Content-Typ (Teaser, Suche/Biete, Event)
 
-### Option 1: Starten als Dockercontainer
-   - Wechseln Sie im Terminal in das Root-Verzeichnis des Projekts.
-   - Verwenden Sie docker compose, um den Webservice zu starten:
-     ```bash
-     docker compose up -d
-     ```
-   - Dies startet die Spring Boot-Anwendung mit der Backend-API und der Datenbank.
+### 📱 #09 - Display-Vorschau mit QR-Code
+- QR-Code-Generator einbauen (z. B. `qrcode.react`)
+- Live-Vorschau, wie Inhalt auf Display aussehen würde
+- Zeichenanzahl anzeigen
 
-   - Wenn das Docker image noch nicht gebaut ist:
-      - Build the backend
-        ```
-        mvn clean package -D skipTests
-        ```
-      - Build the docker container:
-        ```
-        docker compose build
-        ```
+---
 
+## 🧠 PHASE 5 – Moderation & Admin
 
-### Option 2: Manueller Start
-#### 1. Starten des Spring Boot Backends
-   - Wechseln Sie im Terminal in das Root-Verzeichnis des Projekts.
-   - Verwenden Sie Maven, um das Backend zu bauen und zu starten:
-     ```bash
-     mvn clean install -D skipTests
-     mvn spring-boot:run
-     ```
-   - Dies startet die Spring Boot-Anwendung mit der Backend-API und den erforderlichen Endpunkten.
-#### 2. Starten des Next.js Frontends
-   - Wechseln Sie im Terminal in das Verzeichnis des Frontend-Projekts: `src/frontend/`
-   - Installieren Sie die erforderlichen Node.js-Abhängigkeiten:
-     ```bash
-     npm install
-     ```
-   - Nachdem die Abhängigkeiten installiert wurden, starten Sie den Next.js-Entwicklungsserver:
-     ```bash
-     npm run dev
-     ```
-   - Dies startet die Frontend-Anwendung unter [http://localhost:3000](http://localhost:3000).
+### 🧾 #10 - Moderationsansicht für Admin bauen
+- Admin sieht alle Inhalte im Status „pending“
+- Freigeben / Ablehnen mit einem Klick
+- Status-Update per API
 
-### Option 3: Start-Skript
-Das PowerShell-Skript `start_script.ps1` wurde entwickelt, um den Start eines Webservice-Umfelds zu automatisieren. Es umfasst das
-Starten von Docker Desktop, das Bereinigen und Erstellen des Backends mit Maven und die Verwaltung des Frontends mit npm.
-Das Skript überwacht außerdem die Eingabe der Taste `q`, um alle laufenden Prozesse zu stoppen und zurück zum
-Root-Verzeichnis zu wechseln.
+### 🤖 #11 - Optionale KI-Prüfung von Inhalten (Basic Check)
+- Beispiel: OpenAI API einbauen für Content Check
+- Entscheidung „OK / nicht OK“
+- Ergebnis anzeigen + Admin
 
-⚠️ **Wichtiger Hinweis zur Entwicklung**
+---
 
-Für die lokale Entwicklung **muss** die Datei `docker-compose-development.yml` genutzt werden – insbesondere, wenn du das Startskript (z. B. `./start.sh`) aufrufst.  
+## 📤 PHASE 6 – Anzeige auf Display
 
-1. Lege zunächst ein Backup der vorhandenen Compose-Datei an (z. B. `docker-compose.yml` zu `docker-compose-production.yml`).  
-2. Benenne anschließend **`docker-compose-development.yml` zu `docker-compose.yml`** um.  
+### 🖥 #12 - API: Display-Inhalt nach Datum ausliefern
+- `GET /display/:id/current`
+- Liefert Content, wenn `start_date <= today <= end_date`
+- JSON-Struktur für Display: Titel, Text, QR
 
+### 🕒 #13 - Ablauf-Logik: Auto-Deaktivierung nach Zeitraum
+- Cron-Job oder Abfrage, die abgelaufene Inhalte ausblendet
+- Optional: 1–2 Tage Kulanzzeit (offline-Fall)
 
-### Option 4: Start mit IntelliJ IDE
-Um die Debuggung-Funktionen der IntelliJ IDE verwenden zu können, kann die Anwendung auch direkt aus der
-Entwicklungsumgebung gestartet werden. Dazu muss das Spring Boot-Backend über den Run-Befehl der IDE gestartet werden
-(`Umschalt`+`F10`). Das Next.js Frontend kann wie bei Option 1 über das Terminal gestartet werden.
+---
 
+## ✅ BONUS & DOKU
 
-## 📂 Ordnerstruktur
-Im Folgenden wird eine Übersicht über die wichtigsten Ordner und Dateien des Backends und Frontends gegeben.
+### 🪄 #14 - Styling mit Tailwind + Accessibility
+- Farben, Kontraste, Fokus-Indikatoren, etc.
+- Schriftgrößen für Bildschirm-Vorschau
 
+### 📖 #15 - Entwicklerdokumentation schreiben
+- Projektstruktur
+- API-Doku (Swagger / Markdown)
+- Setup-Anleitung für neue Entwickler
 
-### Backend
-```
-src/main
-├── java
-│ ├── master.it_projekt_tablohm
-│ │ ├── controller # REST-Controller für API-Endpunkte
-│ │ ├── dto # Datentransferobjekte
-│ │ ├── model # Datenmodelle und Entity-Klassen
-│ │ ├── repositories # JPA Repositories für DB-Interaktionen
-│ │ └── services # Geschäftslogik und Services
-├── resources
-│ ├── static
-│ │ └── api_test.http # Testen der REST-Schnittstelle
-│ ├── application.properties # Globale Parameter und Logging Parameter
-```
+---
 
-### Frontend
-```
-src/frontend
-├── public
-│ └── uploads # Upload-Ordner der Mediathek
-├── src
-│ ├── app # Page-Komponenten für Seiten
-│ │ ├── calendar # Page-Komponente für Kalender
-│ │ ├── config # Page-Komponente für Konfigurationsseite
-│ │ ├── media # Page-Komponente für Mediathek
-│ │ ├── template_editor # Page-Komponente für Template Editor
-│ │ ├── globals.css # Globales CSS-File (gültig für alle Komponenten)
-│ │ ├── layout.tsx # Layout-Komponente
-│ │ └── page.tsx # Dashboard
-│ ├── components # Verwendete Komponenten der jeweiligen Seiten
-│ │ └── shared # Geteilte Komponenten
-│ ├── types # Datenstrukturen
-│ └── utils # Globale Funktionen
-├── next.config.ts # Globale Konfiguration für next.js
-├── package.json # Verwendete Pake 
-```
+## 🧪 TESTS (optional)
+
+### 🧪 #16 - API-Tests (z. B. Buchung, Content-Erstellung)
+- Mit Postman oder Jest (z. B. für `POST /bookings`)
+- Prüfen: Validierung, Rollen-Check, Kollisionen
+
+### 🧪 #17 - Usability-Test mit Kommilitonen vorbereiten
+- Test-Account bereitstellen
+- Mini-Fragebogen: „War etwas unklar?“
+- Feedback notieren & Verbesserungen planen
+
+---
+
+## 🧠 Hinweise zur Planung
+- ⏱ Jede dieser Aufgaben passt in ~4 Stunden Aufwand
+- 🧑‍🤝‍🧑 Einige Aufgaben (z. B. #08 und #09) können zu zweit parallel gemacht werden
+- 📦 Alle Issues können direkt in GitHub oder Trello übernommen werden
