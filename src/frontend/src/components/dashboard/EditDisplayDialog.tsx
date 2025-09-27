@@ -249,6 +249,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                     <div className={'mt-5'}>
                         <SelectImage selectedFilename={data.defaultFilename}
                                      screenWidth={data.width}
+                                     selectedDisplayMac={data.macAddress}
                                      screenHeight={data.height}
                                      screenOrientation={data.orientation}
                                      onSelect={defaultFilenameChangeHandler}

@@ -11,6 +11,7 @@ import {getBackendApiUrl} from "@/utils/backendApiUrl";
 
 type SelectImageProps = {
     selectedFilename?: string,
+    selectedDisplayMac?: string,
     screenWidth?: number,
     screenHeight?: number,
     screenOrientation?: string,
@@ -18,7 +19,8 @@ type SelectImageProps = {
     onUnselect: () => void
 }
 
-export default function SelectImage({selectedFilename, screenWidth, screenHeight, screenOrientation, onSelect, onUnselect}: SelectImageProps) {
+
+export default function SelectImage({selectedFilename, selectedDisplayMac, screenWidth, screenHeight, screenOrientation, onSelect, onUnselect}: SelectImageProps) {
 
     const backendApiUrl = getBackendApiUrl();
 
@@ -99,7 +101,7 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
             screenRatio = screenHeight / screenWidth;
         }
 
-        const tolerance = 0.05; // 5% Toleranz
+        const tolerance = 0.10; // 10% Toleranz
 
 
         const imgRatio = imgWidth / imgHeight;
@@ -135,10 +137,35 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
 
     const handleDialogOpen = () => setDialogOpen(!dialogOpen)
 
-    const selectHandler = (filename: string) => {
-        onSelect(filename)
-        handleDialogOpen()
-    }
+    const selectHandler = async (filename: string) => {
+
+        console.log("selectHandler aufgerufen mit:", filename, selectedDisplayMac);
+        onSelect(filename);
+        handleDialogOpen();
+
+        if (!selectedDisplayMac) {
+            console.error("Kein Display ausgewählt, MAC fehlt!");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${backendApiUrl}/oepl/send-image`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, mac: selectedDisplayMac }),
+            });
+
+            if (!response.ok) {
+                console.error("Fehler beim Senden des Bildes:", await response.text());
+            } else {
+                console.log(`Bild "${filename}" erfolgreich an OEPL gesendet.`);
+            }
+        } catch (error) {
+            console.error("Netzwerkfehler:", error);
+        }
+    };
+
+
 
     return (
         <>
