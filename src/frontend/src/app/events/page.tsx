@@ -1,20 +1,26 @@
 'use client'
 
 import {useEffect, useState} from 'react'
-import {Card, CardBody, Checkbox, Input, Option, Select, Typography, Button} from '@material-tailwind/react'
+import {Card, CardBody, Checkbox, Input, Option, Select, Typography, Button, Dialog, DialogHeader, DialogBody, DialogFooter} from '@material-tailwind/react'
 import PageHeader from '@/components/layout/PageHeader'
 import {DisplayData} from '@/types/displayData'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
 
 type DisplayTypeKey = 'door-sign' | 'event-board' | 'notice-board' | 'room-booking'
 
+type DoorSignPersonStatus = 'available' | 'busy'
+
+type DoorSignPerson = {
+    id: number
+    name: string
+    status: DoorSignPersonStatus
+    busyUntil: string
+}
+
 type DoorSignForm = {
     roomNumber: string
-    roomType: string
-    names: string[]
-    status: 'frei' | 'belegt' | 'reserviert'
-    statusUntil: string
-    unassigned: boolean
+    people: DoorSignPerson[]
+    footerNote: string
 }
 
 type EventBoardForm = {
@@ -53,19 +59,17 @@ const displayTypeOptions: { value: DisplayTypeKey; label: string }[] = [
     { value: 'room-booking', label: 'Raumbuchung' },
 ]
 
-const doorSignStatuses: { value: DoorSignForm['status']; label: string; badgeClass: string }[] = [
-    { value: 'frei', label: 'Frei', badgeClass: 'bg-white text-black border border-black' },
-    { value: 'belegt', label: 'Belegt', badgeClass: 'bg-red-600 text-white' },
-    { value: 'reserviert', label: 'Reserviert', badgeClass: 'bg-white text-red-600 border border-red-600' },
+const doorSignPersonStatuses: { value: DoorSignPersonStatus; label: string }[] = [
+    { value: 'available', label: 'Verfügbar' },
+    { value: 'busy', label: 'Beschäftigt' },
 ]
 
 const defaultDoorSignForm: DoorSignForm = {
     roomNumber: '',
-    roomType: '',
-    names: [''],
-    status: 'frei',
-    statusUntil: '',
-    unassigned: false,
+    people: [
+        { id: 1, name: '', status: 'available', busyUntil: '' },
+    ],
+    footerNote: '',
 }
 
 const defaultEventBoardForm: EventBoardForm = {
@@ -106,6 +110,8 @@ export default function EventsPage() {
     const [roomBookingForm, setRoomBookingForm] = useState<RoomBookingForm>(defaultRoomBookingForm)
     const [isLoadingDisplays, setIsLoadingDisplays] = useState<boolean>(true)
     const [displayError, setDisplayError] = useState<string>('')
+    const [isPersonDialogOpen, setIsPersonDialogOpen] = useState<boolean>(false)
+    const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
 
     useEffect(() => {
         const fetchDisplays = async () => {
@@ -138,23 +144,76 @@ export default function EventsPage() {
         setRoomBookingForm(defaultRoomBookingForm)
     }, [displayType])
 
-    const addDoorSignNameField = () => {
+    const openPersonDialog = (person: DoorSignPerson) => {
+        setPersonDraft({ ...person })
+        setIsPersonDialogOpen(true)
+    }
+
+    const closePersonDialog = () => {
+        setIsPersonDialogOpen(false)
+        setPersonDraft(null)
+    }
+
+    const addDoorSignPerson = () => {
+        let createdPerson: DoorSignPerson | null = null
         setDoorSignForm((prev) => {
-            if (prev.names.length >= 3) {
+            if (prev.people.length >= 3) {
                 return prev
             }
-            return { ...prev, names: [...prev.names, ''] }
+            const nextId = prev.people.length === 0 ? 1 : Math.max(...prev.people.map((person) => person.id)) + 1
+            createdPerson = { id: nextId, name: '', status: 'available', busyUntil: '' }
+            return {
+                ...prev,
+                people: [...prev.people, createdPerson],
+            }
+        })
+        if (createdPerson) {
+            openPersonDialog(createdPerson)
+        }
+    }
+
+    const removeDoorSignPerson = (personId: number) => {
+        setDoorSignForm((prev) => {
+            if (prev.people.length <= 1) {
+                return prev
+            }
+            return {
+                ...prev,
+                people: prev.people.filter((person) => person.id !== personId),
+            }
         })
     }
 
-    const removeDoorSignNameField = (index: number) => {
-        setDoorSignForm((prev) => {
-            if (prev.names.length <= 1) {
-                return prev
-            }
-            const newNames = prev.names.filter((_, idx) => idx !== index)
-            return { ...prev, names: newNames }
+    const updateDoorSignPerson = (personId: number, updates: Partial<DoorSignPerson>) => {
+        setDoorSignForm((prev) => ({
+            ...prev,
+            people: prev.people.map((person) =>
+                person.id === personId
+                    ? (() => {
+                        const nextPerson = { ...person, ...updates }
+                        if (updates.status && updates.status !== 'busy') {
+                            nextPerson.busyUntil = ''
+                        }
+                        if (nextPerson.status !== 'busy') {
+                            nextPerson.busyUntil = ''
+                        }
+                        return nextPerson
+                    })()
+                    : person,
+            ),
+        }))
+    }
+
+    const savePersonDialog = () => {
+        if (!personDraft) {
+            return
+        }
+        updateDoorSignPerson(personDraft.id, {
+            name: personDraft.name,
+            status: personDraft.status,
+            busyUntil: personDraft.status === 'busy' ? personDraft.busyUntil : '',
         })
+        closePersonDialog()
     }
 
     const updateBookingEntry = (entryId: number, key: keyof BookingEntry, value: string) => {
@@ -196,58 +255,63 @@ export default function EventsPage() {
         case 'door-sign':
             return (
                 <div className={'space-y-4'}>
-                    <div className={'grid gap-4 sm:grid-cols-2'}>
-                        <Input label={'Raumnummer'} value={doorSignForm.roomNumber}
-                               onChange={(event) => setDoorSignForm({ ...doorSignForm, roomNumber: event.target.value })} />
-                        <Input label={'Raumtyp'} value={doorSignForm.roomType}
-                               onChange={(event) => setDoorSignForm({ ...doorSignForm, roomType: event.target.value })} />
-                    </div>
+                    <Input label={'Raumnummer'} value={doorSignForm.roomNumber}
+                           onChange={(event) => setDoorSignForm({ ...doorSignForm, roomNumber: event.target.value })} />
                     <div>
                         <Typography variant={'small'} color={'blue-gray'} className={'mb-2 font-medium'}>
-                            Anzuzeigende Namen (max. 3)
+                            Personen auf dem Türschild (max. 3)
                         </Typography>
-                        <div className={'space-y-3'}>
-                            {doorSignForm.names.map((name, index) => (
-                                <div key={index} className={'flex items-center gap-3'}>
-                                    <Input label={`Name ${index + 1}`} value={name}
-                                           onChange={(event) => {
-                                               const newNames = [...doorSignForm.names]
-                                               newNames[index] = event.target.value
-                                               setDoorSignForm({ ...doorSignForm, names: newNames })
-                                           }} />
-                                    {doorSignForm.names.length > 1 && (
-                                        <Button variant={'text'} color={'gray'} size={'sm'}
-                                                className={'normal-case'}
-                                                onClick={() => removeDoorSignNameField(index)}>
-                                            Entfernen
-                                        </Button>
-                                    )}
-                                </div>
-                            ))}
+                        <div className={'space-y-4'}>
+                            {doorSignForm.people.map((person, index) => {
+                                const statusDefinition = doorSignPersonStatuses.find((status) => status.value === person.status)
+                                const statusLabel = statusDefinition?.label ?? 'Verfügbar'
+                                const displayName = (person.name ?? '').trim().length > 0 ? person.name : `Person ${index + 1}`
+                                const busyInfo = person.status === 'busy' && person.busyUntil
+                                    ? `Bis ${formattedDate(person.busyUntil)}`
+                                    : ''
+
+                                return (
+                                    <div key={person.id} className={'rounded-lg border border-blue-gray-100 bg-white p-4 shadow-sm'}>
+                                        <div className={'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'}>
+                                            <button type={'button'}
+                                                    onClick={() => openPersonDialog(person)}
+                                                    className={'w-full rounded-md bg-transparent text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500'}>
+                                                <p className={'text-base font-semibold text-black'}>{displayName}</p>
+                                                <p className={'text-sm text-blue-gray-500'}>
+                                                    Status: {statusLabel}
+                                                    {busyInfo && (
+                                                        <span className={'text-blue-gray-400'}> – {busyInfo}</span>
+                                                    )}
+                                                </p>
+                                            </button>
+                                            <div className={'flex items-center gap-2'}>
+                                                <Button variant={'outlined'} size={'sm'} className={'normal-case'}
+                                                        onClick={() => openPersonDialog(person)}>
+                                                    Bearbeiten
+                                                </Button>
+                                                {doorSignForm.people.length > 1 && (
+                                                    <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case'}
+                                                            onClick={() => removeDoorSignPerson(person.id)}>
+                                                        Entfernen
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
                         <div className={'mt-3'}>
                             <Button variant={'outlined'} size={'sm'}
-                                    disabled={doorSignForm.names.length >= 3}
-                                    onClick={addDoorSignNameField} className={'normal-case'}>
-                                Weiteren Namen hinzufügen
+                                    disabled={doorSignForm.people.length >= 3}
+                                    onClick={addDoorSignPerson} className={'normal-case'}>
+                                Weitere Person hinzufügen
                             </Button>
                         </div>
                     </div>
-                    <div className={'grid gap-4 sm:grid-cols-2'}>
-                        <div>
-                            <Select label={'Status'} value={doorSignForm.status}
-                                    onChange={(value) => value && setDoorSignForm({ ...doorSignForm, status: value as DoorSignForm['status'] })}>
-                                {doorSignStatuses.map((status) => (
-                                    <Option key={status.value} value={status.value}>{status.label}</Option>
-                                ))}
-                            </Select>
-                        </div>
-                        <Input type={doorSignForm.status === 'frei' ? 'date' : 'datetime-local'}
-                               label={'Status gültig bis'} value={doorSignForm.statusUntil}
-                               onChange={(event) => setDoorSignForm({ ...doorSignForm, statusUntil: event.target.value })} />
-                    </div>
-                    <Checkbox label={'Raum aktuell unzugeteilt'} checked={doorSignForm.unassigned}
-                              onChange={(event) => setDoorSignForm({ ...doorSignForm, unassigned: event.target.checked })} />
+                    <Input label={'Unterer Text'} value={doorSignForm.footerNote}
+                           onChange={(event) => setDoorSignForm({ ...doorSignForm, footerNote: event.target.value })}
+                           placeholder={'Kurzer Hinweis am unteren Rand'} />
                 </div>
             )
         case 'event-board':
@@ -363,44 +427,65 @@ export default function EventsPage() {
     const renderPreview = () => {
         switch (displayType) {
         case 'door-sign': {
-            const statusDefinition = doorSignStatuses.find((status) => status.value === doorSignForm.status)
-            const badgeClass = statusDefinition?.badgeClass ?? 'bg-white text-black border border-black'
-            const names = doorSignForm.names.filter((name) => name.trim().length > 0)
+            const peopleSource = Array.isArray(doorSignForm.people) ? doorSignForm.people : []
+            const peopleWithNames = peopleSource.filter((person) => (person.name ?? '').trim().length > 0)
+            const hasBusyPerson = peopleSource.some((person) => person.status === 'busy')
+            const availabilityLabel = hasBusyPerson ? 'Beschäftigt' : 'Verfügbar'
+            const statusClasses = hasBusyPerson ? 'bg-red-600 text-white border border-red-700' : 'bg-white text-black border border-black'
+            const footerNote = typeof doorSignForm.footerNote === 'string' ? doorSignForm.footerNote : ''
+            const footerContent = footerNote.trim()
+                || 'Zusätzlicher Hinweis'
+
+            const isMinimalState = peopleWithNames.length === 0 && footerNote.trim().length === 0
 
             return (
-                <div className={'rounded-2xl bg-white text-black border-2 border-black p-6 shadow-sm flex flex-col gap-5'}>
-                    <div className={'flex items-start justify-between gap-3'}>
-                        <div>
-                            <p className={'text-xs uppercase tracking-wide text-red-700'}>Raum</p>
-                            <p className={'text-4xl font-semibold'}>{doorSignForm.roomNumber || '—'}</p>
-                            <p className={'text-sm mt-1'}>{doorSignForm.roomType || 'Raumtyp'}</p>
+                <div className={'flex flex-col rounded-xl border-2 border-black bg-white text-black'} style={{ width: 400, height: 300 }}>
+                    <div className={'flex flex-1 gap-10'}>
+                        <div className={'flex flex-1 items-center px-6'}>
+                            <div className={'w-full'}>
+                        {isMinimalState ? (
+                            <div className={'rounded-md border border-dashed border-black px-4 py-3 text-center text-sm font-medium'}>
+                                Raum aktuell unzugeteilt
+                            </div>
+                        ) : peopleWithNames.length === 0 ? (
+                                    <p className={'text-sm'}>Namen erscheinen hier.</p>
+                                ) : (
+                                    <ul className={'space-y-3'}>
+                                        {peopleWithNames.map((person) => (
+                                            <li key={person.id} className={`text-base font-semibold ${person.status === 'busy' ? 'text-red-600' : ''}`}>
+                                                {person.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
                         </div>
-                        <span className={`rounded-full px-3 py-1 text-sm font-semibold ${badgeClass}`}>
-                            {statusDefinition?.label ?? 'Status'}
-                        </span>
-                    </div>
-                    {doorSignForm.unassigned ? (
-                        <div className={'rounded-xl border border-dashed border-black p-4 text-center text-sm'}>
-                            Raum aktuell nicht zugeteilt – Raumnummer wird angezeigt
-                        </div>
-                    ) : (
-                        <div className={'grid gap-2'}>
-                            {names.length === 0 && (
-                                <p className={'text-sm'}>Hier erscheinen die gebuchten Personen.</p>
-                            )}
-                            {names.map((name, index) => (
-                                <div key={index} className={'rounded-lg border border-black bg-white px-4 py-2 text-base font-medium'}>
-                                    {name}
+                        <div className={'flex w-40 flex-col items-end px-6 pt-6 pb-4'}>
+                            <div className={'text-right'}>
+                                <p className={'text-5xl font-bold leading-none whitespace-nowrap overflow-hidden text-ellipsis'}>{doorSignForm.roomNumber || '—'}</p>
+                            </div>
+                            {!isMinimalState && (
+                                <div className={`mt-5 inline-flex items-center rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wide shadow-sm ${statusClasses}`}>
+                                    {availabilityLabel}
                                 </div>
-                            ))}
+                            )}
+                        </div>
+                    </div>
+                    {isMinimalState && (
+                        <div className={'border-t border-black px-6 py-3 text-xs leading-relaxed'}>
+                            <div className={'flex items-center justify-between'}>
+                                <span className={'font-medium'}>Raumzuweisung verfügbar</span>
+                                <div className={'h-12 w-12 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
+                                    QR
+                                </div>
+                            </div>
                         </div>
                     )}
-                    <div className={'text-xs'}>Status gültig bis: {formattedDate(doorSignForm.statusUntil)}</div>
-                    <div className={'flex justify-end'}>
-                        <div className={'h-12 w-12 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
-                            QR
+                    {!isMinimalState && footerContent && (
+                        <div className={'border-t border-black px-6 py-3 text-xs leading-relaxed'}>
+                            <span>{footerContent}</span>
                         </div>
-                    </div>
+                    )}
                 </div>
             )
         }
@@ -538,6 +623,48 @@ export default function EventsPage() {
                     </CardBody>
                 </Card>
             </div>
+
+            <Dialog open={isPersonDialogOpen} handler={closePersonDialog} size={'sm'}>
+                <DialogHeader>Person bearbeiten</DialogHeader>
+                <DialogBody>
+                    {personDraft && (
+                        <div className={'space-y-4'}>
+                            <Input label={'Name'} value={personDraft.name}
+                                   onChange={(event) => setPersonDraft({ ...personDraft, name: event.target.value })} />
+                            <Select label={'Status'} value={personDraft.status}
+                                    onChange={(value) => {
+                                        if (!value || !personDraft) {
+                                            return
+                                        }
+                                        const nextStatus = value as DoorSignPersonStatus
+                                        setPersonDraft({
+                                            ...personDraft,
+                                            status: nextStatus,
+                                            busyUntil: nextStatus === 'busy' ? personDraft.busyUntil : '',
+                                        })
+                                    }}>
+                                {doorSignPersonStatuses.map((status) => (
+                                    <Option key={status.value} value={status.value}>{status.label}</Option>
+                                ))}
+                            </Select>
+                            {personDraft.status === 'busy' && (
+                                <Input type={'datetime-local'} label={'Beschäftigt bis'}
+                                       value={personDraft.busyUntil}
+                                       onChange={(event) => setPersonDraft({ ...personDraft, busyUntil: event.target.value })} />
+                            )}
+                        </div>
+                    )}
+                </DialogBody>
+                <DialogFooter className={'space-x-2'}>
+                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closePersonDialog}>
+                        Abbrechen
+                    </Button>
+                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={savePersonDialog}
+                            disabled={!personDraft}>
+                        Speichern
+                    </Button>
+                </DialogFooter>
+            </Dialog>
         </div>
     )
 }
