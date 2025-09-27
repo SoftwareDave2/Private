@@ -61,6 +61,10 @@ export default function NavLinks({
       name: "Template Editor",
     },
     {
+      href: "/events",
+      name: "Events",
+    },
+    {
       href: "/config",
       name: "Config",
     },
