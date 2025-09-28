@@ -380,18 +380,20 @@ export default function EventsPage() {
                 || 'Zusätzlicher Hinweis'
 
             const isMinimalState = peopleWithNames.length === 0 && footerNote.trim().length === 0
+            const showStatusBadge = peopleWithNames.length > 0
+            const emptyAssignmentMessage = (
+                <div className={'rounded-md border border-black px-4 py-3 text-center text-sm font-medium'}>
+                    Raum aktuell unzugeteilt
+                </div>
+            )
 
             return (
                 <div className={'flex flex-col rounded-xl border-2 border-black bg-white text-black'} style={{ width: 400, height: 300 }}>
                     <div className={'flex flex-1 gap-10'}>
                         <div className={'flex flex-1 items-center px-6'}>
                             <div className={'w-full'}>
-                        {isMinimalState ? (
-                            <div className={'rounded-md border border-dashed border-black px-4 py-3 text-center text-sm font-medium'}>
-                                Raum aktuell unzugeteilt
-                            </div>
-                        ) : peopleWithNames.length === 0 ? (
-                                    <p className={'text-sm'}>Namen erscheinen hier.</p>
+                                {isMinimalState || peopleWithNames.length === 0 ? (
+                                    emptyAssignmentMessage
                                 ) : (
                                     <ul className={'space-y-3'}>
                                         {peopleWithNames.map((person) => (
@@ -407,7 +409,7 @@ export default function EventsPage() {
                             <div className={'text-right'}>
                                 <p className={'text-5xl font-bold leading-none whitespace-nowrap overflow-hidden text-ellipsis'}>{doorSignForm.roomNumber || '—'}</p>
                             </div>
-                            {!isMinimalState && (
+                            {showStatusBadge && (
                                 <div className={`mt-5 inline-flex items-center rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wide shadow-sm ${statusClasses}`}>
                                     {availabilityLabel}
                                 </div>
