@@ -50,8 +50,8 @@ type BookingEntry = {
 }
 
 type RoomBookingForm = {
-    heading: string
-    subtitle: string
+    roomNumber: string
+    roomType: string
     entries: BookingEntry[]
 }
 
@@ -91,8 +91,8 @@ const defaultNoticeBoardForm: NoticeBoardForm = {
 }
 
 const defaultRoomBookingForm: RoomBookingForm = {
-    heading: 'Heute im Raum',
-    subtitle: '',
+    roomNumber: '',
+    roomType: 'Besprechungsraum',
     entries: [
         { id: 1, title: '', time: '' },
         { id: 2, title: '', time: '' },
@@ -115,6 +115,8 @@ export default function EventsPage() {
     const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
     const [isEventDialogOpen, setIsEventDialogOpen] = useState<boolean>(false)
     const [eventDraft, setEventDraft] = useState<EventBoardEvent | null>(null)
+    const [isBookingDialogOpen, setIsBookingDialogOpen] = useState<boolean>(false)
+    const [bookingDraft, setBookingDraft] = useState<{ id: number; title: string; startTime: string; endTime: string } | null>(null)
 
     const filteredDisplays = useMemo(() => {
         if (displayType === 'event-board') {
@@ -190,6 +192,25 @@ export default function EventsPage() {
     const closeEventDialog = () => {
         setIsEventDialogOpen(false)
         setEventDraft(null)
+    }
+
+    const openBookingDialog = (entry: BookingEntry) => {
+        const raw = typeof entry.time === 'string' ? entry.time : ''
+        const parts = raw.split('-').map((part) => part.trim()).filter((part) => part.length > 0)
+        const startTime = parts.length >= 1 ? parts[0] : ''
+        const endTime = parts.length >= 2 ? parts[1] : ''
+        setBookingDraft({
+            id: entry.id,
+            title: entry.title,
+            startTime,
+            endTime,
+        })
+        setIsBookingDialogOpen(true)
+    }
+
+    const closeBookingDialog = () => {
+        setIsBookingDialogOpen(false)
+        setBookingDraft(null)
     }
 
     const addDoorSignPerson = () => {
@@ -303,29 +324,46 @@ export default function EventsPage() {
         closeEventDialog()
     }
 
-    const updateBookingEntry = (entryId: number, key: keyof BookingEntry, value: string) => {
+    const saveBookingDialog = () => {
+        if (!bookingDraft) {
+            return
+        }
+        const start = bookingDraft.startTime.trim()
+        const end = bookingDraft.endTime.trim()
+        const timeLabel = start && end ? `${start} - ${end}` : start || end
         setRoomBookingForm((prev) => ({
             ...prev,
             entries: prev.entries.map((entry) =>
-                entry.id === entryId ? { ...entry, [key]: value } : entry,
+                entry.id === bookingDraft.id
+                    ? { ...entry, title: bookingDraft.title, time: timeLabel }
+                    : entry,
             ),
         }))
+        closeBookingDialog()
     }
 
     const addBookingEntry = () => {
+        let createdEntry: BookingEntry | null = null
         setRoomBookingForm((prev) => {
             if (prev.entries.length >= 4) {
                 return prev
             }
             const nextId = prev.entries.length === 0 ? 1 : Math.max(...prev.entries.map((entry) => entry.id)) + 1
+            createdEntry = { id: nextId, title: '', time: '' }
             return {
                 ...prev,
-                entries: [...prev.entries, { id: nextId, title: '', time: '' }],
+                entries: [...prev.entries, createdEntry],
             }
         })
+        if (createdEntry) {
+            openBookingDialog(createdEntry)
+        }
     }
 
     const removeBookingEntry = (entryId: number) => {
+        if (bookingDraft && bookingDraft.id === entryId) {
+            closeBookingDialog()
+        }
         setRoomBookingForm((prev) => {
             if (prev.entries.length <= 1) {
                 return prev
@@ -466,29 +504,33 @@ export default function EventsPage() {
         case 'room-booking':
             return (
                 <div className={'space-y-4'}>
-                    <Input label={'Überschrift'} value={roomBookingForm.heading}
-                           onChange={(event) => setRoomBookingForm({ ...roomBookingForm, heading: event.target.value })} />
-                    <Input label={'Unterzeile'} value={roomBookingForm.subtitle}
-                           onChange={(event) => setRoomBookingForm({ ...roomBookingForm, subtitle: event.target.value })} />
+                    <div className={'grid gap-3 sm:grid-cols-2'}>
+                        <Input label={'Raumnummer'} value={roomBookingForm.roomNumber}
+                               onChange={(event) => setRoomBookingForm({ ...roomBookingForm, roomNumber: event.target.value })} />
+                        <Input label={'Raumtyp'} value={roomBookingForm.roomType}
+                               onChange={(event) => setRoomBookingForm({ ...roomBookingForm, roomType: event.target.value })} />
+                    </div>
                     <div className={'space-y-3'}>
                         <Typography variant={'small'} color={'blue-gray'} className={'font-medium'}>
                             Gezeigte Termine (max. 4 Einträge)
                         </Typography>
-                        {roomBookingForm.entries.map((entry, index) => (
-                            <div key={entry.id} className={'grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center'}>
-                                <div className={'grid gap-3 sm:grid-cols-2'}>
-                                    <Input label={`Titel ${index + 1}`} value={entry.title}
-                                           onChange={(event) => updateBookingEntry(entry.id, 'title', event.target.value)} />
-                                    <Input label={'Zeit (z. B. 09:30 - 10:15)'} value={entry.time}
-                                           onChange={(event) => updateBookingEntry(entry.id, 'time', event.target.value)} />
+                        <div className={'space-y-3'}>
+                            {roomBookingForm.entries.map((entry) => (
+                                <div key={entry.id} className={'grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center rounded-lg border border-blue-gray-100 bg-white p-4'}>
+                                    <button type={'button'} className={'text-left w-full focus:outline-none'} onClick={() => openBookingDialog(entry)}>
+                                        <p className={'font-semibold text-sm text-black'}>{entry.title.trim() || 'Neuer Termin'}</p>
+                                        <p className={'text-xs text-blue-gray-500 mt-1'}>
+                                            {entry.time.trim() || 'Uhrzeit festlegen'}
+                                        </p>
+                                    </button>
+                                    <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-start sm:justify-self-end'}
+                                            disabled={roomBookingForm.entries.length <= 1}
+                                            onClick={() => removeBookingEntry(entry.id)}>
+                                        Entfernen
+                                    </Button>
                                 </div>
-                                <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-start sm:justify-self-end'}
-                                        disabled={roomBookingForm.entries.length <= 1}
-                                        onClick={() => removeBookingEntry(entry.id)}>
-                                    Entfernen
-                                </Button>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                         <Button variant={'outlined'} size={'sm'} className={'normal-case'}
                                 disabled={roomBookingForm.entries.length >= 4}
                                 onClick={addBookingEntry}>
@@ -683,34 +725,111 @@ export default function EventsPage() {
                     )}
                 </div>
             )
-        case 'room-booking':
-            return (
-                <div className={'rounded-2xl bg-white p-6 border-2 border-black flex flex-col gap-5 text-black'}>
-                    <div>
-                        <p className={'text-xs uppercase tracking-wide text-red-700 mb-1'}>Raumbuchung</p>
-                        <h3 className={'text-3xl font-semibold text-black'}>{roomBookingForm.heading || 'Raumnutzung'}</h3>
-                        {roomBookingForm.subtitle && (
-                            <p className={'text-sm mt-1'}>{roomBookingForm.subtitle}</p>
-                        )}
-                    </div>
-                    <div className={'space-y-2'}>
-                        {roomBookingForm.entries.filter((entry) => entry.title.trim().length > 0 || entry.time.trim().length > 0).length === 0 && (
-                            <p className={'text-sm'}>Fügen Sie Termine hinzu, um anstehende Meetings darzustellen.</p>
-                        )}
-                        {roomBookingForm.entries.map((entry) => (
-                            <div key={entry.id} className={'flex items-baseline justify-between rounded-lg border border-black bg-white px-4 py-3'}>
-                                <span className={'text-sm font-medium text-black'}>{entry.title || 'Titel'}</span>
-                                <span className={'text-xs text-red-700 ml-4'}>{entry.time || 'Uhrzeit'}</span>
-                            </div>
-                        ))}
-                    </div>
-                    <div className={'flex justify-end'}>
-                        <div className={'h-12 w-12 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
-                            QR
+        case 'room-booking': {
+            const entriesSource = Array.isArray(roomBookingForm.entries)
+                ? roomBookingForm.entries
+                : []
+            const parsedEntries = entriesSource
+                .filter((entry) => (entry.title ?? '').trim().length > 0 || (entry.time ?? '').trim().length > 0)
+                .map((entry) => {
+                    const raw = typeof entry.time === 'string' ? entry.time : ''
+                    const segments = raw.split('-').map((segment) => segment.trim()).filter((segment) => segment.length > 0)
+                    const startTime = segments.length >= 1 ? segments[0] : ''
+                    const endTime = segments.length >= 2 ? segments[1] : ''
+                    const normalized = startTime && endTime ? `${startTime} - ${endTime}` : raw || startTime || endTime
+                    return {
+                        ...entry,
+                        normalizedTime: normalized,
+                        startTime,
+                        endTime,
+                    }
+                })
+
+            const roomNumberLabel = ((roomBookingForm.roomNumber || '').trim()) || '—'
+            const roomTypeLabel = ((roomBookingForm.roomType || 'Besprechungsraum').trim()) || 'Besprechungsraum'
+
+            if (parsedEntries.length === 0) {
+                return (
+                    <div className={'rounded-2xl bg-white border-2 border-black p-5 flex flex-col text-black'} style={{ width: 400, height: 300 }}>
+                        <div className={'flex items-start justify-between'}>
+                            <span className={'text-sm text-transparent'}>.</span>
+                            <p className={'text-3xl font-semibold text-black leading-tight text-right min-w-[4rem]'}>{roomNumberLabel}</p>
                         </div>
+                        <div className={'flex-1 flex items-center justify-center'}>
+                            <div className={'w-full max-w-xs'}>
+                                <p className={'text-base font-semibold text-black text-left'}>Keine anstehenden Termine</p>
+                            </div>
+                        </div>
+                        <div className={'pt-3 flex justify-between items-end'}>
+                            <p className={'text-sm font-semibold text-black truncate'}>{roomTypeLabel}</p>
+                            <div className={'flex flex-col items-center space-y-2'}>
+                                <div className={'h-16 w-16 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.55rem] uppercase'}>
+                                    QR
+                                </div>
+                                <p className={'text-xs text-black'}>Neue Termine hinzufügen</p>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            const activeEntry = parsedEntries[0]
+            const secondaryEntries = parsedEntries.slice(1, 4)
+
+            return (
+                <div className={'rounded-2xl bg-white border-2 border-black p-5 flex flex-col gap-4 text-black'} style={{ width: 400, height: 300 }}>
+                    <div className={'flex items-start justify-between gap-4'}>
+                        <div className={'flex flex-col gap-3'}>
+                            <div className={'grid gap-2'}>
+                                <div className={'flex items-center justify-between'}>
+                                    <p className={'text-xs uppercase tracking-wide text-red-700 font-semibold'}>Aktiver Termin</p>
+                                    <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case'}
+                                            onClick={() => removeBookingEntry(activeEntry.id)}>
+                                        Entfernen
+                                    </Button>
+                                </div>
+                                <div className={'mt-1 rounded-lg border border-black bg-white px-3 py-2 text-left w-40 h-20 flex flex-col justify-center'}>
+                                    <span className={'text-sm font-semibold text-black truncate'}>
+                                        {activeEntry?.normalizedTime ? `${activeEntry.normalizedTime} Uhr` : 'Keine Zeit'}
+                                    </span>
+                                    <span className={'mt-1 text-xs text-black line-clamp-2'}>
+                                        {activeEntry?.title?.trim() || 'Kein Meeting ausgewählt'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <p className={'text-3xl font-semibold text-black leading-tight text-right min-w-[4rem]'}>{roomNumberLabel}</p>
+                    </div>
+                    <div className={'flex-1 min-h-0'}>
+                        {secondaryEntries.length > 0 && (
+                            <div className={'flex flex-1 flex-col bg-white px-3 pt-3 pb-6 space-y-2'}>
+                                {secondaryEntries.map((entry, index) => {
+                                    const labelText = `Ab ${entry.startTime ? `${entry.startTime} Uhr` : 'sofort'}: ${(entry.title ?? '').trim()}`
+                                    const isLast = index === secondaryEntries.length - 1
+                                    return (
+                                        <div key={entry.id} className={'text-sm text-black leading-snug w-full'}>
+                                            <p>{labelText}</p>
+                                            {!isLast && <div className={'h-px w-full bg-black/30 my-1'} />}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </div>
+                    <div className={'mt-auto pt-3 flex justify-between items-end'}>
+                        <p className={'text-sm font-semibold text-black truncate'}>{roomTypeLabel}</p>
+                        {parsedEntries.length <= 1 && (
+                            <div className={'flex flex-col items-center space-y-2'}>
+                                <div className={'h-16 w-16 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.55rem] uppercase'}>
+                                    QR
+                                </div>
+                                <p className={'text-xs text-black'}>Neue Termine hinzufügen</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )
+        }
         default:
             return null
         }
@@ -792,6 +911,33 @@ export default function EventsPage() {
                     </Button>
                     <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={saveEventDialog}
                             disabled={!eventDraft}>
+                        Speichern
+                    </Button>
+                </DialogFooter>
+            </Dialog>
+
+            <Dialog open={isBookingDialogOpen} handler={closeBookingDialog} size={'sm'}>
+                <DialogHeader>Termin bearbeiten</DialogHeader>
+                <DialogBody>
+                    {bookingDraft && (
+                        <div className={'space-y-4'}>
+                            <Input label={'Titel'} value={bookingDraft.title}
+                                   onChange={(event) => setBookingDraft({ ...bookingDraft, title: event.target.value })} />
+                            <div className={'grid gap-3 sm:grid-cols-2'}>
+                                <Input type={'time'} label={'Beginn'} value={bookingDraft.startTime}
+                                       onChange={(event) => setBookingDraft({ ...bookingDraft, startTime: event.target.value })} />
+                                <Input type={'time'} label={'Ende'} value={bookingDraft.endTime}
+                                       onChange={(event) => setBookingDraft({ ...bookingDraft, endTime: event.target.value })} />
+                            </div>
+                        </div>
+                    )}
+                </DialogBody>
+                <DialogFooter className={'space-x-2'}>
+                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closeBookingDialog}>
+                        Abbrechen
+                    </Button>
+                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={saveBookingDialog}
+                            disabled={!bookingDraft}>
                         Speichern
                     </Button>
                 </DialogFooter>
