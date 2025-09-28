@@ -41,7 +41,7 @@ export function RoomBookingFormSection({
                                     {entry.time.trim() || 'Uhrzeit festlegen'}
                                 </p>
                             </button>
-                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-start sm:justify-self-end'}
+                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-stretch sm:justify-self-end w-full sm:w-auto'}
                                     disabled={form.entries.length <= 1}
                                     onClick={() => onRemoveEntry(entry.id)}>
                                 Entfernen
@@ -49,7 +49,7 @@ export function RoomBookingFormSection({
                         </div>
                     ))}
                 </div>
-                <Button variant={'outlined'} size={'sm'} className={'normal-case'}
+                <Button variant={'outlined'} size={'sm'} className={'normal-case w-full sm:w-auto'}
                         disabled={form.entries.length >= 4}
                         onClick={onAddEntry}>
                     Termin hinzufügen

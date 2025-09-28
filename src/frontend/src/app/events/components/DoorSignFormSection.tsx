@@ -59,13 +59,13 @@ export function DoorSignFormSection({
                                             )}
                                         </p>
                                     </button>
-                                    <div className={'flex items-center gap-2'}>
-                                        <Button variant={'outlined'} size={'sm'} className={'normal-case'}
+                                    <div className={'flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end'}>
+                                        <Button variant={'outlined'} size={'sm'} className={'normal-case w-full sm:w-auto'}
                                                 onClick={() => onEditPerson(person)}>
                                             Bearbeiten
                                         </Button>
                                         {form.people.length > 1 && (
-                                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case'}
+                                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case w-full sm:w-auto'}
                                                     onClick={() => onRemovePerson(person.id)}>
                                                 Entfernen
                                             </Button>
@@ -76,7 +76,7 @@ export function DoorSignFormSection({
                         )
                     })}
                 </div>
-                <Button variant={'outlined'} size={'sm'} className={'normal-case mt-3'}
+                <Button variant={'outlined'} size={'sm'} className={'normal-case mt-3 w-full sm:w-auto'}
                         disabled={form.people.length >= 3}
                         onClick={onAddPerson}>
                     Weitere Person hinzufügen

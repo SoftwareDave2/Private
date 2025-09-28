@@ -52,14 +52,14 @@ export function EventBoardFormSection({
                                     <p className={'text-xs text-blue-gray-500 mt-1 break-words'}>{event.qrLink}</p>
                                 )}
                             </button>
-                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-start sm:justify-self-end'}
+                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-stretch sm:justify-self-end w-full sm:w-auto'}
                                     onClick={() => onRemoveEvent(event.id)}>
                                 Entfernen
                             </Button>
                         </div>
                     ))}
                 </div>
-                <Button variant={'outlined'} size={'sm'} className={'normal-case'}
+                <Button variant={'outlined'} size={'sm'} className={'normal-case w-full sm:w-auto'}
                         disabled={form.events.length >= 4}
                         onClick={onAddEvent}>
                     Ereignis hinzufügen

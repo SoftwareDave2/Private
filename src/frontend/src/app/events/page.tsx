@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useMemo, useState} from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {Card, CardBody, Input, Option, Select, Typography, Button, Dialog, DialogHeader, DialogBody, DialogFooter} from '@material-tailwind/react'
 import PageHeader from '@/components/layout/PageHeader'
 import {DisplayData} from '@/types/displayData'
@@ -72,6 +72,13 @@ const templateSamples: Record<DisplayTypeKey, string> = {
 </section>`,
 }
 
+const previewDimensions: Record<DisplayTypeKey, { width: number; height: number }> = {
+    'door-sign': { width: 400, height: 300 },
+    'event-board': { width: 400, height: 300 },
+    'notice-board': { width: 296, height: 128 },
+    'room-booking': { width: 400, height: 300 },
+}
+
 export default function EventsPage() {
     const backendApiUrl = getBackendApiUrl()
 
@@ -103,6 +110,10 @@ export default function EventsPage() {
         }
         return displays
     }, [displayType, displays])
+
+    const previewContainerRef = useRef<HTMLDivElement | null>(null)
+    const [previewScale, setPreviewScale] = useState(1)
+    const previewSize = previewDimensions[displayType] ?? previewDimensions['door-sign']
 
     useEffect(() => {
         const fetchDisplays = async () => {
@@ -152,6 +163,41 @@ export default function EventsPage() {
             setSelectedDisplay(filteredDisplays[0].macAddress)
         }
     }, [filteredDisplays, isLoadingDisplays, selectedDisplay])
+
+    useEffect(() => {
+        const container = previewContainerRef.current
+        if (!container) {
+            return
+        }
+
+        const computeScale = () => {
+            const availableWidth = container.clientWidth
+            if (availableWidth <= 0) {
+                return
+            }
+            const nextScale = Math.min(1, Math.max(0.5, availableWidth / previewSize.width))
+            setPreviewScale((current) => {
+                if (Math.abs(current - nextScale) < 0.01) {
+                    return current
+                }
+                return nextScale
+            })
+        }
+
+        computeScale()
+
+        if (typeof ResizeObserver !== 'undefined') {
+            const observer = new ResizeObserver(() => computeScale())
+            observer.observe(container)
+            return () => observer.disconnect()
+        }
+
+        if (typeof window !== 'undefined') {
+            const handleResize = () => computeScale()
+            window.addEventListener('resize', handleResize)
+            return () => window.removeEventListener('resize', handleResize)
+        }
+    }, [previewSize.height, previewSize.width, displayType])
 
     const openPersonDialog = (person: DoorSignPerson) => {
         setPersonDraft({ ...person })
@@ -792,12 +838,14 @@ export default function EventsPage() {
         }
     }
 
+    const previewContent = renderPreview()
+
     return (
-        <div className={'space-y-6'}>
+        <div className={'space-y-6 px-4 sm:px-0 w-full max-w-full overflow-x-hidden'}>
             <PageHeader title={'Events'} info={'Konfigurieren Sie Inhalte für die Displays in der Keßlerstraße'} />
-            <div className={'grid gap-6 lg:grid-cols-2'}>
-                <Card className={'border border-blue-gray-100 shadow-sm'}>
-                    <CardBody className={'space-y-6'}>
+            <div className={'flex flex-col gap-6 xl:grid xl:grid-cols-2 w-full max-w-full'}>
+                <Card className={'w-full max-w-full border border-blue-gray-100 shadow-sm'}>
+                    <CardBody className={'space-y-6 p-4 sm:p-6'}>
                         <div className={'grid gap-4 sm:grid-cols-2'}>
                             <div>
                                 <Select label={'Display auswählen'} value={selectedDisplay}
@@ -832,26 +880,50 @@ export default function EventsPage() {
                     </CardBody>
                 </Card>
 
-                <Card className={'border border-blue-gray-100 shadow-sm'}>
-                    <CardBody>
-                        <div className={'mb-4 flex items-center justify-between text-xs text-red-700 uppercase tracking-wide'}>
+                <Card className={'w-full max-w-full border border-blue-gray-100 shadow-sm'}>
+                    <CardBody className={'space-y-6 p-4 sm:p-6'}>
+                        <div className={'flex flex-col gap-1 text-left text-xs uppercase tracking-wide text-red-700 sm:flex-row sm:items-center sm:justify-between'}>
                             <span>Live-Vorschau</span>
-                            <span>{displayTypeOptions.find((option) => option.value === displayType)?.label}</span>
+                            <span className={'font-semibold sm:text-right'}>{displayTypeOptions.find((option) => option.value === displayType)?.label}</span>
                         </div>
-                        {renderPreview()}
-                        <div className={'mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'}>
-                            <div className={'flex flex-wrap gap-3'}>
-                                <Button variant={'outlined'} color={'gray'} className={'normal-case'} onClick={openTemplateEditDialog}>
+                        {previewContent && (
+                            <div ref={previewContainerRef} className={'w-full overflow-x-hidden'}>
+                                <div className={'flex justify-center sm:justify-start'}>
+                                    <div
+                                        style={{
+                                            width: previewSize.width * previewScale,
+                                            height: previewSize.height * previewScale,
+                                            maxWidth: '100%',
+                                            overflow: 'hidden',
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                width: previewSize.width,
+                                                height: previewSize.height,
+                                                transform: `scale(${previewScale})`,
+                                                transformOrigin: 'top left',
+                                            }}
+                                        >
+                                            {previewContent}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        <div className={'flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between'}>
+                            <div className={'flex w-full flex-col gap-3 xl:w-auto xl:flex-row xl:flex-wrap'}>
+                                <Button variant={'outlined'} color={'gray'} className={'normal-case w-full xl:w-auto'} onClick={openTemplateEditDialog}>
                                     Template bearbeiten
                                 </Button>
-                                <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={openTemplateCreateDialog}>
+                                <Button variant={'filled'} color={'red'} className={'normal-case w-full xl:w-auto'} onClick={openTemplateCreateDialog}>
                                     Template erstellen
                                 </Button>
                             </div>
                             <Button
                                 variant={'filled'}
                                 color={'green'}
-                                className={'normal-case'}
+                                className={'normal-case w-full xl:w-auto'}
                                 disabled={isSendInProgress || isLoadingDisplays || !selectedDisplay}
                                 onClick={handleSendToDisplay}
                             >
@@ -859,7 +931,7 @@ export default function EventsPage() {
                             </Button>
                         </div>
                         {sendFeedback && (
-                            <div className={`mt-3 rounded-md border px-4 py-3 text-sm ${sendFeedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>
+                            <div className={`rounded-md border px-4 py-3 text-sm ${sendFeedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>
                                 {sendFeedback.message}
                             </div>
                         )}
