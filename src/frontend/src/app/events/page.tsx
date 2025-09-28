@@ -23,12 +23,17 @@ type DoorSignForm = {
     footerNote: string
 }
 
+type EventBoardEvent = {
+    id: number
+    title: string
+    date: string
+    time: string
+    qrLink: string
+}
+
 type EventBoardForm = {
     title: string
-    eventCount: string
-    description: string
-    start: string
-    end: string
+    events: EventBoardEvent[]
 }
 
 type NoticeBoardForm = {
@@ -74,10 +79,10 @@ const defaultDoorSignForm: DoorSignForm = {
 
 const defaultEventBoardForm: EventBoardForm = {
     title: '',
-    eventCount: '0',
-    description: '',
-    start: '',
-    end: '',
+    events: [
+        { id: 1, title: '', date: '', time: '', qrLink: '' },
+        { id: 2, title: '', date: '', time: '', qrLink: '' },
+    ],
 }
 
 const defaultNoticeBoardForm: NoticeBoardForm = {
@@ -112,6 +117,8 @@ export default function EventsPage() {
     const [displayError, setDisplayError] = useState<string>('')
     const [isPersonDialogOpen, setIsPersonDialogOpen] = useState<boolean>(false)
     const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
+    const [isEventDialogOpen, setIsEventDialogOpen] = useState<boolean>(false)
+    const [eventDraft, setEventDraft] = useState<EventBoardEvent | null>(null)
 
     const filteredDisplays = useMemo(() => {
         if (displayType === 'event-board') {
@@ -179,6 +186,16 @@ export default function EventsPage() {
         setPersonDraft(null)
     }
 
+    const openEventDialog = (event: EventBoardEvent) => {
+        setEventDraft({ ...event })
+        setIsEventDialogOpen(true)
+    }
+
+    const closeEventDialog = () => {
+        setIsEventDialogOpen(false)
+        setEventDraft(null)
+    }
+
     const addDoorSignPerson = () => {
         let createdPerson: DoorSignPerson | null = null
         setDoorSignForm((prev) => {
@@ -229,6 +246,42 @@ export default function EventsPage() {
         }))
     }
 
+    const addEventBoardEvent = () => {
+        let createdEvent: EventBoardEvent | null = null
+        setEventBoardForm((prev) => {
+            if (prev.events.length >= 4) {
+                return prev
+            }
+            const nextId = prev.events.length === 0 ? 1 : Math.max(...prev.events.map((event) => event.id)) + 1
+            createdEvent = { id: nextId, title: '', date: '', time: '', qrLink: '' }
+            return {
+                ...prev,
+                events: [...prev.events, createdEvent],
+            }
+        })
+        if (createdEvent) {
+            openEventDialog(createdEvent)
+        }
+    }
+
+    const removeEventBoardEvent = (eventId: number) => {
+        setEventBoardForm((prev) => ({
+            ...prev,
+            events: prev.events.filter((event) => event.id !== eventId),
+        }))
+    }
+
+    const updateEventBoardEvent = (eventId: number, updates: Partial<EventBoardEvent>) => {
+        setEventBoardForm((prev) => ({
+            ...prev,
+            events: prev.events.map((event) =>
+                event.id === eventId
+                    ? { ...event, ...updates }
+                    : event,
+            ),
+        }))
+    }
+
     const savePersonDialog = () => {
         if (!personDraft) {
             return
@@ -239,6 +292,19 @@ export default function EventsPage() {
             busyUntil: personDraft.status === 'busy' ? personDraft.busyUntil : '',
         })
         closePersonDialog()
+    }
+
+    const saveEventDialog = () => {
+        if (!eventDraft) {
+            return
+        }
+        updateEventBoardEvent(eventDraft.id, {
+            title: eventDraft.title,
+            date: eventDraft.date,
+            time: eventDraft.time,
+            qrLink: eventDraft.qrLink,
+        })
+        closeEventDialog()
     }
 
     const updateBookingEntry = (entryId: number, key: keyof BookingEntry, value: string) => {
@@ -341,28 +407,41 @@ export default function EventsPage() {
             )
         case 'event-board':
             return (
-                <div className={'space-y-4'}>
-                    <Input label={'Titel'} value={eventBoardForm.title}
-                           onChange={(event) => setEventBoardForm({ ...eventBoardForm, title: event.target.value })} />
-                    <div className={'grid gap-4 sm:grid-cols-2'}>
-                        <Input type={'number'} label={'Anzahl der Events'}
-                               value={eventBoardForm.eventCount}
-                               onChange={(event) => setEventBoardForm({ ...eventBoardForm, eventCount: event.target.value })} />
-                        <Input type={'datetime-local'} label={'Ablaufzeit'} value={eventBoardForm.end}
-                               onChange={(event) => setEventBoardForm({ ...eventBoardForm, end: event.target.value })} />
+                <div className={'space-y-5'}>
+                    <Input label={'Überschrift'} value={eventBoardForm.title}
+                           onChange={(event) => setEventBoardForm({ ...eventBoardForm, title: event.target.value })}
+                           placeholder={'z. B. Ereignisse heute'} />
+                    <div className={'space-y-3'}>
+                        <Typography variant={'small'} color={'blue-gray'} className={'font-medium'}>
+                            Ereignisse (max. 4 Einträge)
+                        </Typography>
+                        <div className={'space-y-3'}>
+                            {eventBoardForm.events.map((event) => (
+                                <div key={event.id} className={'grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center rounded-lg border border-blue-gray-100 bg-white p-4'}>
+                                    <button type={'button'}
+                                            className={'text-left w-full focus:outline-none'}
+                                            onClick={() => openEventDialog(event)}>
+                                        <p className={'font-semibold text-sm text-black'}>{event.title.trim() || 'Neues Ereignis'}</p>
+                                        <p className={'text-xs text-blue-gray-500 mt-1'}>
+                                            {(event.date.trim() || 'Datum festlegen')} · {(event.time.trim() || 'Uhrzeit festlegen')}
+                                        </p>
+                                        {event.qrLink.trim() && (
+                                            <p className={'text-xs text-blue-gray-500 mt-1 break-words'}>{event.qrLink}</p>
+                                        )}
+                                    </button>
+                                    <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-start sm:justify-self-end'}
+                                            onClick={() => removeEventBoardEvent(event.id)}>
+                                        Entfernen
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant={'outlined'} size={'sm'} className={'normal-case'}
+                                disabled={eventBoardForm.events.length >= 4}
+                                onClick={addEventBoardEvent}>
+                            Ereignis hinzufügen
+                        </Button>
                     </div>
-                    <div>
-                        <label className={'block text-sm font-medium text-blue-gray-700 mb-2'}>
-                            Beschreibung
-                        </label>
-                        <textarea className={'w-full rounded-md border border-blue-gray-100 bg-white p-3 text-sm focus:border-red-500 focus:outline-none focus:ring-0'}
-                                  rows={4}
-                                  value={eventBoardForm.description}
-                                  onChange={(event) => setEventBoardForm({ ...eventBoardForm, description: event.target.value })}
-                                  placeholder={'Kurzbeschreibung des Events oder weiterführende Infos'} />
-                    </div>
-                    <Input type={'datetime-local'} label={'Startzeit'} value={eventBoardForm.start}
-                           onChange={(event) => setEventBoardForm({ ...eventBoardForm, start: event.target.value })} />
                 </div>
             )
         case 'notice-board':
@@ -515,28 +594,76 @@ export default function EventsPage() {
             )
         }
         case 'event-board': {
-            const eventCount = parseInt(eventBoardForm.eventCount || '0', 10)
-            const safeEventCount = Number.isNaN(eventCount) ? 0 : Math.max(eventCount, 0)
+            const formatDateLabel = (value: string) => {
+                if (!value) {
+                    return ''
+                }
+                const parsed = new Date(value)
+                if (Number.isNaN(parsed.getTime())) {
+                    return value
+                }
+                const day = parsed.getDate().toString().padStart(2, '0')
+                const month = (parsed.getMonth() + 1).toString().padStart(2, '0')
+                const year = parsed.getFullYear().toString()
+                return `${day}.${month}.${year}`
+            }
 
+            const events = Array.isArray(eventBoardForm.events)
+                ? eventBoardForm.events
+                    .filter((event) =>
+                        (event.title ?? '').trim().length > 0
+                        || (event.date ?? '').trim().length > 0
+                        || (event.time ?? '').trim().length > 0,
+                    )
+                    .slice(0, 4)
+                : []
+            const isDenseLayout = events.length >= 4
             return (
-                <div className={'rounded-2xl bg-white border-2 border-black p-6 text-black flex flex-col gap-5 overflow-hidden'}
+                <div className={'rounded-2xl bg-white border-2 border-black p-4 text-black flex flex-col gap-2 overflow-hidden'}
                      style={{ width: 400, height: 300 }}>
-                    <div>
-                        <p className={'text-xs uppercase tracking-wide text-red-700 mb-1'}>Ereignisse</p>
-                        <h3 className={'text-3xl font-semibold text-black'}>{eventBoardForm.title || 'Neues Event'}</h3>
-                    </div>
-                    <p className={'text-sm text-black'}>{eventBoardForm.description || 'Nutzen Sie diesen Bereich für Kurzbeschreibungen oder Highlights zum Event.'}</p>
-                    <div className={'flex flex-wrap items-center gap-4 text-sm text-black'}>
-                        <span className={'rounded-full border border-red-600 px-3 py-1 text-red-600 font-medium'}>
-                            {safeEventCount} geplante Ereignisse
-                        </span>
-                        <span>Start: {formattedDate(eventBoardForm.start)}</span>
-                        <span>Ablauf: {formattedDate(eventBoardForm.end)}</span>
-                    </div>
-                    <div className={'flex justify-end'}>
-                        <div className={'h-12 w-12 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
-                            QR
+                    {eventBoardForm.title.trim() && (
+                        <div>
+                            <h3 className={'text-lg font-semibold text-black leading-tight truncate'}>{eventBoardForm.title.trim()}</h3>
                         </div>
+                    )}
+                    <div className={'flex-1 overflow-hidden'}>
+                        {events.length > 0 ? (
+                            <div className={`flex flex-col h-full ${events.length < 4 ? 'justify-start' : 'justify-between'} ${isDenseLayout ? 'gap-1' : 'gap-1.5'}`}>
+                                {events.map((event) => {
+                                    const title = event.title.trim() || 'Titel festlegen'
+                                    const date = formatDateLabel(event.date.trim()) || 'Datum folgt'
+                                    const time = event.time.trim() || 'Zeit folgt'
+                                    const hasQrLink = event.qrLink.trim().length > 0
+
+                                    return (
+                                        <div key={event.id}
+                                             className={`flex items-center justify-between rounded-lg border border-red-600/40 bg-white ${isDenseLayout ? 'px-2 py-1' : 'px-2.5 py-1.5'} ${isDenseLayout ? 'gap-1.5' : 'gap-2'}`}>
+                                            <div className={`flex-1 min-w-0 ${isDenseLayout ? 'space-y-0.5' : 'space-y-0.5'}`}>
+                                                <p className={`${isDenseLayout ? 'text-[0.78rem]' : 'text-[0.82rem]'} font-semibold text-black truncate`} title={title}>{title}</p>
+                                                <p className={`${isDenseLayout ? 'text-[0.68rem]' : 'text-[0.72rem]'} text-black truncate`} title={`${date} · ${time}`}>
+                                                    {date} · {time}
+                                                </p>
+                                            </div>
+                                            <div className={`flex items-center justify-center rounded-md uppercase text-center leading-tight px-1 border ${hasQrLink ? 'border-black bg-red-50 text-red-700' : 'border-dashed border-black text-black'} ${isDenseLayout ? 'h-10 w-10 text-[0.45rem]' : 'h-11 w-11 text-[0.48rem]'}`}>
+                                                QR
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className={'flex h-full flex-col items-center justify-center gap-4 rounded-lg bg-white px-6 text-center'}>
+                                <p className={'text-base font-semibold text-red-600'}>
+                                    Derzeit gibt es keine anstehenden Ereignisse
+                                </p>
+                                <div className={'flex flex-col items-center gap-2'}>
+                                    <div className={'h-20 w-20 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
+                                        QR
+                                    </div>
+                                    <p className={'text-sm text-black'}>QR-Code scannen und neue Ereignisse hinzufügen</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )
@@ -649,6 +776,36 @@ export default function EventsPage() {
                     </CardBody>
                 </Card>
             </div>
+
+            <Dialog open={isEventDialogOpen} handler={closeEventDialog} size={'sm'}>
+                <DialogHeader>Ereignis bearbeiten</DialogHeader>
+                <DialogBody>
+                    {eventDraft && (
+                        <div className={'space-y-4'}>
+                            <Input label={'Titel'} value={eventDraft.title}
+                                   onChange={(event) => setEventDraft({ ...eventDraft, title: event.target.value })} />
+                            <div className={'grid gap-3 sm:grid-cols-2'}>
+                                <Input type={'date'} label={'Datum'} value={eventDraft.date}
+                                       onChange={(event) => setEventDraft({ ...eventDraft, date: event.target.value })} />
+                                <Input type={'time'} label={'Uhrzeit'} value={eventDraft.time}
+                                       onChange={(event) => setEventDraft({ ...eventDraft, time: event.target.value })} />
+                            </div>
+                            <Input type={'url'} label={'Link für QR-Code'} value={eventDraft.qrLink}
+                                   onChange={(event) => setEventDraft({ ...eventDraft, qrLink: event.target.value })}
+                                   placeholder={'https://...'} />
+                        </div>
+                    )}
+                </DialogBody>
+                <DialogFooter className={'space-x-2'}>
+                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closeEventDialog}>
+                        Abbrechen
+                    </Button>
+                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={saveEventDialog}
+                            disabled={!eventDraft}>
+                        Speichern
+                    </Button>
+                </DialogFooter>
+            </Dialog>
 
             <Dialog open={isPersonDialogOpen} handler={closePersonDialog} size={'sm'}>
                 <DialogHeader>Person bearbeiten</DialogHeader>
