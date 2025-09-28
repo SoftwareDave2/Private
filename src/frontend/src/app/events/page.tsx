@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {Card, CardBody, Checkbox, Input, Option, Select, Typography, Button, Dialog, DialogHeader, DialogBody, DialogFooter} from '@material-tailwind/react'
 import PageHeader from '@/components/layout/PageHeader'
 import {DisplayData} from '@/types/displayData'
@@ -113,6 +113,13 @@ export default function EventsPage() {
     const [isPersonDialogOpen, setIsPersonDialogOpen] = useState<boolean>(false)
     const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
 
+    const filteredDisplays = useMemo(() => {
+        if (displayType === 'event-board') {
+            return displays.filter((display) => display.width === 400 && display.height === 300)
+        }
+        return displays
+    }, [displayType, displays])
+
     useEffect(() => {
         const fetchDisplays = async () => {
             try {
@@ -143,6 +150,24 @@ export default function EventsPage() {
         setNoticeBoardForm(defaultNoticeBoardForm)
         setRoomBookingForm(defaultRoomBookingForm)
     }, [displayType])
+
+    useEffect(() => {
+        if (isLoadingDisplays) {
+            return
+        }
+
+        if (filteredDisplays.length === 0) {
+            if (selectedDisplay !== '') {
+                setSelectedDisplay('')
+            }
+            return
+        }
+
+        const isCurrentSelectionAvailable = filteredDisplays.some((display) => display.macAddress === selectedDisplay)
+        if (!isCurrentSelectionAvailable) {
+            setSelectedDisplay(filteredDisplays[0].macAddress)
+        }
+    }, [filteredDisplays, isLoadingDisplays, selectedDisplay])
 
     const openPersonDialog = (person: DoorSignPerson) => {
         setPersonDraft({ ...person })
@@ -494,7 +519,8 @@ export default function EventsPage() {
             const safeEventCount = Number.isNaN(eventCount) ? 0 : Math.max(eventCount, 0)
 
             return (
-                <div className={'rounded-2xl bg-white border-2 border-black p-6 text-black flex flex-col gap-5'}>
+                <div className={'rounded-2xl bg-white border-2 border-black p-6 text-black flex flex-col gap-5 overflow-hidden'}
+                     style={{ width: 400, height: 300 }}>
                     <div>
                         <p className={'text-xs uppercase tracking-wide text-red-700 mb-1'}>Ereignisse</p>
                         <h3 className={'text-3xl font-semibold text-black'}>{eventBoardForm.title || 'Neues Event'}</h3>
@@ -583,8 +609,8 @@ export default function EventsPage() {
                             <div>
                                 <Select label={'Display auswählen'} value={selectedDisplay}
                                         onChange={(value) => value && setSelectedDisplay(value)}
-                                        disabled={isLoadingDisplays || displays.length === 0}>
-                                    {displays.map((display) => (
+                                        disabled={isLoadingDisplays || filteredDisplays.length === 0}>
+                                    {filteredDisplays.map((display) => (
                                         <Option key={display.macAddress} value={display.macAddress}>
                                             {display.displayName || display.macAddress}
                                         </Option>
