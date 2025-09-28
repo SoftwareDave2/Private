@@ -1,7 +1,7 @@
 'use client'
 
 import {useEffect, useMemo, useState} from 'react'
-import {Card, CardBody, Checkbox, Input, Option, Select, Typography, Button, Dialog, DialogHeader, DialogBody, DialogFooter} from '@material-tailwind/react'
+import {Card, CardBody, Input, Option, Select, Typography, Button, Dialog, DialogHeader, DialogBody, DialogFooter} from '@material-tailwind/react'
 import PageHeader from '@/components/layout/PageHeader'
 import {DisplayData} from '@/types/displayData'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
@@ -39,8 +39,6 @@ type EventBoardForm = {
 type NoticeBoardForm = {
     title: string
     body: string
-    showQr: boolean
-    qrContent: string
     start: string
     end: string
 }
@@ -88,8 +86,6 @@ const defaultEventBoardForm: EventBoardForm = {
 const defaultNoticeBoardForm: NoticeBoardForm = {
     title: '',
     body: '',
-    showQr: true,
-    qrContent: '',
     start: '',
     end: '',
 }
@@ -465,12 +461,6 @@ export default function EventsPage() {
                         <Input type={'datetime-local'} label={'Ende'} value={noticeBoardForm.end}
                                onChange={(event) => setNoticeBoardForm({ ...noticeBoardForm, end: event.target.value })} />
                     </div>
-                    <Checkbox label={'QR-Code anzeigen'} checked={noticeBoardForm.showQr}
-                              onChange={(event) => setNoticeBoardForm({ ...noticeBoardForm, showQr: event.target.checked })} />
-                    {noticeBoardForm.showQr && (
-                        <Input label={'QR-Inhalt (URL oder Text)'} value={noticeBoardForm.qrContent}
-                               onChange={(event) => setNoticeBoardForm({ ...noticeBoardForm, qrContent: event.target.value })} />
-                    )}
                 </div>
             )
         case 'room-booking':
@@ -670,27 +660,27 @@ export default function EventsPage() {
         }
         case 'notice-board':
             return (
-                <div className={'rounded-2xl bg-white text-black border-2 border-black p-6 shadow-sm flex flex-col gap-5'}>
-                    <div>
-                        <p className={'text-xs uppercase tracking-wide text-red-700 mb-1'}>Hinweis</p>
-                        <h3 className={'text-3xl font-semibold text-black'}>{noticeBoardForm.title || 'Neuer Hinweis'}</h3>
-                    </div>
-                    <p className={'text-sm leading-6 text-black whitespace-pre-line'}>
-                        {noticeBoardForm.body || 'Nutzen Sie diesen Bereich für Wegbeschreibung, Hinweise oder Sicherheitsinformationen.'}
-                    </p>
-                    <div className={'grid gap-2 text-xs text-black'}>
-                        <span>Start: {formattedDate(noticeBoardForm.start)}</span>
-                        <span>Ende: {formattedDate(noticeBoardForm.end)}</span>
-                    </div>
-                    <div className={'flex justify-end'}>
-                        {noticeBoardForm.showQr ? (
-                            <div className={'h-12 w-12 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
+                <div className={'rounded-xl bg-white text-black border-2 border-black p-2.5 flex h-full flex-col'}
+                     style={{ width: 296, height: 128 }}>
+                    {noticeBoardForm.title.trim().length > 0 || noticeBoardForm.body.trim().length > 0 ? (
+                        <>
+                            <div className={'flex-1 min-h-0 space-y-1 overflow-hidden'}>
+                                {noticeBoardForm.title.trim() && (
+                                    <h3 className={'text-lg font-semibold text-black leading-tight truncate'}>{noticeBoardForm.title}</h3>
+                                )}
+                                {noticeBoardForm.body.trim() && (
+                                    <p className={'text-[0.95rem] leading-snug whitespace-pre-line line-clamp-3'}>{noticeBoardForm.body}</p>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <div className={'flex h-full flex-col items-center justify-center gap-3 text-center px-4'}>
+                            <p className={'text-base font-semibold text-black leading-tight'}>Zum Beschreiben QR-Code scannen</p>
+                            <div className={'h-16 w-16 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
                                 QR
                             </div>
-                        ) : (
-                            <span className={'text-xs text-red-600'}>Kein QR-Code</span>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             )
         case 'room-booking':
