@@ -5,99 +5,29 @@ import {Card, CardBody, Input, Option, Select, Typography, Button, Dialog, Dialo
 import PageHeader from '@/components/layout/PageHeader'
 import {DisplayData} from '@/types/displayData'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
-
-type DisplayTypeKey = 'door-sign' | 'event-board' | 'notice-board' | 'room-booking'
-
-type DoorSignPersonStatus = 'available' | 'busy'
-
-type DoorSignPerson = {
-    id: number
-    name: string
-    status: DoorSignPersonStatus
-    busyUntil: string
-}
-
-type DoorSignForm = {
-    roomNumber: string
-    people: DoorSignPerson[]
-    footerNote: string
-}
-
-type EventBoardEvent = {
-    id: number
-    title: string
-    date: string
-    time: string
-    qrLink: string
-}
-
-type EventBoardForm = {
-    title: string
-    events: EventBoardEvent[]
-}
-
-type NoticeBoardForm = {
-    title: string
-    body: string
-    start: string
-    end: string
-}
-
-type BookingEntry = {
-    id: number
-    title: string
-    time: string
-}
-
-type RoomBookingForm = {
-    roomNumber: string
-    roomType: string
-    entries: BookingEntry[]
-}
-
-const displayTypeOptions: { value: DisplayTypeKey; label: string }[] = [
-    { value: 'door-sign', label: 'Türschild' },
-    { value: 'event-board', label: 'Ereignisse' },
-    { value: 'notice-board', label: 'Hinweisschild' },
-    { value: 'room-booking', label: 'Raumbuchung' },
-]
-
-const doorSignPersonStatuses: { value: DoorSignPersonStatus; label: string }[] = [
-    { value: 'available', label: 'Verfügbar' },
-    { value: 'busy', label: 'Beschäftigt' },
-]
-
-const defaultDoorSignForm: DoorSignForm = {
-    roomNumber: '',
-    people: [
-        { id: 1, name: '', status: 'available', busyUntil: '' },
-    ],
-    footerNote: '',
-}
-
-const defaultEventBoardForm: EventBoardForm = {
-    title: '',
-    events: [
-        { id: 1, title: '', date: '', time: '', qrLink: '' },
-        { id: 2, title: '', date: '', time: '', qrLink: '' },
-    ],
-}
-
-const defaultNoticeBoardForm: NoticeBoardForm = {
-    title: '',
-    body: '',
-    start: '',
-    end: '',
-}
-
-const defaultRoomBookingForm: RoomBookingForm = {
-    roomNumber: '',
-    roomType: 'Besprechungsraum',
-    entries: [
-        { id: 1, title: '', time: '' },
-        { id: 2, title: '', time: '' },
-    ],
-}
+import {
+    DisplayTypeKey,
+    DoorSignForm,
+    DoorSignPerson,
+    DoorSignPersonStatus,
+    EventBoardEvent,
+    EventBoardForm,
+    NoticeBoardForm,
+    BookingEntry,
+    RoomBookingForm,
+} from './types'
+import {
+    defaultDoorSignForm,
+    defaultEventBoardForm,
+    defaultNoticeBoardForm,
+    defaultRoomBookingForm,
+    displayTypeOptions,
+    doorSignPersonStatuses,
+} from './constants'
+import {DoorSignFormSection} from './components/DoorSignFormSection'
+import {EventBoardFormSection} from './components/EventBoardFormSection'
+import {NoticeBoardFormSection} from './components/NoticeBoardFormSection'
+import {RoomBookingFormSection} from './components/RoomBookingFormSection'
 
 export default function EventsPage() {
     const backendApiUrl = getBackendApiUrl()
@@ -379,165 +309,42 @@ export default function EventsPage() {
         switch (displayType) {
         case 'door-sign':
             return (
-                <div className={'space-y-4'}>
-                    <Input label={'Raumnummer'} value={doorSignForm.roomNumber}
-                           onChange={(event) => setDoorSignForm({ ...doorSignForm, roomNumber: event.target.value })} />
-                    <div>
-                        <Typography variant={'small'} color={'blue-gray'} className={'mb-2 font-medium'}>
-                            Personen auf dem Türschild (max. 3)
-                        </Typography>
-                        <div className={'space-y-4'}>
-                            {doorSignForm.people.map((person, index) => {
-                                const statusDefinition = doorSignPersonStatuses.find((status) => status.value === person.status)
-                                const statusLabel = statusDefinition?.label ?? 'Verfügbar'
-                                const displayName = (person.name ?? '').trim().length > 0 ? person.name : `Person ${index + 1}`
-                                const busyInfo = person.status === 'busy' && person.busyUntil
-                                    ? `Bis ${formattedDate(person.busyUntil)}`
-                                    : ''
-
-                                return (
-                                    <div key={person.id} className={'rounded-lg border border-blue-gray-100 bg-white p-4 shadow-sm'}>
-                                        <div className={'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'}>
-                                            <button type={'button'}
-                                                    onClick={() => openPersonDialog(person)}
-                                                    className={'w-full rounded-md bg-transparent text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500'}>
-                                                <p className={'text-base font-semibold text-black'}>{displayName}</p>
-                                                <p className={'text-sm text-blue-gray-500'}>
-                                                    Status: {statusLabel}
-                                                    {busyInfo && (
-                                                        <span className={'text-blue-gray-400'}> – {busyInfo}</span>
-                                                    )}
-                                                </p>
-                                            </button>
-                                            <div className={'flex items-center gap-2'}>
-                                                <Button variant={'outlined'} size={'sm'} className={'normal-case'}
-                                                        onClick={() => openPersonDialog(person)}>
-                                                    Bearbeiten
-                                                </Button>
-                                                {doorSignForm.people.length > 1 && (
-                                                    <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case'}
-                                                            onClick={() => removeDoorSignPerson(person.id)}>
-                                                        Entfernen
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                        <div className={'mt-3'}>
-                            <Button variant={'outlined'} size={'sm'}
-                                    disabled={doorSignForm.people.length >= 3}
-                                    onClick={addDoorSignPerson} className={'normal-case'}>
-                                Weitere Person hinzufügen
-                            </Button>
-                        </div>
-                    </div>
-                    <Input label={'Unterer Text'} value={doorSignForm.footerNote}
-                           onChange={(event) => setDoorSignForm({ ...doorSignForm, footerNote: event.target.value })}
-                           placeholder={'Kurzer Hinweis am unteren Rand'} />
-                </div>
+                <DoorSignFormSection
+                    form={doorSignForm}
+                    statuses={doorSignPersonStatuses}
+                    onFormChange={setDoorSignForm}
+                    onEditPerson={openPersonDialog}
+                    onAddPerson={addDoorSignPerson}
+                    onRemovePerson={removeDoorSignPerson}
+                    formatDate={formattedDate}
+                />
             )
         case 'event-board':
             return (
-                <div className={'space-y-5'}>
-                    <Input label={'Überschrift'} value={eventBoardForm.title}
-                           onChange={(event) => setEventBoardForm({ ...eventBoardForm, title: event.target.value })}
-                           placeholder={'z. B. Ereignisse heute'} />
-                    <div className={'space-y-3'}>
-                        <Typography variant={'small'} color={'blue-gray'} className={'font-medium'}>
-                            Ereignisse (max. 4 Einträge)
-                        </Typography>
-                        <div className={'space-y-3'}>
-                            {eventBoardForm.events.map((event) => (
-                                <div key={event.id} className={'grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center rounded-lg border border-blue-gray-100 bg-white p-4'}>
-                                    <button type={'button'}
-                                            className={'text-left w-full focus:outline-none'}
-                                            onClick={() => openEventDialog(event)}>
-                                        <p className={'font-semibold text-sm text-black'}>{event.title.trim() || 'Neues Ereignis'}</p>
-                                        <p className={'text-xs text-blue-gray-500 mt-1'}>
-                                            {(event.date.trim() || 'Datum festlegen')} · {(event.time.trim() || 'Uhrzeit festlegen')}
-                                        </p>
-                                        {event.qrLink.trim() && (
-                                            <p className={'text-xs text-blue-gray-500 mt-1 break-words'}>{event.qrLink}</p>
-                                        )}
-                                    </button>
-                                    <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-start sm:justify-self-end'}
-                                            onClick={() => removeEventBoardEvent(event.id)}>
-                                        Entfernen
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                        <Button variant={'outlined'} size={'sm'} className={'normal-case'}
-                                disabled={eventBoardForm.events.length >= 4}
-                                onClick={addEventBoardEvent}>
-                            Ereignis hinzufügen
-                        </Button>
-                    </div>
-                </div>
+                <EventBoardFormSection
+                    form={eventBoardForm}
+                    onFormChange={setEventBoardForm}
+                    onAddEvent={addEventBoardEvent}
+                    onEditEvent={openEventDialog}
+                    onRemoveEvent={removeEventBoardEvent}
+                />
             )
         case 'notice-board':
             return (
-                <div className={'space-y-4'}>
-                    <Input label={'Titel'} value={noticeBoardForm.title}
-                           onChange={(event) => setNoticeBoardForm({ ...noticeBoardForm, title: event.target.value })} />
-                    <div>
-                        <label className={'block text-sm font-medium text-blue-gray-700 mb-2'}>
-                            Freitext
-                        </label>
-                        <textarea className={'w-full rounded-md border border-blue-gray-100 bg-white p-3 text-sm focus:border-red-500 focus:outline-none focus:ring-0'}
-                                  rows={4}
-                                  value={noticeBoardForm.body}
-                                  onChange={(event) => setNoticeBoardForm({ ...noticeBoardForm, body: event.target.value })}
-                                  placeholder={'Hinweise, Wegbeschreibungen oder Ansprechpartner:innen'} />
-                    </div>
-                    <div className={'grid gap-4 sm:grid-cols-2'}>
-                        <Input type={'datetime-local'} label={'Start'} value={noticeBoardForm.start}
-                               onChange={(event) => setNoticeBoardForm({ ...noticeBoardForm, start: event.target.value })} />
-                        <Input type={'datetime-local'} label={'Ende'} value={noticeBoardForm.end}
-                               onChange={(event) => setNoticeBoardForm({ ...noticeBoardForm, end: event.target.value })} />
-                    </div>
-                </div>
+                <NoticeBoardFormSection
+                    form={noticeBoardForm}
+                    onFormChange={setNoticeBoardForm}
+                />
             )
         case 'room-booking':
             return (
-                <div className={'space-y-4'}>
-                    <div className={'grid gap-3 sm:grid-cols-2'}>
-                        <Input label={'Raumnummer'} value={roomBookingForm.roomNumber}
-                               onChange={(event) => setRoomBookingForm({ ...roomBookingForm, roomNumber: event.target.value })} />
-                        <Input label={'Raumtyp'} value={roomBookingForm.roomType}
-                               onChange={(event) => setRoomBookingForm({ ...roomBookingForm, roomType: event.target.value })} />
-                    </div>
-                    <div className={'space-y-3'}>
-                        <Typography variant={'small'} color={'blue-gray'} className={'font-medium'}>
-                            Gezeigte Termine (max. 4 Einträge)
-                        </Typography>
-                        <div className={'space-y-3'}>
-                            {roomBookingForm.entries.map((entry) => (
-                                <div key={entry.id} className={'grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center rounded-lg border border-blue-gray-100 bg-white p-4'}>
-                                    <button type={'button'} className={'text-left w-full focus:outline-none'} onClick={() => openBookingDialog(entry)}>
-                                        <p className={'font-semibold text-sm text-black'}>{entry.title.trim() || 'Neuer Termin'}</p>
-                                        <p className={'text-xs text-blue-gray-500 mt-1'}>
-                                            {entry.time.trim() || 'Uhrzeit festlegen'}
-                                        </p>
-                                    </button>
-                                    <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-start sm:justify-self-end'}
-                                            disabled={roomBookingForm.entries.length <= 1}
-                                            onClick={() => removeBookingEntry(entry.id)}>
-                                        Entfernen
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                        <Button variant={'outlined'} size={'sm'} className={'normal-case'}
-                                disabled={roomBookingForm.entries.length >= 4}
-                                onClick={addBookingEntry}>
-                            Termin hinzufügen
-                        </Button>
-                    </div>
-                </div>
+                <RoomBookingFormSection
+                    form={roomBookingForm}
+                    onFormChange={setRoomBookingForm}
+                    onAddEntry={addBookingEntry}
+                    onEditEntry={openBookingDialog}
+                    onRemoveEntry={removeBookingEntry}
+                />
             )
         default:
             return null
@@ -618,7 +425,7 @@ export default function EventsPage() {
                         </div>
                     )}
                     {!isMinimalState && footerContent && (
-                        <div className={'border-t border-black px-6 py-3 text-xs leading-relaxed'}>
+                        <div className={'border-t border-black px-6 py-3 text-sm leading-relaxed font-medium'}>
                             <span>{footerContent}</span>
                         </div>
                     )}
