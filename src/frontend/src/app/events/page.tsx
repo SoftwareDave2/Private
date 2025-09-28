@@ -29,6 +29,49 @@ import {EventBoardFormSection} from './components/EventBoardFormSection'
 import {NoticeBoardFormSection} from './components/NoticeBoardFormSection'
 import {RoomBookingFormSection} from './components/RoomBookingFormSection'
 
+const templateSamples: Record<DisplayTypeKey, string> = {
+    'door-sign': `<!-- Türschild Template -->
+<section class="door-sign">
+  <header>
+    <h1>{{ roomNumber }}</h1>
+    <span>{{ status }}</span>
+  </header>
+  <main>
+    <ul>
+      <li v-for="person in people">{{ person.name }}</li>
+    </ul>
+  </main>
+</section>`,
+    'event-board': `<!-- Ereignistafel Template -->
+<section class="event-board">
+  <h1>{{ title }}</h1>
+  <article v-for="event in events">
+    <h2>{{ event.title }}</h2>
+    <p>{{ event.date }} · {{ event.time }}</p>
+  </article>
+</section>`,
+    'notice-board': `<!-- Hinweis-Template -->
+<section class="notice-board">
+  <header>
+    <h1>{{ title }}</h1>
+    <time>{{ start }} – {{ end }}</time>
+  </header>
+  <p>{{ body }}</p>
+</section>`,
+    'room-booking': `<!-- Raumbuchung Template -->
+<section class="room-booking">
+  <header>
+    <h1>{{ roomNumber }}</h1>
+    <span>{{ roomType }}</span>
+  </header>
+  <ul>
+    <li v-for="entry in entries">
+      <strong>{{ entry.time }}</strong> – {{ entry.title }}
+    </li>
+  </ul>
+</section>`,
+}
+
 export default function EventsPage() {
     const backendApiUrl = getBackendApiUrl()
 
@@ -47,6 +90,12 @@ export default function EventsPage() {
     const [eventDraft, setEventDraft] = useState<EventBoardEvent | null>(null)
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState<boolean>(false)
     const [bookingDraft, setBookingDraft] = useState<{ id: number; title: string; startTime: string; endTime: string } | null>(null)
+    const [isTemplateEditDialogOpen, setIsTemplateEditDialogOpen] = useState<boolean>(false)
+    const [isTemplateCreateDialogOpen, setIsTemplateCreateDialogOpen] = useState<boolean>(false)
+    const [templateEditorContent, setTemplateEditorContent] = useState<string>('')
+    const [templateCreatorContent, setTemplateCreatorContent] = useState<string>('')
+    const [isSendInProgress, setIsSendInProgress] = useState<boolean>(false)
+    const [sendFeedback, setSendFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
     const filteredDisplays = useMemo(() => {
         if (displayType === 'event-board') {
@@ -141,6 +190,105 @@ export default function EventsPage() {
     const closeBookingDialog = () => {
         setIsBookingDialogOpen(false)
         setBookingDraft(null)
+    }
+
+    const resolveDisplayLabel = (type: DisplayTypeKey) => displayTypeOptions.find((option) => option.value === type)?.label ?? type
+
+    const openTemplateEditDialog = () => {
+        setTemplateEditorContent(templateSamples[displayType] ?? '')
+        setIsTemplateEditDialogOpen(true)
+    }
+
+    const closeTemplateEditDialog = () => {
+        setIsTemplateEditDialogOpen(false)
+    }
+
+    const openTemplateCreateDialog = () => {
+        const label = resolveDisplayLabel(displayType)
+        const baseTemplate = templateSamples[displayType] ?? '<!-- Neues Template -->'
+        setTemplateCreatorContent(`// Neues Template für ${label}\n\n${baseTemplate}`)
+        setIsTemplateCreateDialogOpen(true)
+    }
+
+    const closeTemplateCreateDialog = () => {
+        setIsTemplateCreateDialogOpen(false)
+    }
+
+    const buildDisplayPayload = () => {
+        switch (displayType) {
+        case 'door-sign': {
+            const peopleSource = Array.isArray(doorSignForm.people) ? doorSignForm.people : []
+            const normalizedPeople = peopleSource.map((person) => ({
+                id: person.id,
+                name: (person.name ?? '').trim(),
+                status: person.status,
+                busyUntil: person.status === 'busy' ? (person.busyUntil ?? '') : '',
+            }))
+            return {
+                roomNumber: (doorSignForm.roomNumber ?? '').trim(),
+                people: normalizedPeople,
+                footerNote: (doorSignForm.footerNote ?? '').trim(),
+            }
+        }
+        case 'event-board': {
+            const eventsSource = Array.isArray(eventBoardForm.events) ? eventBoardForm.events : []
+            const normalizedEvents = eventsSource.map((event) => ({
+                id: event.id,
+                title: (event.title ?? '').trim(),
+                date: event.date ?? '',
+                time: event.time ?? '',
+                qrLink: (event.qrLink ?? '').trim(),
+            }))
+            return {
+                title: (eventBoardForm.title ?? '').trim(),
+                description: (eventBoardForm.description ?? '').trim(),
+                events: normalizedEvents,
+            }
+        }
+        case 'notice-board':
+            return {
+                title: (noticeBoardForm.title ?? '').trim(),
+                body: (noticeBoardForm.body ?? '').trim(),
+                qrContent: (noticeBoardForm.qrContent ?? '').trim(),
+                start: noticeBoardForm.start ?? '',
+                end: noticeBoardForm.end ?? '',
+            }
+        case 'room-booking': {
+            const entriesSource = Array.isArray(roomBookingForm.entries) ? roomBookingForm.entries : []
+            const normalizedEntries = entriesSource.map((entry) => ({
+                id: entry.id,
+                title: (entry.title ?? '').trim(),
+                time: entry.time ?? '',
+            }))
+            return {
+                roomNumber: (roomBookingForm.roomNumber ?? '').trim(),
+                roomType: (roomBookingForm.roomType ?? '').trim(),
+                entries: normalizedEntries,
+            }
+        }
+        default:
+            return {}
+        }
+    }
+
+    const handleSendToDisplay = () => {
+        if (!selectedDisplay) {
+            setSendFeedback({ type: 'error', message: 'Bitte wählen Sie zuerst ein Display aus.' })
+            return
+        }
+
+        setSendFeedback(null)
+        setIsSendInProgress(true)
+        const payload = buildDisplayPayload()
+        console.log('Prepared display payload', {
+            macAddress: selectedDisplay,
+            displayType,
+            payload,
+        })
+        setTimeout(() => {
+            setSendFeedback({ type: 'success', message: 'Die Live-Vorschau wurde (Demo) erfolgreich an das Display übermittelt.' })
+            setIsSendInProgress(false)
+        }, 400)
     }
 
     const addDoorSignPerson = () => {
@@ -691,9 +839,79 @@ export default function EventsPage() {
                             <span>{displayTypeOptions.find((option) => option.value === displayType)?.label}</span>
                         </div>
                         {renderPreview()}
+                        <div className={'mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'}>
+                            <div className={'flex flex-wrap gap-3'}>
+                                <Button variant={'outlined'} color={'gray'} className={'normal-case'} onClick={openTemplateEditDialog}>
+                                    Template bearbeiten
+                                </Button>
+                                <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={openTemplateCreateDialog}>
+                                    Template erstellen
+                                </Button>
+                            </div>
+                            <Button
+                                variant={'filled'}
+                                color={'green'}
+                                className={'normal-case'}
+                                disabled={isSendInProgress || isLoadingDisplays || !selectedDisplay}
+                                onClick={handleSendToDisplay}
+                            >
+                                {isSendInProgress ? 'Wird gesendet…' : 'An Display senden'}
+                            </Button>
+                        </div>
+                        {sendFeedback && (
+                            <div className={`mt-3 rounded-md border px-4 py-3 text-sm ${sendFeedback.type === 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>
+                                {sendFeedback.message}
+                            </div>
+                        )}
                     </CardBody>
                 </Card>
             </div>
+
+            <Dialog open={isTemplateEditDialogOpen} handler={closeTemplateEditDialog} size={'xl'}>
+                <DialogHeader>Template bearbeiten</DialogHeader>
+                <DialogBody className={'space-y-4'}>
+                    <Typography variant={'small'} color={'blue-gray'} className={'font-normal'}>
+                        Bearbeiten Sie den Beispielcode für {resolveDisplayLabel(displayType)}.
+                    </Typography>
+                    <textarea
+                        value={templateEditorContent}
+                        onChange={(event) => setTemplateEditorContent(event.target.value)}
+                        className={'min-h-[320px] w-full rounded-md border border-blue-gray-100 bg-blue-gray-50/40 p-3 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent'}
+                        spellCheck={false}
+                    />
+                </DialogBody>
+                <DialogFooter className={'space-x-2'}>
+                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closeTemplateEditDialog}>
+                        Abbrechen
+                    </Button>
+                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={closeTemplateEditDialog}>
+                        Template speichern
+                    </Button>
+                </DialogFooter>
+            </Dialog>
+
+            <Dialog open={isTemplateCreateDialogOpen} handler={closeTemplateCreateDialog} size={'xl'}>
+                <DialogHeader>Template erstellen</DialogHeader>
+                <DialogBody className={'space-y-4'}>
+                    <Typography variant={'small'} color={'blue-gray'} className={'font-normal'}>
+                        Erstellen Sie ein neues Template für {resolveDisplayLabel(displayType)}.
+                    </Typography>
+                    <textarea
+                        value={templateCreatorContent}
+                        onChange={(event) => setTemplateCreatorContent(event.target.value)}
+                        className={'min-h-[320px] w-full rounded-md border border-blue-gray-100 bg-blue-gray-50/40 p-3 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent'}
+                        spellCheck={false}
+                    />
+                </DialogBody>
+                <DialogFooter className={'space-x-2'}>
+                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closeTemplateCreateDialog}>
+                        Abbrechen
+                    </Button>
+                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={closeTemplateCreateDialog}>
+                        Template speichern
+                    </Button>
+                </DialogFooter>
+            </Dialog>
 
             <Dialog open={isEventDialogOpen} handler={closeEventDialog} size={'sm'}>
                 <DialogHeader>Ereignis bearbeiten</DialogHeader>
