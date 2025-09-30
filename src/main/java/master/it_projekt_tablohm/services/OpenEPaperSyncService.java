@@ -209,17 +209,36 @@ public class OpenEPaperSyncService {
 
     public void sendImageToDisplay(String filename, String mac) {
         try {
-            // JSON-Template für das Bild
+
             // String jsonTemplate = String.format("[{\"image\":[\"/uploads/%s\",0,0]}]", filename);
 
-            String jsonString = "[{\"text\": [20, 20, \"Hello, World!\", \"glasstown_nbp_tf\", 2, 0, 50]}]";
+            // sending jsonString (test)
+            String jsonString = """
+            [
+              {"circle":[20,15,2,0]},
+              {"circle":[50,30,1,0]},
+              {"circle":[80,10,2,0]},
+              {"circle":[120,40,1,0]},
+              {"circle":[150,20,2,0]},
+              {"circle":[200,50,1,0]},
+              {"circle":[250,40,30,4]},
+              {"circle":[240,30,5,5]},
+              {"circle":[260,45,8,5]},
+              {"circle":[255,25,3,5]},
+              {"rbox":[70,70,30,60,5,5]},
+              {"triangle":[70,70,100,70,85,45,2]},
+              {"triangle":[60,120,70,130,70,110,2]},
+              {"triangle":[100,130,110,120,100,110,2]},
+              {"triangle":[75,130,95,130,85,150,10]},
+              {"triangle":[80,130,90,130,85,145,3]}
+            ]
+            """;
 
-            // JSON korrekt URL-encoden
+            // URL-encoden
             String encodedJson = URLEncoder.encode(jsonString, StandardCharsets.UTF_8);
-            // Formulardaten für POST
             String formData = String.format("mac=%s&json=%s", mac, encodedJson);
 
-            // HTTP-Client bauen
+            // HTTP-Client build
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI("http://" + OEPL_HOST + "/jsonupload"))
@@ -229,12 +248,12 @@ public class OpenEPaperSyncService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
-                logger.info("Bild erfolgreich an OEPL gesendet: {} (mac: {})", filename, mac);
+                logger.info("Image successfully sent to: {} (mac: {})", filename, mac);
             } else {
-                logger.error("Fehler beim Senden des Bildes: HTTP {} - {}", response.statusCode(), response.body());
+                logger.error("Error while sending image: HTTP {} - {}", response.statusCode(), response.body());
             }
         } catch (Exception e) {
-            logger.error("Fehler beim Senden des Bildes an OEPL: {}", e.getMessage(), e);
+            logger.error("Error while sending image to OEPL: {}", e.getMessage(), e);
         }
     }
 }

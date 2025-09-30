@@ -139,12 +139,11 @@ export default function SelectImage({selectedFilename, selectedDisplayMac, scree
 
     const selectHandler = async (filename: string) => {
 
-        console.log("selectHandler aufgerufen mit:", filename, selectedDisplayMac);
         onSelect(filename);
         handleDialogOpen();
 
         if (!selectedDisplayMac) {
-            console.error("Kein Display ausgewählt, MAC fehlt!");
+            console.error("Mac is missing!");
             return;
         }
 
@@ -156,12 +155,12 @@ export default function SelectImage({selectedFilename, selectedDisplayMac, scree
             });
 
             if (!response.ok) {
-                console.error("Fehler beim Senden des Bildes:", await response.text());
+                console.error("Error while sending image:", await response.text());
             } else {
-                console.log(`Bild "${filename}" erfolgreich an OEPL gesendet.`);
+                console.log(`Image "${filename}" successfully sent to backend.`);
             }
         } catch (error) {
-            console.error("Netzwerkfehler:", error);
+            console.error("Network error:", error);
         }
     };
 

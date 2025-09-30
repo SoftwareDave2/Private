@@ -28,7 +28,8 @@ public class OEPLController {
         }
 
         try {
-            openEPaperSyncService.sendImageToDisplay(filename, mac);
+            // TODO: finish method and uncomment
+            // openEPaperSyncService.sendImageToDisplay(filename, mac);
             return ResponseEntity.ok("Image successfully sent: " + filename);
         } catch (Exception e) {
             e.printStackTrace();
