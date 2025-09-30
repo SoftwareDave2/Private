@@ -1,15 +1,14 @@
 'use client'
 
-import {useEffect, useMemo, useRef, useState} from 'react'
-import {Card, CardBody, Input, Option, Select, Typography, Button, Dialog, DialogHeader, DialogBody, DialogFooter} from '@material-tailwind/react'
+import {useEffect, useState} from 'react'
+import {Button, Card, CardBody, Option, Select} from '@material-tailwind/react'
+
 import PageHeader from '@/components/layout/PageHeader'
-import {DisplayData} from '@/types/displayData'
-import {getBackendApiUrl} from '@/utils/backendApiUrl'
+
 import {
     DisplayTypeKey,
     DoorSignForm,
     DoorSignPerson,
-    DoorSignPersonStatus,
     EventBoardEvent,
     EventBoardForm,
     NoticeBoardForm,
@@ -23,80 +22,135 @@ import {
     defaultRoomBookingForm,
     displayTypeOptions,
     doorSignPersonStatuses,
+    previewDimensions,
+    templateSamples,
 } from './constants'
 import {DoorSignFormSection} from './components/DoorSignFormSection'
 import {EventBoardFormSection} from './components/EventBoardFormSection'
 import {NoticeBoardFormSection} from './components/NoticeBoardFormSection'
 import {RoomBookingFormSection} from './components/RoomBookingFormSection'
+import {DisplayPreview} from './components/previews/DisplayPreview'
+import {DoorSignPersonDialog} from './components/dialogs/DoorSignPersonDialog'
+import {EventBoardEventDialog} from './components/dialogs/EventBoardEventDialog'
+import {RoomBookingEntryDialog} from './components/dialogs/RoomBookingEntryDialog'
+import {TemplateCodeDialog} from './components/dialogs/TemplateCodeDialog'
+import {useDisplaySelection} from './hooks/useDisplaySelection'
+import {usePreviewScale} from './hooks/usePreviewScale'
 
-const templateSamples: Record<DisplayTypeKey, string> = {
-    'door-sign': `<!-- Türschild Template -->
-<section class="door-sign">
-  <header>
-    <h1>{{ roomNumber }}</h1>
-    <span>{{ status }}</span>
-  </header>
-  <main>
-    <ul>
-      <li v-for="person in people">{{ person.name }}</li>
-    </ul>
-  </main>
-</section>`,
-    'event-board': `<!-- Ereignistafel Template -->
-<section class="event-board">
-  <h1>{{ title }}</h1>
-  <article v-for="event in events">
-    <h2>{{ event.title }}</h2>
-    <p>{{ event.date }} · {{ event.time }}</p>
-  </article>
-</section>`,
-    'notice-board': `<!-- Hinweis-Template -->
-<section class="notice-board">
-  <header>
-    <h1>{{ title }}</h1>
-    <time>{{ start }} – {{ end }}</time>
-  </header>
-  <p>{{ body }}</p>
-</section>`,
-    'room-booking': `<!-- Raumbuchung Template -->
-<section class="room-booking">
-  <header>
-    <h1>{{ roomNumber }}</h1>
-    <span>{{ roomType }}</span>
-  </header>
-  <ul>
-    <li v-for="entry in entries">
-      <strong>{{ entry.time }}</strong> – {{ entry.title }}
-    </li>
-  </ul>
-</section>`,
+type BookingDraft = {
+    id: number
+    title: string
+    startTime: string
+    endTime: string
 }
 
-const previewDimensions: Record<DisplayTypeKey, { width: number; height: number }> = {
-    'door-sign': { width: 400, height: 300 },
-    'event-board': { width: 400, height: 300 },
-    'notice-board': { width: 296, height: 128 },
-    'room-booking': { width: 400, height: 300 },
+type DisplayPayloadForms = {
+    doorSignForm: DoorSignForm
+    eventBoardForm: EventBoardForm
+    noticeBoardForm: NoticeBoardForm
+    roomBookingForm: RoomBookingForm
 }
+
+const formatDoorSignDate = (value: string) => {
+    if (!value) {
+        return '—'
+    }
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) {
+        return value
+    }
+    return date.toLocaleString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    })
+}
+
+const buildDoorSignPayload = (form: DoorSignForm) => {
+    const peopleSource = Array.isArray(form.people) ? form.people : []
+    const normalizedPeople = peopleSource.map((person) => ({
+        id: person.id,
+        name: (person.name ?? '').trim(),
+        status: person.status,
+        busyUntil: person.status === 'busy' ? (person.busyUntil ?? '') : '',
+    }))
+    return {
+        roomNumber: (form.roomNumber ?? '').trim(),
+        people: normalizedPeople,
+        footerNote: (form.footerNote ?? '').trim(),
+    }
+}
+
+const buildEventBoardPayload = (form: EventBoardForm) => {
+    const eventsSource = Array.isArray(form.events) ? form.events : []
+    const normalizedEvents = eventsSource.map((event) => ({
+        id: event.id,
+        title: (event.title ?? '').trim(),
+        date: event.date ?? '',
+        time: event.time ?? '',
+        qrLink: (event.qrLink ?? '').trim(),
+    }))
+    return {
+        title: (form.title ?? '').trim(),
+        description: (form.description ?? '').trim(),
+        events: normalizedEvents,
+    }
+}
+
+const buildNoticeBoardPayload = (form: NoticeBoardForm) => ({
+    title: (form.title ?? '').trim(),
+    body: (form.body ?? '').trim(),
+    qrContent: (form.qrContent ?? '').trim(),
+    start: form.start ?? '',
+    end: form.end ?? '',
+})
+
+const buildRoomBookingPayload = (form: RoomBookingForm) => {
+    const entriesSource = Array.isArray(form.entries) ? form.entries : []
+    const normalizedEntries = entriesSource.map((entry) => ({
+        id: entry.id,
+        title: (entry.title ?? '').trim(),
+        time: entry.time ?? '',
+    }))
+    return {
+        roomNumber: (form.roomNumber ?? '').trim(),
+        roomType: (form.roomType ?? '').trim(),
+        entries: normalizedEntries,
+    }
+}
+
+const buildDisplayPayload = (displayType: DisplayTypeKey, forms: DisplayPayloadForms) => {
+    switch (displayType) {
+    case 'door-sign':
+        return buildDoorSignPayload(forms.doorSignForm)
+    case 'event-board':
+        return buildEventBoardPayload(forms.eventBoardForm)
+    case 'notice-board':
+        return buildNoticeBoardPayload(forms.noticeBoardForm)
+    case 'room-booking':
+        return buildRoomBookingPayload(forms.roomBookingForm)
+    default:
+        return {}
+    }
+}
+
+const resolveDisplayLabel = (type: DisplayTypeKey) =>
+    displayTypeOptions.find((option) => option.value === type)?.label ?? type
 
 export default function EventsPage() {
-    const backendApiUrl = getBackendApiUrl()
-
-    const [displays, setDisplays] = useState<DisplayData[]>([])
-    const [selectedDisplay, setSelectedDisplay] = useState<string>('')
     const [displayType, setDisplayType] = useState<DisplayTypeKey>('door-sign')
     const [doorSignForm, setDoorSignForm] = useState<DoorSignForm>(defaultDoorSignForm)
     const [eventBoardForm, setEventBoardForm] = useState<EventBoardForm>(defaultEventBoardForm)
     const [noticeBoardForm, setNoticeBoardForm] = useState<NoticeBoardForm>(defaultNoticeBoardForm)
     const [roomBookingForm, setRoomBookingForm] = useState<RoomBookingForm>(defaultRoomBookingForm)
-    const [isLoadingDisplays, setIsLoadingDisplays] = useState<boolean>(true)
-    const [displayError, setDisplayError] = useState<string>('')
+
     const [isPersonDialogOpen, setIsPersonDialogOpen] = useState<boolean>(false)
     const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
     const [isEventDialogOpen, setIsEventDialogOpen] = useState<boolean>(false)
     const [eventDraft, setEventDraft] = useState<EventBoardEvent | null>(null)
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState<boolean>(false)
-    const [bookingDraft, setBookingDraft] = useState<{ id: number; title: string; startTime: string; endTime: string } | null>(null)
+    const [bookingDraft, setBookingDraft] = useState<BookingDraft | null>(null)
     const [isTemplateEditDialogOpen, setIsTemplateEditDialogOpen] = useState<boolean>(false)
     const [isTemplateCreateDialogOpen, setIsTemplateCreateDialogOpen] = useState<boolean>(false)
     const [templateEditorContent, setTemplateEditorContent] = useState<string>('')
@@ -104,40 +158,16 @@ export default function EventsPage() {
     const [isSendInProgress, setIsSendInProgress] = useState<boolean>(false)
     const [sendFeedback, setSendFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
-    const filteredDisplays = useMemo(() => {
-        if (displayType === 'event-board') {
-            return displays.filter((display) => display.width === 400 && display.height === 300)
-        }
-        return displays
-    }, [displayType, displays])
+    const {
+        filteredDisplays,
+        selectedDisplay,
+        setSelectedDisplay,
+        isLoadingDisplays,
+        displayError,
+    } = useDisplaySelection(displayType)
 
-    const previewContainerRef = useRef<HTMLDivElement | null>(null)
-    const [previewScale, setPreviewScale] = useState(1)
     const previewSize = previewDimensions[displayType] ?? previewDimensions['door-sign']
-
-    useEffect(() => {
-        const fetchDisplays = async () => {
-            try {
-                const response = await fetch(backendApiUrl + '/display/all')
-                if (!response.ok) {
-                    throw new Error('Konnte Displays nicht abrufen')
-                }
-                const data = await response.json() as DisplayData[]
-                setDisplays(data)
-                if (data.length > 0) {
-                    setSelectedDisplay(data[0].macAddress)
-                }
-            } catch (err) {
-                console.error(err)
-                setDisplayError('Displays konnten nicht geladen werden.')
-            } finally {
-                setIsLoadingDisplays(false)
-            }
-        }
-
-        fetchDisplays()
-            .catch((err) => console.error(err))
-    }, [backendApiUrl])
+    const { containerRef: previewContainerRef, previewScale } = usePreviewScale(previewSize, displayType)
 
     useEffect(() => {
         setDoorSignForm(defaultDoorSignForm)
@@ -145,59 +175,6 @@ export default function EventsPage() {
         setNoticeBoardForm(defaultNoticeBoardForm)
         setRoomBookingForm(defaultRoomBookingForm)
     }, [displayType])
-
-    useEffect(() => {
-        if (isLoadingDisplays) {
-            return
-        }
-
-        if (filteredDisplays.length === 0) {
-            if (selectedDisplay !== '') {
-                setSelectedDisplay('')
-            }
-            return
-        }
-
-        const isCurrentSelectionAvailable = filteredDisplays.some((display) => display.macAddress === selectedDisplay)
-        if (!isCurrentSelectionAvailable) {
-            setSelectedDisplay(filteredDisplays[0].macAddress)
-        }
-    }, [filteredDisplays, isLoadingDisplays, selectedDisplay])
-
-    useEffect(() => {
-        const container = previewContainerRef.current
-        if (!container) {
-            return
-        }
-
-        const computeScale = () => {
-            const availableWidth = container.clientWidth
-            if (availableWidth <= 0) {
-                return
-            }
-            const nextScale = Math.min(1, Math.max(0.5, availableWidth / previewSize.width))
-            setPreviewScale((current) => {
-                if (Math.abs(current - nextScale) < 0.01) {
-                    return current
-                }
-                return nextScale
-            })
-        }
-
-        computeScale()
-
-        if (typeof ResizeObserver !== 'undefined') {
-            const observer = new ResizeObserver(() => computeScale())
-            observer.observe(container)
-            return () => observer.disconnect()
-        }
-
-        if (typeof window !== 'undefined') {
-            const handleResize = () => computeScale()
-            window.addEventListener('resize', handleResize)
-            return () => window.removeEventListener('resize', handleResize)
-        }
-    }, [previewSize.height, previewSize.width, displayType])
 
     const openPersonDialog = (person: DoorSignPerson) => {
         setPersonDraft({ ...person })
@@ -238,8 +215,6 @@ export default function EventsPage() {
         setBookingDraft(null)
     }
 
-    const resolveDisplayLabel = (type: DisplayTypeKey) => displayTypeOptions.find((option) => option.value === type)?.label ?? type
-
     const openTemplateEditDialog = () => {
         setTemplateEditorContent(templateSamples[displayType] ?? '')
         setIsTemplateEditDialogOpen(true)
@@ -258,83 +233,6 @@ export default function EventsPage() {
 
     const closeTemplateCreateDialog = () => {
         setIsTemplateCreateDialogOpen(false)
-    }
-
-    const buildDisplayPayload = () => {
-        switch (displayType) {
-        case 'door-sign': {
-            const peopleSource = Array.isArray(doorSignForm.people) ? doorSignForm.people : []
-            const normalizedPeople = peopleSource.map((person) => ({
-                id: person.id,
-                name: (person.name ?? '').trim(),
-                status: person.status,
-                busyUntil: person.status === 'busy' ? (person.busyUntil ?? '') : '',
-            }))
-            return {
-                roomNumber: (doorSignForm.roomNumber ?? '').trim(),
-                people: normalizedPeople,
-                footerNote: (doorSignForm.footerNote ?? '').trim(),
-            }
-        }
-        case 'event-board': {
-            const eventsSource = Array.isArray(eventBoardForm.events) ? eventBoardForm.events : []
-            const normalizedEvents = eventsSource.map((event) => ({
-                id: event.id,
-                title: (event.title ?? '').trim(),
-                date: event.date ?? '',
-                time: event.time ?? '',
-                qrLink: (event.qrLink ?? '').trim(),
-            }))
-            return {
-                title: (eventBoardForm.title ?? '').trim(),
-                description: (eventBoardForm.description ?? '').trim(),
-                events: normalizedEvents,
-            }
-        }
-        case 'notice-board':
-            return {
-                title: (noticeBoardForm.title ?? '').trim(),
-                body: (noticeBoardForm.body ?? '').trim(),
-                qrContent: (noticeBoardForm.qrContent ?? '').trim(),
-                start: noticeBoardForm.start ?? '',
-                end: noticeBoardForm.end ?? '',
-            }
-        case 'room-booking': {
-            const entriesSource = Array.isArray(roomBookingForm.entries) ? roomBookingForm.entries : []
-            const normalizedEntries = entriesSource.map((entry) => ({
-                id: entry.id,
-                title: (entry.title ?? '').trim(),
-                time: entry.time ?? '',
-            }))
-            return {
-                roomNumber: (roomBookingForm.roomNumber ?? '').trim(),
-                roomType: (roomBookingForm.roomType ?? '').trim(),
-                entries: normalizedEntries,
-            }
-        }
-        default:
-            return {}
-        }
-    }
-
-    const handleSendToDisplay = () => {
-        if (!selectedDisplay) {
-            setSendFeedback({ type: 'error', message: 'Bitte wählen Sie zuerst ein Display aus.' })
-            return
-        }
-
-        setSendFeedback(null)
-        setIsSendInProgress(true)
-        const payload = buildDisplayPayload()
-        console.log('Prepared display payload', {
-            macAddress: selectedDisplay,
-            displayType,
-            payload,
-        })
-        setTimeout(() => {
-            setSendFeedback({ type: 'success', message: 'Die Live-Vorschau wurde (Demo) erfolgreich an das Display übermittelt.' })
-            setIsSendInProgress(false)
-        }, 400)
     }
 
     const addDoorSignPerson = () => {
@@ -423,6 +321,39 @@ export default function EventsPage() {
         }))
     }
 
+    const addBookingEntry = () => {
+        let createdEntry: BookingEntry | null = null
+        setRoomBookingForm((prev) => {
+            if (prev.entries.length >= 4) {
+                return prev
+            }
+            const nextId = prev.entries.length === 0 ? 1 : Math.max(...prev.entries.map((entry) => entry.id)) + 1
+            createdEntry = { id: nextId, title: '', time: '' }
+            return {
+                ...prev,
+                entries: [...prev.entries, createdEntry],
+            }
+        })
+        if (createdEntry) {
+            openBookingDialog(createdEntry)
+        }
+    }
+
+    const removeBookingEntry = (entryId: number) => {
+        if (bookingDraft && bookingDraft.id === entryId) {
+            closeBookingDialog()
+        }
+        setRoomBookingForm((prev) => {
+            if (prev.entries.length <= 1) {
+                return prev
+            }
+            return {
+                ...prev,
+                entries: prev.entries.filter((entry) => entry.id !== entryId),
+            }
+        })
+    }
+
     const savePersonDialog = () => {
         if (!personDraft) {
             return
@@ -466,37 +397,41 @@ export default function EventsPage() {
         closeBookingDialog()
     }
 
-    const addBookingEntry = () => {
-        let createdEntry: BookingEntry | null = null
-        setRoomBookingForm((prev) => {
-            if (prev.entries.length >= 4) {
-                return prev
-            }
-            const nextId = prev.entries.length === 0 ? 1 : Math.max(...prev.entries.map((entry) => entry.id)) + 1
-            createdEntry = { id: nextId, title: '', time: '' }
-            return {
-                ...prev,
-                entries: [...prev.entries, createdEntry],
-            }
+    const handleSendToDisplay = () => {
+        if (!selectedDisplay) {
+            setSendFeedback({ type: 'error', message: 'Bitte wählen Sie zuerst ein Display aus.' })
+            return
+        }
+
+        setSendFeedback(null)
+        setIsSendInProgress(true)
+        const payload = buildDisplayPayload(displayType, {
+            doorSignForm,
+            eventBoardForm,
+            noticeBoardForm,
+            roomBookingForm,
         })
-        if (createdEntry) {
-            openBookingDialog(createdEntry)
+        console.log('Prepared display payload', {
+            macAddress: selectedDisplay,
+            displayType,
+            payload,
+        })
+        setTimeout(() => {
+            setSendFeedback({ type: 'success', message: 'Die Live-Vorschau wurde (Demo) erfolgreich an das Display übermittelt.' })
+            setIsSendInProgress(false)
+        }, 400)
+    }
+
+    const handleDisplaySelectChange = (value: string | undefined) => {
+        if (typeof value === 'string') {
+            setSelectedDisplay(value)
         }
     }
 
-    const removeBookingEntry = (entryId: number) => {
-        if (bookingDraft && bookingDraft.id === entryId) {
-            closeBookingDialog()
+    const handleDisplayTypeChange = (value: string | undefined) => {
+        if (typeof value === 'string') {
+            setDisplayType(value as DisplayTypeKey)
         }
-        setRoomBookingForm((prev) => {
-            if (prev.entries.length <= 1) {
-                return prev
-            }
-            return {
-                ...prev,
-                entries: prev.entries.filter((entry) => entry.id !== entryId),
-            }
-        })
     }
 
     const renderFormFields = () => {
@@ -510,7 +445,7 @@ export default function EventsPage() {
                     onEditPerson={openPersonDialog}
                     onAddPerson={addDoorSignPerson}
                     onRemovePerson={removeDoorSignPerson}
-                    formatDate={formattedDate}
+                    formatDate={formatDoorSignDate}
                 />
             )
         case 'event-board':
@@ -545,300 +480,16 @@ export default function EventsPage() {
         }
     }
 
-    const formattedDate = (value: string) => {
-        if (!value) {
-            return '—'
-        }
-        const date = new Date(value)
-        if (Number.isNaN(date.getTime())) {
-            return value
-        }
-        return date.toLocaleString('de-DE', {
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-        })
-    }
-
-    const renderPreview = () => {
-        switch (displayType) {
-        case 'door-sign': {
-            const peopleSource = Array.isArray(doorSignForm.people) ? doorSignForm.people : []
-            const peopleWithNames = peopleSource.filter((person) => (person.name ?? '').trim().length > 0)
-            const hasBusyPerson = peopleSource.some((person) => person.status === 'busy')
-            const availabilityLabel = hasBusyPerson ? 'Beschäftigt' : 'Verfügbar'
-            const statusClasses = hasBusyPerson ? 'bg-red-600 text-white border border-red-700' : 'bg-white text-black border border-black'
-            const footerNote = typeof doorSignForm.footerNote === 'string' ? doorSignForm.footerNote : ''
-            const footerContent = footerNote.trim()
-                || 'Zusätzlicher Hinweis'
-
-            const isMinimalState = peopleWithNames.length === 0 && footerNote.trim().length === 0
-            const showStatusBadge = peopleWithNames.length > 0
-            const emptyAssignmentMessage = (
-                <div className={'rounded-md border border-black px-4 py-3 text-center text-sm font-medium'}>
-                    Raum aktuell unzugeteilt
-                </div>
-            )
-
-            return (
-                <div className={'flex flex-col rounded-xl border-2 border-black bg-white text-black'} style={{ width: 400, height: 300 }}>
-                    <div className={'flex flex-1 gap-10'}>
-                        <div className={'flex flex-1 items-center px-6'}>
-                            <div className={'w-full'}>
-                                {isMinimalState || peopleWithNames.length === 0 ? (
-                                    emptyAssignmentMessage
-                                ) : (
-                                    <ul className={'space-y-3'}>
-                                        {peopleWithNames.map((person) => (
-                                            <li key={person.id} className={`text-base font-semibold ${person.status === 'busy' ? 'text-red-600' : ''}`}>
-                                                {person.name}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
-                        </div>
-                        <div className={'flex w-40 flex-col items-end px-6 pt-6 pb-4'}>
-                            <div className={'text-right'}>
-                                <p className={'text-5xl font-bold leading-none whitespace-nowrap overflow-hidden text-ellipsis'}>{doorSignForm.roomNumber || '—'}</p>
-                            </div>
-                            {showStatusBadge && (
-                                <div className={`mt-5 inline-flex items-center rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wide shadow-sm ${statusClasses}`}>
-                                    {availabilityLabel}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    {isMinimalState && (
-                        <div className={'border-t border-black px-6 py-3 text-xs leading-relaxed'}>
-                            <div className={'flex items-center justify-between'}>
-                                <span className={'font-medium'}>Raumzuweisung verfügbar</span>
-                                <div className={'h-12 w-12 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
-                                    QR
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    {!isMinimalState && footerContent && (
-                        <div className={'border-t border-black px-6 py-3 text-sm leading-relaxed font-medium'}>
-                            <span>{footerContent}</span>
-                        </div>
-                    )}
-                </div>
-            )
-        }
-        case 'event-board': {
-            const formatDateLabel = (value: string) => {
-                if (!value) {
-                    return ''
-                }
-                const parsed = new Date(value)
-                if (Number.isNaN(parsed.getTime())) {
-                    return value
-                }
-                const day = parsed.getDate().toString().padStart(2, '0')
-                const month = (parsed.getMonth() + 1).toString().padStart(2, '0')
-                const year = parsed.getFullYear().toString()
-                return `${day}.${month}.${year}`
-            }
-
-            const events = Array.isArray(eventBoardForm.events)
-                ? eventBoardForm.events
-                    .filter((event) =>
-                        (event.title ?? '').trim().length > 0
-                        || (event.date ?? '').trim().length > 0
-                        || (event.time ?? '').trim().length > 0,
-                    )
-                    .slice(0, 4)
-                : []
-            const isDenseLayout = events.length >= 4
-            return (
-                <div className={'rounded-2xl bg-white border-2 border-black p-4 text-black flex flex-col gap-2 overflow-hidden'}
-                     style={{ width: 400, height: 300 }}>
-                    {eventBoardForm.title.trim() && (
-                        <div>
-                            <h3 className={'text-lg font-semibold text-black leading-tight truncate'}>{eventBoardForm.title.trim()}</h3>
-                        </div>
-                    )}
-                    <div className={'flex-1 overflow-hidden'}>
-                        {events.length > 0 ? (
-                            <div className={`flex flex-col h-full ${events.length < 4 ? 'justify-start' : 'justify-between'} ${isDenseLayout ? 'gap-1' : 'gap-1.5'}`}>
-                                {events.map((event) => {
-                                    const title = event.title.trim() || 'Titel festlegen'
-                                    const date = formatDateLabel(event.date.trim()) || 'Datum folgt'
-                                    const time = event.time.trim() || 'Zeit folgt'
-                                    const hasQrLink = event.qrLink.trim().length > 0
-
-                                    return (
-                                        <div key={event.id}
-                                             className={`flex items-center justify-between rounded-lg border border-red-600/40 bg-white ${isDenseLayout ? 'px-2 py-1' : 'px-2.5 py-1.5'} ${isDenseLayout ? 'gap-1.5' : 'gap-2'}`}>
-                                            <div className={`flex-1 min-w-0 ${isDenseLayout ? 'space-y-0.5' : 'space-y-0.5'}`}>
-                                                <p className={`${isDenseLayout ? 'text-[0.78rem]' : 'text-[0.82rem]'} font-semibold text-black truncate`} title={title}>{title}</p>
-                                                <p className={`${isDenseLayout ? 'text-[0.68rem]' : 'text-[0.72rem]'} text-black truncate`} title={`${date} · ${time}`}>
-                                                    {date} · {time}
-                                                </p>
-                                            </div>
-                                            <div className={`flex items-center justify-center rounded-md uppercase text-center leading-tight px-1 border ${hasQrLink ? 'border-black bg-red-50 text-red-700' : 'border-dashed border-black text-black'} ${isDenseLayout ? 'h-10 w-10 text-[0.45rem]' : 'h-11 w-11 text-[0.48rem]'}`}>
-                                                QR
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        ) : (
-                            <div className={'flex h-full flex-col items-center justify-center gap-4 rounded-lg bg-white px-6 text-center'}>
-                                <p className={'text-base font-semibold text-red-600'}>
-                                    Derzeit gibt es keine anstehenden Ereignisse
-                                </p>
-                                <div className={'flex flex-col items-center gap-2'}>
-                                    <div className={'h-20 w-20 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
-                                        QR
-                                    </div>
-                                    <p className={'text-sm text-black'}>QR-Code scannen und neue Ereignisse hinzufügen</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )
-        }
-        case 'notice-board':
-            return (
-                <div className={'rounded-xl bg-white text-black border-2 border-black p-2.5 flex h-full flex-col'}
-                     style={{ width: 296, height: 128 }}>
-                    {noticeBoardForm.title.trim().length > 0 || noticeBoardForm.body.trim().length > 0 ? (
-                        <>
-                            <div className={'flex-1 min-h-0 space-y-1 overflow-hidden'}>
-                                {noticeBoardForm.title.trim() && (
-                                    <h3 className={'text-lg font-semibold text-black leading-tight truncate'}>{noticeBoardForm.title}</h3>
-                                )}
-                                {noticeBoardForm.body.trim() && (
-                                    <p className={'text-[0.95rem] leading-snug whitespace-pre-line line-clamp-3'}>{noticeBoardForm.body}</p>
-                                )}
-                            </div>
-                        </>
-                    ) : (
-                        <div className={'flex h-full flex-col items-center justify-center gap-3 text-center px-4'}>
-                            <p className={'text-base font-semibold text-black leading-tight'}>Zum Beschreiben QR-Code scannen</p>
-                            <div className={'h-16 w-16 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.6rem] uppercase'}>
-                                QR
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )
-        case 'room-booking': {
-            const entriesSource = Array.isArray(roomBookingForm.entries)
-                ? roomBookingForm.entries
-                : []
-            const parsedEntries = entriesSource
-                .filter((entry) => (entry.title ?? '').trim().length > 0 || (entry.time ?? '').trim().length > 0)
-                .map((entry) => {
-                    const raw = typeof entry.time === 'string' ? entry.time : ''
-                    const segments = raw.split('-').map((segment) => segment.trim()).filter((segment) => segment.length > 0)
-                    const startTime = segments.length >= 1 ? segments[0] : ''
-                    const endTime = segments.length >= 2 ? segments[1] : ''
-                    const normalized = startTime && endTime ? `${startTime} - ${endTime}` : raw || startTime || endTime
-                    return {
-                        ...entry,
-                        normalizedTime: normalized,
-                        startTime,
-                        endTime,
-                    }
-                })
-
-            const roomNumberLabel = ((roomBookingForm.roomNumber || '').trim()) || '—'
-            const roomTypeLabel = ((roomBookingForm.roomType || 'Besprechungsraum').trim()) || 'Besprechungsraum'
-
-            if (parsedEntries.length === 0) {
-                return (
-                    <div className={'rounded-2xl bg-white border-2 border-black p-5 flex flex-col text-black'} style={{ width: 400, height: 300 }}>
-                        <div className={'flex items-start justify-between'}>
-                            <span className={'text-sm text-transparent'}>.</span>
-                            <p className={'text-3xl font-semibold text-black leading-tight text-right min-w-[4rem]'}>{roomNumberLabel}</p>
-                        </div>
-                        <div className={'flex-1 flex items-center justify-center'}>
-                            <div className={'w-full max-w-xs'}>
-                                <p className={'text-base font-semibold text-black text-left'}>Keine anstehenden Termine</p>
-                            </div>
-                        </div>
-                        <div className={'pt-3 flex justify-between items-end'}>
-                            <p className={'text-sm font-semibold text-black truncate'}>{roomTypeLabel}</p>
-                            <div className={'flex flex-col items-center space-y-2'}>
-                                <div className={'h-16 w-16 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.55rem] uppercase'}>
-                                    QR
-                                </div>
-                                <p className={'text-xs text-black'}>Neue Termine hinzufügen</p>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            const activeEntry = parsedEntries[0]
-            const secondaryEntries = parsedEntries.slice(1, 4)
-
-            return (
-                <div className={'rounded-2xl bg-white border-2 border-black p-5 flex flex-col gap-4 text-black'} style={{ width: 400, height: 300 }}>
-                    <div className={'flex items-start justify-between gap-4'}>
-                        <div className={'flex flex-col gap-3'}>
-                            <div className={'grid gap-2'}>
-                                <div className={'flex items-center justify-between'}>
-                                    <p className={'text-xs uppercase tracking-wide text-red-700 font-semibold'}>Aktiver Termin</p>
-                                    <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case'}
-                                            onClick={() => removeBookingEntry(activeEntry.id)}>
-                                        Entfernen
-                                    </Button>
-                                </div>
-                                <div className={'mt-1 rounded-lg border border-black bg-white px-3 py-2 text-left w-40 h-20 flex flex-col justify-center'}>
-                                    <span className={'text-sm font-semibold text-black truncate'}>
-                                        {activeEntry?.normalizedTime ? `${activeEntry.normalizedTime} Uhr` : 'Keine Zeit'}
-                                    </span>
-                                    <span className={'mt-1 text-xs text-black line-clamp-2'}>
-                                        {activeEntry?.title?.trim() || 'Kein Meeting ausgewählt'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <p className={'text-3xl font-semibold text-black leading-tight text-right min-w-[4rem]'}>{roomNumberLabel}</p>
-                    </div>
-                    <div className={'flex-1 min-h-0'}>
-                        {secondaryEntries.length > 0 && (
-                            <div className={'flex flex-1 flex-col bg-white px-3 pt-3 pb-6 space-y-2'}>
-                                {secondaryEntries.map((entry, index) => {
-                                    const labelText = `Ab ${entry.startTime ? `${entry.startTime} Uhr` : 'sofort'}: ${(entry.title ?? '').trim()}`
-                                    const isLast = index === secondaryEntries.length - 1
-                                    return (
-                                        <div key={entry.id} className={'text-sm text-black leading-snug w-full'}>
-                                            <p>{labelText}</p>
-                                            {!isLast && <div className={'h-px w-full bg-black/30 my-1'} />}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </div>
-                    <div className={'mt-auto pt-3 flex justify-between items-end'}>
-                        <p className={'text-sm font-semibold text-black truncate'}>{roomTypeLabel}</p>
-                        {parsedEntries.length <= 1 && (
-                            <div className={'flex flex-col items-center space-y-2'}>
-                                <div className={'h-16 w-16 rounded-lg border border-dashed border-black flex items-center justify-center text-[0.55rem] uppercase'}>
-                                    QR
-                                </div>
-                                <p className={'text-xs text-black'}>Neue Termine hinzufügen</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )
-        }
-        default:
-            return null
-        }
-    }
-
-    const previewContent = renderPreview()
+    const previewContent = (
+        <DisplayPreview
+            displayType={displayType}
+            doorSignForm={doorSignForm}
+            eventBoardForm={eventBoardForm}
+            noticeBoardForm={noticeBoardForm}
+            roomBookingForm={roomBookingForm}
+            onRemoveRoomBookingEntry={removeBookingEntry}
+        />
+    )
 
     return (
         <div className={'space-y-6 px-4 sm:px-0 w-full max-w-full overflow-x-hidden'}>
@@ -849,7 +500,7 @@ export default function EventsPage() {
                         <div className={'grid gap-4 sm:grid-cols-2'}>
                             <div>
                                 <Select label={'Display auswählen'} value={selectedDisplay}
-                                        onChange={(value) => value && setSelectedDisplay(value)}
+                                        onChange={handleDisplaySelectChange}
                                         disabled={isLoadingDisplays || filteredDisplays.length === 0}>
                                     {filteredDisplays.map((display) => (
                                         <Option key={display.macAddress} value={display.macAddress}>
@@ -860,7 +511,7 @@ export default function EventsPage() {
                             </div>
                             <div>
                                 <Select label={'Displayart'} value={displayType}
-                                        onChange={(value) => value && setDisplayType(value as DisplayTypeKey)}>
+                                        onChange={handleDisplayTypeChange}>
                                     {displayTypeOptions.map((option) => (
                                         <Option key={option.value} value={option.value}>
                                             {option.label}
@@ -939,150 +590,50 @@ export default function EventsPage() {
                 </Card>
             </div>
 
-            <Dialog open={isTemplateEditDialogOpen} handler={closeTemplateEditDialog} size={'xl'}>
-                <DialogHeader>Template bearbeiten</DialogHeader>
-                <DialogBody className={'space-y-4'}>
-                    <Typography variant={'small'} color={'blue-gray'} className={'font-normal'}>
-                        Bearbeiten Sie den Beispielcode für {resolveDisplayLabel(displayType)}.
-                    </Typography>
-                    <textarea
-                        value={templateEditorContent}
-                        onChange={(event) => setTemplateEditorContent(event.target.value)}
-                        className={'min-h-[320px] w-full rounded-md border border-blue-gray-100 bg-blue-gray-50/40 p-3 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent'}
-                        spellCheck={false}
-                    />
-                </DialogBody>
-                <DialogFooter className={'space-x-2'}>
-                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closeTemplateEditDialog}>
-                        Abbrechen
-                    </Button>
-                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={closeTemplateEditDialog}>
-                        Template speichern
-                    </Button>
-                </DialogFooter>
-            </Dialog>
+            <TemplateCodeDialog
+                open={isTemplateEditDialogOpen}
+                title={'Template bearbeiten'}
+                description={`Bearbeiten Sie den Beispielcode für ${resolveDisplayLabel(displayType)}.`}
+                value={templateEditorContent}
+                onChange={setTemplateEditorContent}
+                onClose={closeTemplateEditDialog}
+                onConfirm={closeTemplateEditDialog}
+            />
 
-            <Dialog open={isTemplateCreateDialogOpen} handler={closeTemplateCreateDialog} size={'xl'}>
-                <DialogHeader>Template erstellen</DialogHeader>
-                <DialogBody className={'space-y-4'}>
-                    <Typography variant={'small'} color={'blue-gray'} className={'font-normal'}>
-                        Erstellen Sie ein neues Template für {resolveDisplayLabel(displayType)}.
-                    </Typography>
-                    <textarea
-                        value={templateCreatorContent}
-                        onChange={(event) => setTemplateCreatorContent(event.target.value)}
-                        className={'min-h-[320px] w-full rounded-md border border-blue-gray-100 bg-blue-gray-50/40 p-3 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent'}
-                        spellCheck={false}
-                    />
-                </DialogBody>
-                <DialogFooter className={'space-x-2'}>
-                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closeTemplateCreateDialog}>
-                        Abbrechen
-                    </Button>
-                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={closeTemplateCreateDialog}>
-                        Template speichern
-                    </Button>
-                </DialogFooter>
-            </Dialog>
+            <TemplateCodeDialog
+                open={isTemplateCreateDialogOpen}
+                title={'Template erstellen'}
+                description={`Erstellen Sie ein neues Template für ${resolveDisplayLabel(displayType)}.`}
+                value={templateCreatorContent}
+                onChange={setTemplateCreatorContent}
+                onClose={closeTemplateCreateDialog}
+                onConfirm={closeTemplateCreateDialog}
+            />
 
-            <Dialog open={isEventDialogOpen} handler={closeEventDialog} size={'sm'}>
-                <DialogHeader>Ereignis bearbeiten</DialogHeader>
-                <DialogBody>
-                    {eventDraft && (
-                        <div className={'space-y-4'}>
-                            <Input label={'Titel'} value={eventDraft.title}
-                                   onChange={(event) => setEventDraft({ ...eventDraft, title: event.target.value })} />
-                            <div className={'grid gap-3 sm:grid-cols-2'}>
-                                <Input type={'date'} label={'Datum'} value={eventDraft.date}
-                                       onChange={(event) => setEventDraft({ ...eventDraft, date: event.target.value })} />
-                                <Input type={'time'} label={'Uhrzeit'} value={eventDraft.time}
-                                       onChange={(event) => setEventDraft({ ...eventDraft, time: event.target.value })} />
-                            </div>
-                            <Input type={'url'} label={'Link für QR-Code'} value={eventDraft.qrLink}
-                                   onChange={(event) => setEventDraft({ ...eventDraft, qrLink: event.target.value })}
-                                   placeholder={'https://...'} />
-                        </div>
-                    )}
-                </DialogBody>
-                <DialogFooter className={'space-x-2'}>
-                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closeEventDialog}>
-                        Abbrechen
-                    </Button>
-                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={saveEventDialog}
-                            disabled={!eventDraft}>
-                        Speichern
-                    </Button>
-                </DialogFooter>
-            </Dialog>
+            <EventBoardEventDialog
+                open={isEventDialogOpen}
+                event={eventDraft}
+                onClose={closeEventDialog}
+                onChange={(nextEvent) => setEventDraft(nextEvent)}
+                onSave={saveEventDialog}
+            />
 
-            <Dialog open={isBookingDialogOpen} handler={closeBookingDialog} size={'sm'}>
-                <DialogHeader>Termin bearbeiten</DialogHeader>
-                <DialogBody>
-                    {bookingDraft && (
-                        <div className={'space-y-4'}>
-                            <Input label={'Titel'} value={bookingDraft.title}
-                                   onChange={(event) => setBookingDraft({ ...bookingDraft, title: event.target.value })} />
-                            <div className={'grid gap-3 sm:grid-cols-2'}>
-                                <Input type={'time'} label={'Beginn'} value={bookingDraft.startTime}
-                                       onChange={(event) => setBookingDraft({ ...bookingDraft, startTime: event.target.value })} />
-                                <Input type={'time'} label={'Ende'} value={bookingDraft.endTime}
-                                       onChange={(event) => setBookingDraft({ ...bookingDraft, endTime: event.target.value })} />
-                            </div>
-                        </div>
-                    )}
-                </DialogBody>
-                <DialogFooter className={'space-x-2'}>
-                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closeBookingDialog}>
-                        Abbrechen
-                    </Button>
-                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={saveBookingDialog}
-                            disabled={!bookingDraft}>
-                        Speichern
-                    </Button>
-                </DialogFooter>
-            </Dialog>
+            <RoomBookingEntryDialog
+                open={isBookingDialogOpen}
+                draft={bookingDraft}
+                onClose={closeBookingDialog}
+                onChange={(nextDraft) => setBookingDraft(nextDraft)}
+                onSave={saveBookingDialog}
+            />
 
-            <Dialog open={isPersonDialogOpen} handler={closePersonDialog} size={'sm'}>
-                <DialogHeader>Person bearbeiten</DialogHeader>
-                <DialogBody>
-                    {personDraft && (
-                        <div className={'space-y-4'}>
-                            <Input label={'Name'} value={personDraft.name}
-                                   onChange={(event) => setPersonDraft({ ...personDraft, name: event.target.value })} />
-                            <Select label={'Status'} value={personDraft.status}
-                                    onChange={(value) => {
-                                        if (!value || !personDraft) {
-                                            return
-                                        }
-                                        const nextStatus = value as DoorSignPersonStatus
-                                        setPersonDraft({
-                                            ...personDraft,
-                                            status: nextStatus,
-                                            busyUntil: nextStatus === 'busy' ? personDraft.busyUntil : '',
-                                        })
-                                    }}>
-                                {doorSignPersonStatuses.map((status) => (
-                                    <Option key={status.value} value={status.value}>{status.label}</Option>
-                                ))}
-                            </Select>
-                            {personDraft.status === 'busy' && (
-                                <Input type={'datetime-local'} label={'Beschäftigt bis'}
-                                       value={personDraft.busyUntil}
-                                       onChange={(event) => setPersonDraft({ ...personDraft, busyUntil: event.target.value })} />
-                            )}
-                        </div>
-                    )}
-                </DialogBody>
-                <DialogFooter className={'space-x-2'}>
-                    <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={closePersonDialog}>
-                        Abbrechen
-                    </Button>
-                    <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={savePersonDialog}
-                            disabled={!personDraft}>
-                        Speichern
-                    </Button>
-                </DialogFooter>
-            </Dialog>
+            <DoorSignPersonDialog
+                open={isPersonDialogOpen}
+                person={personDraft}
+                statuses={doorSignPersonStatuses}
+                onClose={closePersonDialog}
+                onChange={(nextPerson) => setPersonDraft(nextPerson)}
+                onSave={savePersonDialog}
+            />
         </div>
     )
 }
