@@ -65,10 +65,6 @@ export function RoomBookingPreview({ form, onRemoveEntry }: RoomBookingPreviewPr
                     <div className={'grid gap-2'}>
                         <div className={'flex items-center justify-between'}>
                             <p className={'text-xs uppercase tracking-wide text-red-700 font-semibold'}>Aktiver Termin</p>
-                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case'}
-                                    onClick={() => onRemoveEntry(activeEntry.id)}>
-                                Entfernen
-                            </Button>
                         </div>
                         <div className={'mt-1 rounded-lg border border-black bg-white px-3 py-2 text-left w-40 h-20 flex flex-col justify-center'}>
                             <span className={'text-sm font-semibold text-black truncate'}>
@@ -84,12 +80,12 @@ export function RoomBookingPreview({ form, onRemoveEntry }: RoomBookingPreviewPr
             </div>
             <div className={'flex-1 min-h-0'}>
                 {secondaryEntries.length > 0 && (
-                    <div className={'flex flex-1 flex-col bg-white px-3 pt-3 pb-6 space-y-2'}>
+                    <div className={'flex flex-1 flex-col bg-white px-3 pt-2 pb-3 space-y-1.5'}>
                         {secondaryEntries.map((entry, index) => {
                             const labelText = `Ab ${entry.startTime ? `${entry.startTime} Uhr` : 'sofort'}: ${(entry.title ?? '').trim()}`
                             const isLast = index === secondaryEntries.length - 1
                             return (
-                                <div key={entry.id} className={'text-sm text-black leading-snug w-full'}>
+                                <div key={entry.id} className={'text-xs text-black leading-tight w-full'}>
                                     <p>{labelText}</p>
                                     {!isLast && <div className={'h-px w-full bg-black/30 my-1'} />}
                                 </div>
