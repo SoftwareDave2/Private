@@ -29,11 +29,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} container mx-auto p-4 antialiased`}
-      >
-        <Nav />
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <div className="container mx-auto p-4">
+          <Nav />
+          {children}
+        </div>
       </body>
     </html>
   );
