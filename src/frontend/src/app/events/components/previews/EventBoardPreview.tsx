@@ -34,7 +34,7 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
         <div className={'rounded-2xl bg-white border-2 border-black p-4 text-black flex flex-col gap-2 overflow-hidden'}
              style={{ width: 400, height: 300 }}>
             {form.title.trim() && (
-                <div>
+                <div className={'text-center'}>
                     <h3 className={'text-lg font-semibold text-black leading-tight truncate'}>{form.title.trim()}</h3>
                 </div>
             )}

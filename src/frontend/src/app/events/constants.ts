@@ -28,8 +28,7 @@ export const defaultDoorSignForm: DoorSignForm = {
 }
 
 export const defaultEventBoardForm: EventBoardForm = {
-    title: '',
-    description: '',
+    title: 'Events',
     events: [
         { id: 1, title: '', date: '', time: '', qrLink: '' },
         { id: 2, title: '', date: '', time: '', qrLink: '' },

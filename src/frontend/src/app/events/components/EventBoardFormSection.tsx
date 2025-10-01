@@ -24,16 +24,6 @@ export function EventBoardFormSection({
         <div className={'space-y-4'}>
             <Input label={'Titel'} value={form.title}
                    onChange={(event) => handleFieldChange('title', event.target.value)} />
-            <div>
-                <label className={'block text-sm font-medium text-blue-gray-700 mb-2'}>
-                    Beschreibung
-                </label>
-                <textarea className={'w-full rounded-md border border-blue-gray-100 bg-white p-3 text-sm focus:border-red-500 focus:outline-none focus:ring-0'}
-                          rows={3}
-                          value={form.description || ''}
-                          onChange={(event) => handleFieldChange('description', event.target.value)}
-                          placeholder={'Kurzer Einführungstext für die Ereignisliste'} />
-            </div>
             <div className={'space-y-3'}>
                 <Typography variant={'small'} color={'blue-gray'} className={'font-medium'}>
                     Ereignisse (max. 4 Einträge)
