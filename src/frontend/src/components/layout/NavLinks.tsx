@@ -25,7 +25,8 @@ export default function NavLinks({
   useEffect(() => {
     const syncAuthState = () => {
       try {
-        const hasToken = typeof window !== "undefined" && !!localStorage.getItem("authToken");
+        const hasToken =
+          typeof window !== "undefined" && !!localStorage.getItem("authToken");
         setIsAuthenticated(hasToken);
       } catch (err) {
         console.error("Fehler beim Lesen des Auth-Status:", err);
@@ -102,15 +103,15 @@ export default function NavLinks({
 
   if (mobile) {
     return (
-      <div className="space-y-1">
+      <div className="space-y-2">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
             <Link
-              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+              className={`block px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 ${
                 isActive
-                  ? "text-red-600 bg-red-50"
-                  : "text-slate-700 hover:text-red-600 hover:bg-slate-50"
+                  ? "text-red-600 bg-gradient-to-r from-red-50 to-red-100/50 shadow-sm border border-red-200/50"
+                  : "text-slate-700 hover:text-red-600 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100/50 active:scale-[0.98]"
               }`}
               href={link.href}
               key={link.name}
@@ -148,19 +149,24 @@ export default function NavLinks({
 
   // Desktop Navigation
   return (
-    <div className="flex items-center gap-6">
-      <div className="flex gap-6">
+    <div className="flex items-center gap-8">
+      <div className="flex gap-1">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
             <Link
-              className={`text-sm font-medium transition-colors duration-200 hover:text-red-600 ${
-                isActive ? "text-red-600" : "text-slate-700"
+              className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                isActive
+                  ? "text-red-600"
+                  : "text-slate-700 hover:text-red-600 hover:bg-slate-50"
               }`}
               href={link.href}
               key={link.name}
             >
               {link.name}
+              {isActive && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-red-600 to-red-700 rounded-full" />
+              )}
             </Link>
           );
         })}
