@@ -31,12 +31,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} container mx-auto p-4 antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
-        <AuthGuard>
-          <Nav />
-          {children}
-        </AuthGuard>
+        <div className="container mx-auto p-4">
+          <AuthGuard>
+            <Nav />
+            {children}
+          </AuthGuard>
+        </div>
       </body>
     </html>
   );
