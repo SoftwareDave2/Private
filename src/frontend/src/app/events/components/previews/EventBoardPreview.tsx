@@ -26,6 +26,30 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                 || (event.date ?? '').trim().length > 0
                 || (event.time ?? '').trim().length > 0,
             )
+            .sort((a, b) => {
+                const dateA = a.date.trim()
+                const dateB = b.date.trim()
+
+                // Wenn beide Daten leer sind, ursprüngliche Reihenfolge beibehalten
+                if (!dateA && !dateB) return 0
+                // Leere Daten nach hinten
+                if (!dateA) return 1
+                if (!dateB) return -1
+
+                // Daten vergleichen
+                const dateCompare = dateA.localeCompare(dateB)
+                if (dateCompare !== 0) return dateCompare
+
+                // Bei gleichem Datum nach Uhrzeit sortieren
+                const timeA = a.time.trim()
+                const timeB = b.time.trim()
+
+                if (!timeA && !timeB) return 0
+                if (!timeA) return 1
+                if (!timeB) return -1
+
+                return timeA.localeCompare(timeB)
+            })
             .slice(0, 4)
         : []
     const isDenseLayout = events.length >= 4
