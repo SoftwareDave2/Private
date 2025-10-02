@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import jakarta.websocket.*;
 import master.it_projekt_tablohm.dto.OeplTagDTO;
 import master.it_projekt_tablohm.dto.TagTypeDto;
+import master.it_projekt_tablohm.helper.SVGToJPEGConverter;
 import master.it_projekt_tablohm.models.Display;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import org.slf4j.Logger;
@@ -207,31 +208,137 @@ public class OpenEPaperSyncService {
         return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), TimeZone.getDefault().toZoneId());
     }
 
-    public void sendImageToDisplay(String filename, String mac) {
+    // Upload an JPEG image to an OEPL display
+    public void uploadImageToOEPLForDisplay(String filename, String mac) {
         try {
 
-            // String jsonTemplate = String.format("[{\"image\":[\"/uploads/%s\",0,0]}]", filename);
+            File imageFile = new File(UPLOADS_DIR + File.separator + filename);
+            if (!imageFile.exists()) {
+                logger.error("Datei existiert nicht: {}", imageFile.getAbsolutePath());
+                return;
+            }
 
-            // sending jsonString (test)
+            HttpClient client = HttpClient.newHttpClient();
+            String boundary = "----Boundary" + System.currentTimeMillis();
+            String CRLF = "\r\n";
+
+            var byteStream = new java.io.ByteArrayOutputStream();
+            var writer = new java.io.OutputStreamWriter(byteStream, java.nio.charset.StandardCharsets.UTF_8);
+
+            // --- mac
+            writer.append("--").append(boundary).append(CRLF);
+            writer.append("Content-Disposition: form-data; name=\"mac\"").append(CRLF).append(CRLF);
+            writer.append(mac).append(CRLF);
+
+            // --- dither
+            writer.append("--").append(boundary).append(CRLF);
+            writer.append("Content-Disposition: form-data; name=\"dither\"").append(CRLF).append(CRLF);
+            writer.append("0").append(CRLF); // 1 = dithering aktiv
+
+            // --- file
+            writer.append("--").append(boundary).append(CRLF);
+            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"")
+                    .append(filename).append("\"").append(CRLF);
+            writer.append("Content-Type: image/jpeg").append(CRLF).append(CRLF);
+            writer.flush();
+
+            java.nio.file.Files.copy(imageFile.toPath(), byteStream);
+            byteStream.write(CRLF.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+            // End
+            writer.append("--").append(boundary).append("--").append(CRLF);
+            writer.close();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI("http://" + OEPL_HOST + "/imgupload"))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(byteStream.toByteArray()))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                logger.info("Bild {} erfolgreich zu Display (mac: {}, dither=1) hochgeladen", filename, mac);
+            } else {
+                logger.error("Fehler beim Hochladen: HTTP {} - {}", response.statusCode(), response.body());
+            }
+
+        } catch (Exception e) {
+            logger.error("Fehler beim Hochladen des Bildes zu OEPL: {}", e.getMessage(), e);
+        }
+    }
+
+
+
+    //possibility to upload images to the /edit endpoint of OEPL
+    public void uploadImageToOEPL(String filename) {
+        try {
+            logger.debug("wir gehen rein1");
+            File imageFile = new File(UPLOADS_DIR + File.separator + filename);
+            if (!imageFile.exists()) {
+                logger.debug("Datei existiert nicht: {}", imageFile.getAbsolutePath());
+                return;
+            }
+
+            HttpClient client = HttpClient.newHttpClient();
+            String boundary = "----Boundary" + System.currentTimeMillis();
+            String CRLF = "\r\n";
+
+            var byteStream = new java.io.ByteArrayOutputStream();
+            var writer = new java.io.OutputStreamWriter(byteStream, java.nio.charset.StandardCharsets.UTF_8);
+
+            // Datei
+            writer.append("--").append(boundary).append(CRLF);
+            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"")
+                    .append(filename).append("\"").append(CRLF);
+            writer.append("Content-Type: image/jpeg").append(CRLF).append(CRLF);
+            writer.flush();
+
+            java.nio.file.Files.copy(imageFile.toPath(), byteStream);
+            byteStream.write(CRLF.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+            writer.append("--").append(boundary).append("--").append(CRLF);
+            writer.close();
+
+            HttpRequest uploadRequest = HttpRequest.newBuilder()
+                    .uri(new URI("http://" + OEPL_HOST + "/edit")) // nur Datei hochladen
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(byteStream.toByteArray()))
+                    .build();
+
+            HttpResponse<String> uploadResponse = client.send(uploadRequest, HttpResponse.BodyHandlers.ofString());
+            if (uploadResponse.statusCode() == 200) {
+                logger.debug("Bild {} erfolgreich in OEPL static-Ordner hochgeladen", filename);
+            } else {
+                logger.debug("Fehler beim Hochladen in static-Ordner: HTTP {} - {}", uploadResponse.statusCode(), uploadResponse.body());
+            }
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // Thread-Status wiederherstellen
+            logger.debug("wir wurden mal wieder unterbrochen");
+        } catch (Exception e) {
+            logger.error("Fehler beim Hochladen des Bildes in OEPL static-Ordner");
+        }
+    }
+
+    // possibility to send JSON Templates to OEPL (currently not in use)
+    public void sendJSONToDisplay(String filename, String mac) {
+        try {
+
+            // sending jsonString (test string)
             String jsonString = """
-            [
-              {"circle":[20,15,2,0]},
-              {"circle":[50,30,1,0]},
-              {"circle":[80,10,2,0]},
-              {"circle":[120,40,1,0]},
-              {"circle":[150,20,2,0]},
-              {"circle":[200,50,1,0]},
-              {"circle":[250,40,30,4]},
-              {"circle":[240,30,5,5]},
-              {"circle":[260,45,8,5]},
-              {"circle":[255,25,3,5]},
-              {"rbox":[70,70,30,60,5,5]},
-              {"triangle":[70,70,100,70,85,45,2]},
-              {"triangle":[60,120,70,130,70,110,2]},
-              {"triangle":[100,130,110,120,100,110,2]},
-              {"triangle":[75,130,95,130,85,150,10]},
-              {"triangle":[80,130,90,130,85,145,3]}
-            ]
+                    [
+                       {"rbox":[15,11,68,28,10,0,1,1]},
+                       {"text":[290,17,"","fonts/bahnschrift20",1]},
+                       {"text":[24,100,"{.Name1}","fonts/bahnschrift20",1]},
+                       {"rbox":[98,11,68,28,10,2,2,1]},
+                       {"text":[100,11,"nicht stören","fonts/calibrib_30.ttf",0,0,11]},
+                       {"text":[265,0,"{.Raumnummer}","fonts/calibrib_30.ttf",1]},
+                       {"text":[24,11,"verfügbar","fonts/calibrib_30.ttf",1,0,11]},
+                       {"line":[400,240,0,240,2]},
+                       {"text":[15,249,"Angestellte der Hochschulbörse","fonts/calibrib_30.ttf",1,0,15]},
+                       {"text":[24,180,"{.Name3}","fonts/bahnschrift20",1]},
+                       {"text":[24,140,"{.Name2}","fonts/bahnschrift20",1]}
+                     ]
             """;
 
             // URL-encoden
