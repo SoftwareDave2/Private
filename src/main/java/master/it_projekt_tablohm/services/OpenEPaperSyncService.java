@@ -39,7 +39,8 @@ public class OpenEPaperSyncService {
     // Internal web-socket session within this service
     private Session session;
 
-    private static final String OEPL_HOST = "192.168.2.66"; // System.getenv("OEPL_HOST");
+    // 192.168.2.66
+    private static final String OEPL_HOST = "192.168.2.66"; // System.getenv("OEPL_HOST"); 92.168.4.1
     private static final String OEPL_GET_DB_PATH = "/get_db";
     private static final String TAG_TYPE_PATH = "static/tagtypes/";
     private static final String UPLOADS_DIR = System.getProperty("user.dir")
@@ -158,6 +159,8 @@ public class OpenEPaperSyncService {
                 .orElseGet(() -> {
                     Display d = new Display();
                     d.setMacAddress(tagDTO.getMac());
+                    d.setFilename(d.getFilename());
+                    d.setDisplayTechnology("ESL");
                     return d;
                 });
 
@@ -168,8 +171,8 @@ public class OpenEPaperSyncService {
             return;
         }
 
-        // Set/update values
-        display.setDoSwitch(tagDTO.getPending() != 0);
+        // update values
+        // display.setDoSwitch(tagDTO.getPending() != 0);
         display.setDisplayName(tagDTO.getAlias());
         display.setBattery_percentage(mvToPercent(tagDTO.getBatteryMv(), 2200, 3000));
         display.setLastSwitch(fromUnixTimeStamp(tagDTO.getUpdatelast()));
@@ -179,6 +182,13 @@ public class OpenEPaperSyncService {
         display.setNextEventTime(fromUnixTimeStamp(tagDTO.getNextupdate()));
         display.setWakeTime(fromUnixTimeStamp(tagDTO.getNextcheckin()));
         display.setBrand(tagType.getName());
+        display.setDoSwitch(true);
+        display.setFilename(display.getFilename());
+        display.setFilenameApp(display.getFilename());
+
+
+        //TODO: Add distinction between different Display Types (Raumschild, Türschild, Ereignisse, Hinweise)
+        // display.setDisplayType("Türschild");
 
         displayRepository.save(display);
     }

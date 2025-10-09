@@ -1,11 +1,13 @@
 package master.it_projekt_tablohm.controller;
 
+import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.services.OpenEPaperSyncService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Controller
@@ -14,9 +16,12 @@ import java.util.Map;
 public class OEPLController {
 
     private final OpenEPaperSyncService openEPaperSyncService;
+    private final DisplayRepository displayRepository;
 
-    public OEPLController(OpenEPaperSyncService openEPaperSyncService) {
+    public OEPLController(OpenEPaperSyncService openEPaperSyncService,
+                          DisplayRepository displayRepository) {
         this.openEPaperSyncService = openEPaperSyncService;
+        this.displayRepository = displayRepository;
     }
 
     @PostMapping(path = "/send-image")
@@ -28,8 +33,21 @@ public class OEPLController {
         }
 
         try {
+            //sending Image to OEPL
             openEPaperSyncService.uploadImageToOEPLForDisplay(filename, mac);
-            return ResponseEntity.ok("Image successfully sent: " + filename);
+
+            //updating Display
+            displayRepository.findByMacAddress(mac).ifPresent(display -> {
+                LocalDateTime now = LocalDateTime.now();
+                display.setFilename(filename);
+                display.setDefaultFilename(filename);
+                display.setLastSwitch(now);
+                display.setDoSwitch(false);
+                displayRepository.save(display);
+            });
+
+            return ResponseEntity.ok("Image successfully sent and display updated: " + filename);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -149,7 +149,7 @@ export default function SelectImage({selectedFilename, selectedDisplayMac, scree
         }
 
         try {
-            const response = await fetch(`${backendApiUrl}/oepl/send-image`, {
+            const response = await authFetch(`${backendApiUrl}/oepl/send-image`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ filename, mac: selectedDisplayMac }),
