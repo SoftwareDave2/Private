@@ -6,6 +6,7 @@ import DisplayFrame from '@/components/dashboard/DisplayFrame'
 import {DisplayData} from '@/types/displayData'
 import DisplayInfoDialog from '@/components/dashboard/DisplayInfoDialog'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import {authFetch} from '@/utils/authFetch'
 
 // Material Tailwind Select-Komponenten
 import {Select, Option} from '@material-tailwind/react'
@@ -38,7 +39,7 @@ export default function Home() {
 
     // Daten vom Backend laden
     const fetchDisplays = async () => {
-        const data = await fetch(backendApiUrl + '/display/all')
+        const data = await authFetch(backendApiUrl + '/display/all')
         const json = await data.json()
         setDisplays(json)
     }

@@ -28,8 +28,7 @@ export const defaultDoorSignForm: DoorSignForm = {
 }
 
 export const defaultEventBoardForm: EventBoardForm = {
-    title: '',
-    description: '',
+    title: 'Events',
     events: [
         { id: 1, title: '', date: '', time: '', qrLink: '' },
         { id: 2, title: '', date: '', time: '', qrLink: '' },
@@ -50,4 +49,54 @@ export const defaultRoomBookingForm: RoomBookingForm = {
         { id: 1, title: '', time: '' },
         { id: 2, title: '', time: '' },
     ],
+}
+
+export const templateSamples: Record<DisplayTypeKey, string> = {
+    'door-sign': `<!-- Türschild Template -->
+<section class="door-sign">
+  <header>
+    <h1>{{ roomNumber }}</h1>
+    <span>{{ status }}</span>
+  </header>
+  <main>
+    <ul>
+      <li v-for="person in people">{{ person.name }}</li>
+    </ul>
+  </main>
+</section>`,
+    'event-board': `<!-- Ereignistafel Template -->
+<section class="event-board">
+  <h1>{{ title }}</h1>
+  <article v-for="event in events">
+    <h2>{{ event.title }}</h2>
+    <p>{{ event.date }} · {{ event.time }}</p>
+  </article>
+</section>`,
+    'notice-board': `<!-- Hinweis-Template -->
+<section class="notice-board">
+  <header>
+    <h1>{{ title }}</h1>
+    <time>{{ start }} – {{ end }}</time>
+  </header>
+  <p>{{ body }}</p>
+</section>`,
+    'room-booking': `<!-- Raumbuchung Template -->
+<section class="room-booking">
+  <header>
+    <h1>{{ roomNumber }}</h1>
+    <span>{{ roomType }}</span>
+  </header>
+  <ul>
+    <li v-for="entry in entries">
+      <strong>{{ entry.time }}</strong> – {{ entry.title }}
+    </li>
+  </ul>
+</section>`,
+}
+
+export const previewDimensions: Record<DisplayTypeKey, { width: number; height: number }> = {
+    'door-sign': { width: 400, height: 300 },
+    'event-board': { width: 400, height: 300 },
+    'notice-board': { width: 296, height: 128 },
+    'room-booking': { width: 400, height: 300 },
 }

@@ -5,6 +5,7 @@ import UploadMediaButton from '@/components/media/UploadMediaButton'
 import InvalidFileAlert from '@/components/media/InvalidFileAlert'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import {checkFileNameExists} from '@/utils/checkFileNameExists'
+import {authFetch} from '@/utils/authFetch'
 
 type UploadMediaDialogProps = {
     open: boolean,
@@ -74,7 +75,7 @@ export default function UploadMediaDialog({open, onCancel, onSaved}: UploadMedia
         const formData = new FormData()
         formData.append('image', newFile)
         try {
-            const response = await fetch(`${backendApiUrl}/image/upload`, {
+            const response = await authFetch(`${backendApiUrl}/image/upload`, {
                 method: 'POST',
                 body: formData,
             })

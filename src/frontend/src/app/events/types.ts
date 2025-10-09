@@ -25,7 +25,6 @@ export type EventBoardEvent = {
 
 export type EventBoardForm = {
     title: string
-    description?: string
     events: EventBoardEvent[]
 }
 

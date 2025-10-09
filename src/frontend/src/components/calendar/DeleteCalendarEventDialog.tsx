@@ -2,6 +2,7 @@ import {EventDetails} from "@/types/eventDetails";
 import {Button, Dialog, DialogBody, DialogFooter, DialogHeader} from "@material-tailwind/react";
 import React from "react";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import {authFetch} from "@/utils/authFetch";
 
 type DeleteCalendarEventDialogProps = {
     open: boolean,
@@ -17,7 +18,7 @@ export function DeleteCalendarEventDialog({open, event, onClose, onDeleted}: Del
 
     const deleteHandler = async () => {
         try {
-            const response = await fetch(backendApiUrl + '/event/delete/' + event.id, {
+            const response = await authFetch(backendApiUrl + '/event/delete/' + event.id, {
                 method: 'DELETE' }
             )
             const responseText = await response.text()
@@ -33,7 +34,7 @@ export function DeleteCalendarEventDialog({open, event, onClose, onDeleted}: Del
 
     const deleteAllHandler = async () => {
         try {
-            const response = await fetch(backendApiUrl + '/recevent/delete/' + event.groupId, {
+            const response = await authFetch(backendApiUrl + '/recevent/delete/' + event.groupId, {
                 method: 'DELETE' }
             )
             const responseText = await response.text()
