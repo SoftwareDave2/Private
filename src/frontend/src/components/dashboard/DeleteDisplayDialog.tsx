@@ -1,7 +1,8 @@
-import { Button, Dialog, DialogHeader, DialogBody, DialogFooter } from "@material-tailwind/react"
+import {Button, Dialog, DialogHeader, DialogBody, DialogFooter} from "@material-tailwind/react"
 import {DisplayData} from "@/types/displayData";
 import React from "react";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import {authFetch} from "@/utils/authFetch";
 
 type DeleteDisplayDialogProps = {
     open: boolean,
@@ -18,7 +19,7 @@ export function DeleteDisplayDialog({open, displayData, onClose, onDisplayDelete
 
     const deleteDisplayHandler = async () => {
         try {
-            const response = await fetch(backendApiUrl + '/display/delete/' + displayData.macAddress, {
+            const response = await authFetch(backendApiUrl + '/display/delete/' + displayData.macAddress, {
                 method: 'DELETE'}
             )
             const responseText = await response.text()

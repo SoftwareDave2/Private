@@ -7,6 +7,7 @@ import UploadMediaDialog from '@/components/media/UploadMediaDialog'
 import {MediaContentItemData} from '@/types/mediaContentItemData'
 import MediaContentItems from '@/components/media/MediaContentItems'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import {authFetch} from '@/utils/authFetch'
 import {Select, Option, Dialog, DialogHeader, DialogBody, DialogFooter, Button} from '@material-tailwind/react'
 import ImageDeleteResultDialog from '@/components/media/ImageDeleteResultDialog'
 import UploadConfirmedDialog from '@/components/media/UploadConfirmedDialog'
@@ -53,7 +54,7 @@ export default function Media() {
 
     const updateImages = async () => {
         const endpoint = sortOption === 'filename' ? '/image/listByFilename' : '/image/listByDate'
-        const response = await fetch(backendApiUrl + endpoint)
+        const response = await authFetch(backendApiUrl + endpoint)
         const data = (await response.json()) as MediaContentItemData[]
         setImages(data)
     }

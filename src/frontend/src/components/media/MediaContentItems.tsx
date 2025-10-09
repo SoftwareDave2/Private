@@ -5,6 +5,7 @@ import {useState} from 'react'
 import MediaItemViewDialog from '@/components/media/MediaItemViewDialog'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import {ConfirmDeleteImageDialog} from '@/components/media/ConfirmDeleteImageDialog'
+import {authFetch} from '@/utils/authFetch'
 
 type MediaContentItemProps = {
     images: MediaContentItemData[];
@@ -38,7 +39,7 @@ export default function MediaContentItems({images, onImageDeleted, onDeleteResul
         if (!imageToDelete) return
         const backendApiUrl = getBackendApiUrl()
         try {
-            const response = await fetch(backendApiUrl + '/image/delete/' + imageToDelete, {
+            const response = await authFetch(backendApiUrl + '/image/delete/' + imageToDelete, {
                 method: 'DELETE',
             })
             const responseText = await response.text()

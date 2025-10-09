@@ -1,17 +1,15 @@
 'use client'
 
 import React, {useState, useEffect, FormEvent} from 'react'
-import {
-    Input,
-    Button,
-    Checkbox,
-} from '@material-tailwind/react'
+import {Input, Button, Checkbox} from '@material-tailwind/react'
 import PageHeader from '@/components/layout/PageHeader'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import SaveDialog from '@/components/config/SaveDialog'
-import { DayTimeConfig, Config } from '@/types/config'
+import {DayTimeConfig, Config} from '@/types/config'
+import {authFetch} from '@/utils/authFetch'
 
 export default function ConfigPage() {
+    const backendApiUrl = getBackendApiUrl()
     const defaultWeekdayTimes: { [day: string]: DayTimeConfig } = {
         Montag: {enabled: true, startTime: '08:00', endTime: '18:00'},
         Dienstag: {enabled: true, startTime: '08:00', endTime: '18:00'},
@@ -38,9 +36,8 @@ export default function ConfigPage() {
 
     useEffect(() => {
         const fetchConfig = async () => {
-            const backendApiUrl = getBackendApiUrl()
             try {
-                const response = await fetch(backendApiUrl + '/config/get')
+                const response = await authFetch(backendApiUrl + '/config/get')
                 if (response.ok) {
                     const data = await response.json()
                     const weekdayTimes = data.weekdayTimes || defaultWeekdayTimes
@@ -130,7 +127,7 @@ export default function ConfigPage() {
         console.log('Neue Konfiguration:', updatedConfig)
 
         try {
-            const response = await fetch('http://' + window.location.hostname + ':8080/config/post', {
+            const response = await authFetch(backendApiUrl + '/config/post', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(updatedConfig),

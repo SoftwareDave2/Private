@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LogIn, User } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { LogIn, LogOut, User } from "lucide-react";
+import { getBackendApiUrl } from "@/utils/backendApiUrl";
+import { authFetch } from "@/utils/authFetch";
 
 interface NavLinksProps {
   mobile?: boolean;
@@ -13,6 +16,33 @@ export default function NavLinks({
   mobile = false,
   closeMobileMenu,
 }: NavLinksProps) {
+  const router = useRouter();
+  const backendApiUrl = useMemo(() => getBackendApiUrl(), []);
+  const pathname = usePathname();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isProcessingLogout, setIsProcessingLogout] = useState(false);
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      try {
+        const hasToken = typeof window !== "undefined" && !!localStorage.getItem("authToken");
+        setIsAuthenticated(hasToken);
+      } catch (err) {
+        console.error("Fehler beim Lesen des Auth-Status:", err);
+        setIsAuthenticated(false);
+      }
+    };
+
+    syncAuthState();
+    window.addEventListener("storage", syncAuthState);
+    window.addEventListener("auth-change", syncAuthState);
+
+    return () => {
+      window.removeEventListener("storage", syncAuthState);
+      window.removeEventListener("auth-change", syncAuthState);
+    };
+  }, []);
+
   const navLinks = [
     {
       href: "/",
@@ -35,11 +65,34 @@ export default function NavLinks({
       name: "Config",
     },
   ];
-  const pathname = usePathname();
 
   const handleLinkClick = () => {
     if (mobile && closeMobileMenu) {
       closeMobileMenu();
+    }
+  };
+
+  const clearSession = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authTokenExpiresAt");
+    document.cookie = "authToken=; path=/; max-age=0";
+    window.dispatchEvent(new Event("auth-change"));
+    setIsAuthenticated(false);
+  };
+
+  const handleLogout = async () => {
+    setIsProcessingLogout(true);
+    try {
+      await authFetch(`${backendApiUrl}/auth/logout`, {
+        method: "POST",
+      });
+    } catch (err) {
+      console.error("Fehler beim Abmelden:", err);
+    } finally {
+      clearSession();
+      handleLinkClick();
+      router.replace("/login");
+      setIsProcessingLogout(false);
     }
   };
 
@@ -64,15 +117,27 @@ export default function NavLinks({
           );
         })}
 
-        {/* Mobile Login Button */}
-        <Link
-          href="/login"
-          className="flex items-center px-3 py-2 rounded-md text-base font-medium text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all duration-200"
-          onClick={handleLinkClick}
-        >
-          <LogIn className="w-4 h-4 mr-2" />
-          Anmelden
-        </Link>
+        {/* Mobile Auth Button */}
+        {isAuthenticated ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isProcessingLogout}
+            className="w-full flex items-center justify-center px-3 py-2 rounded-md text-base font-medium text-red-600 border border-red-200 hover:border-red-400 hover:bg-red-50 transition-all duration-200 disabled:opacity-60"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            {isProcessingLogout ? "Abmelden..." : "Abmelden"}
+          </button>
+        ) : (
+          <Link
+            href="/login"
+            className="flex items-center px-3 py-2 rounded-md text-base font-medium text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all duration-200"
+            onClick={handleLinkClick}
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            Anmelden
+          </Link>
+        )}
       </div>
     );
   }
@@ -98,13 +163,25 @@ export default function NavLinks({
       </div>
 
       {/* Desktop Login Button */}
-      <Link
-        href="/login"
-        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
-      >
-        <User className="w-4 h-4 mr-2" />
-        Anmelden
-      </Link>
+      {isAuthenticated ? (
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={isProcessingLogout}
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-600 border border-red-200 hover:border-red-400 hover:bg-red-50 rounded-lg transition-all duration-200 shadow-sm disabled:opacity-60"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          {isProcessingLogout ? "Abmelden..." : "Abmelden"}
+        </button>
+      ) : (
+        <Link
+          href="/login"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+        >
+          <User className="w-4 h-4 mr-2" />
+          Anmelden
+        </Link>
+      )}
     </div>
   );
 }

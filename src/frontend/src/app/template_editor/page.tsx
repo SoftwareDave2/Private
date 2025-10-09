@@ -4,6 +4,7 @@ import React, {useEffect, useRef, useState} from 'react'
 import {fabric} from 'fabric'
 import {Button} from '@material-tailwind/react'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import {authFetch} from '@/utils/authFetch'
 import EditorToolbar from '@/components/template-editor/EditorToolbar'
 import NotificationDialog from '@/components/template-editor/NotificationDialog'
 import SetNameDialog from '@/components/template-editor/SetNameDialog'
@@ -203,7 +204,7 @@ const TemplateEditorPage: React.FC = () => {
 
         // Upload image.
         try {
-            const response = await fetch(`${backendApiUrl}/image/upload`, {
+            const response = await authFetch(`${backendApiUrl}/image/upload`, {
                 method: 'POST',
                 body: formData,
             })

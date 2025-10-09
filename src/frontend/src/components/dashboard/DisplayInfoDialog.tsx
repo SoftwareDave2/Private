@@ -1,10 +1,11 @@
-import { Button, Dialog, DialogHeader, DialogBody, DialogFooter } from "@material-tailwind/react"
+import {Button, Dialog, DialogHeader, DialogBody, DialogFooter} from "@material-tailwind/react"
 import {useState} from 'react'
 import {DisplayData} from "@/types/displayData";
 import DisplayFrame from "@/components/dashboard/DisplayFrame";
 import DisplayStatusInfos from "@/components/dashboard/DisplayStatusInfos";
 import {EditDisplayDialog} from "@/components/dashboard/EditDisplayDialog";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import {authFetch} from "@/utils/authFetch";
 
 type DisplayInfoDialogProps = {
     open: boolean,
@@ -31,7 +32,7 @@ export default function DisplayInfoDialog({open, displayData, onClose, onDisplay
     const editDisplayHandler = async () => {
         // Fetch new display data from server.
         try {
-            const data = await fetch(backendApiUrl + '/display/all')
+            const data = await authFetch(backendApiUrl + '/display/all')
             const allDisplays = (await data.json()) as DisplayData[]
             const display = allDisplays.find(d => d.id === displayData.id)
             if (!display) {
