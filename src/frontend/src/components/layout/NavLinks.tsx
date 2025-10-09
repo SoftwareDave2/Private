@@ -66,10 +66,6 @@ export default function NavLinks({
       name: "Events",
     },
     {
-      href: "/events",
-      name: "Events",
-    },
-    {
       href: "/config",
       name: "Config",
     },
@@ -108,16 +104,12 @@ export default function NavLinks({
   if (mobile) {
     return (
       <div className="space-y-2">
-      <div className="space-y-2">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
             <Link
               className={`block px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 ${
-              className={`block px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 ${
                 isActive
-                  ? "text-red-600 bg-gradient-to-r from-red-50 to-red-100/50 shadow-sm border border-red-200/50"
-                  : "text-slate-700 hover:text-red-600 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100/50 active:scale-[0.98]"
                   ? "text-red-600 bg-gradient-to-r from-red-50 to-red-100/50 shadow-sm border border-red-200/50"
                   : "text-slate-700 hover:text-red-600 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100/50 active:scale-[0.98]"
               }`}
@@ -159,16 +151,10 @@ export default function NavLinks({
   return (
     <div className="flex items-center gap-8">
       <div className="flex gap-1">
-    <div className="flex items-center gap-8">
-      <div className="flex gap-1">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
             <Link
-              className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 group ${
-                isActive
-                  ? "text-red-600"
-                  : "text-slate-700 hover:text-red-600 hover:bg-slate-50"
               className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 group ${
                 isActive
                   ? "text-red-600"
@@ -178,9 +164,6 @@ export default function NavLinks({
               key={link.name}
             >
               {link.name}
-              {isActive && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-red-600 to-red-700 rounded-full" />
-              )}
               {isActive && (
                 <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-red-600 to-red-700 rounded-full" />
               )}
