@@ -95,6 +95,7 @@ public class DisplayController {
         display.setDefaultFilename("initial.jpg");
         display.setFilename(display.getDefaultFilename());
         display.setOrientation("vertical");
+        display.setDisplayType("Tableaux");
         display.setWidth(width);
         display.setHeight(height);
         display.setWakeTime(LocalDateTime.now().plusMinutes(10));

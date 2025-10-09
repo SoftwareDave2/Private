@@ -109,10 +109,9 @@ public class SVGToJPEGConverter {
 
             JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
             jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            jpegParams.setCompressionQuality(1.0f); // 100% Qualität
+            jpegParams.setCompressionQuality(1.0f); // 100% Qualität, dont set it absolutely!
             jpegParams.setProgressiveMode(ImageWriteParam.MODE_DISABLED);
 
-            // Schreibe Bild (Metadaten NICHT anfassen!)
             writer.write(null, new IIOImage(image, null, null), jpegParams);
         } finally {
             writer.dispose();
