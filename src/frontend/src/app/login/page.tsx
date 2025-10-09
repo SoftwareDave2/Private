@@ -3,24 +3,87 @@
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getBackendApiUrl } from "@/utils/backendApiUrl";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const router = useRouter();
+  const backendApiUrl = getBackendApiUrl();
+
+  const persistSession = (token: string, expiresAt: string) => {
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("authTokenExpiresAt", expiresAt);
+
+    const expiresAtDate = new Date(expiresAt);
+    const maxAgeSeconds = Math.max(
+      0,
+      Math.floor((expiresAtDate.getTime() - Date.now()) / 1000)
+    );
+    document.cookie = `authToken=${token}; path=/; max-age=${maxAgeSeconds}`;
+    window.dispatchEvent(new Event("auth-change"));
+    router.replace("/");
+  };
+
+  const handleError = async (response: Response) => {
+    try {
+      const data = await response.json();
+      setErrorMessage(data.message || "Anmeldung fehlgeschlagen.");
+    } catch {
+      setErrorMessage("Anmeldung fehlgeschlagen.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(null);
 
-    // Hier würde später die Backend-Logik implementiert werden
-    console.log("Login attempt:", { email, password });
+    try {
+      const response = await fetch(`${backendApiUrl}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: email, password }),
+      });
 
-    // Simuliere API-Aufruf
-    setTimeout(() => {
+      if (!response.ok) {
+        await handleError(response);
+        return;
+      }
+
+      const data = await response.json();
+      persistSession(data.token, data.expiresAt);
+    } catch (err) {
+      console.error("Fehler beim Login:", err);
+      setErrorMessage("Der Login ist fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+
+  const handleDevLogin = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await fetch(`${backendApiUrl}/auth/dev-login`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        await handleError(response);
+        return;
+      }
+      const data = await response.json();
+      persistSession(data.token, data.expiresAt);
+    } catch (err) {
+      console.error("Fehler beim Dev Login:", err);
+      setErrorMessage("Der Dev-Login ist fehlgeschlagen.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -115,9 +178,15 @@ export default function LoginPage() {
                   type="button"
                   className="text-sm text-red-600 hover:text-red-800 underline transition-colors duration-200 text-left sm:text-right p-1"
                 >
-                  Passwort vergessen?
+                    Passwort vergessen?
                 </button>
               </div>
+
+              {errorMessage && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-md p-3">
+                  {errorMessage}
+                </div>
+              )}
 
               {/* Submit Button */}
               <button
@@ -133,6 +202,16 @@ export default function LoginPage() {
                 ) : (
                   "Anmelden"
                 )}
+              </button>
+
+              {/* Dev Login Button */}
+              <button
+                type="button"
+                onClick={handleDevLogin}
+                disabled={isLoading}
+                className="w-full border border-dashed border-slate-300 text-slate-600 py-3 rounded-lg font-semibold hover:border-red-400 hover:text-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm"
+              >
+                {isLoading ? "Bitte warten..." : "Dev-Zugang nutzen"}
               </button>
             </form>
 

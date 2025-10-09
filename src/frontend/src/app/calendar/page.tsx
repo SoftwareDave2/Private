@@ -12,6 +12,7 @@ import PageHeader from '@/components/layout/PageHeader'
 import {EventClickArg} from '@fullcalendar/core'
 import DisplayFilters from '@/components/calendar/DisplayFilters'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import {authFetch} from '@/utils/authFetch'
 
 export default function Calendar() {
 
@@ -37,7 +38,7 @@ export default function Calendar() {
     }, [])
 
     const updateEvents = async () => {
-        const response = await fetch(backendApiUrl + '/event/all')
+        const response = await authFetch(backendApiUrl + '/event/all')
         const eventData = (await response.json()) as EventDetails[]
 
         const savedSelections = getSelectedDisplaysFromStorage()

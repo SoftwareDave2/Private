@@ -15,7 +15,7 @@ import { DeleteCalendarEventDialog } from "@/components/calendar/DeleteCalendarE
 import SaveEventErrorAlert from "@/components/calendar/SaveEventErrorAlert";
 import DisplayInputCards from "@/components/calendar/DisplayInputCards";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
-import * as wasi from "node:wasi";
+import {authFetch} from "@/utils/authFetch";
 import WakeupErrorDialog from "@/components/calendar/WakeupErrorDialog";
 
 type CalendarEntryDialogProps = {
@@ -165,7 +165,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
             const isUpdate = data.id > 0;
             const path = isUpdate ? ('/event/update/' + data.id) : '/event/add';
             try {
-                const response = await fetch(backendApiUrl + path, {
+                const response = await authFetch(backendApiUrl + path, {
                     method: isUpdate ? 'PUT' : 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(event)
@@ -210,7 +210,7 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
             console.log(recurringEventPayload);
 
             try {
-                const response = await fetch(backendApiUrl + '/recevent/add', {
+                const response = await authFetch(backendApiUrl + '/recevent/add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(recurringEventPayload)

@@ -13,6 +13,7 @@ import SelectImage from "@/components/edit-display/SelectImage";
 import React, {useEffect, useState} from "react";
 import {DeleteDisplayDialog} from "@/components/dashboard/DeleteDisplayDialog";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import {authFetch} from "@/utils/authFetch";
 
 type EditDisplayDialogProps = {
     open: boolean,
@@ -44,7 +45,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
 
     // Beim Initialisieren: Abrufen der Marken vom Backend
     useEffect(() => {
-        fetch(backendApiUrl + "/display/brands")
+        authFetch(backendApiUrl + "/display/brands")
             .then((response) => response.json())
             .then((brands: string[]) => {
                 console.log("Fetched brands:", brands);
@@ -57,7 +58,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
 
     // Beim Initialisieren: Abrufen der Marken vom Backend
     useEffect(() => {
-        fetch(backendApiUrl + "/display/models")
+        authFetch(backendApiUrl + "/display/models")
             .then((response) => response.json())
             .then((models: string[]) => {
                 console.log("Fetched models:", models);
@@ -132,7 +133,7 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
     const updateDisplay = async (formdata: FormData) => {
         console.log(data);
         try {
-            const response = await fetch(backendApiUrl + '/display/add', {
+            const response = await authFetch(backendApiUrl + '/display/add', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body:

@@ -8,6 +8,7 @@ import {MediaContentItemData} from "@/types/mediaContentItemData";
 import Image from "@/components/shared/Image";
 import {ImageData} from "@/types/imageData";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import {authFetch} from "@/utils/authFetch";
 
 type SelectImageProps = {
     selectedFilename?: string,
@@ -54,7 +55,7 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
     const fetchImages = async () => {
         // Use the appropriate endpoint based on sortOption.
         const endpoint =  '/image/listByFilename';
-        const response = await fetch(backendApiUrl + endpoint);
+        const response = await authFetch(backendApiUrl + endpoint);
         const data = (await response.json()) as MediaContentItemData[];
         updateImageData(data)
     };

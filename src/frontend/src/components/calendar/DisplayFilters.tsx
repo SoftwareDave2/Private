@@ -2,6 +2,7 @@ import {DisplayData} from "@/types/displayData";
 import React, {useEffect, useRef, useState} from "react";
 import {Checkbox, Typography} from "@material-tailwind/react";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import {authFetch} from "@/utils/authFetch";
 
 type DisplayFiltersProps = {
     selectedMacs: string[]
@@ -26,7 +27,7 @@ export default function DisplayFilters({selectedMacs, onSelectedMacsChanged}: Di
     }, [])
 
     const updateDisplays = async () => {
-        const response = await fetch(backendApiUrl + '/display/all')
+        const response = await authFetch(backendApiUrl + '/display/all')
         setDisplays(await response.json() as DisplayData[])
     }
 

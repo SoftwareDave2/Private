@@ -5,6 +5,7 @@ import {Button} from "@material-tailwind/react";
 import {DisplayInputCard} from "@/components/calendar/DisplayInputCard";
 import {DisplayData} from "@/types/displayData";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
+import {authFetch} from "@/utils/authFetch";
 
 type DisplayInputCards = {
     displays: EventDisplayDetails[]
@@ -39,7 +40,7 @@ export default function DisplayInputCards({displays, onSetDisplays}: DisplayInpu
     }
 
     const updateAllDisplays = async () => {
-        const response = await fetch(backendApiUrl + '/display/all')
+        const response = await authFetch(backendApiUrl + '/display/all')
         setAllDisplays((await response.json()) as DisplayData[])
     }
 

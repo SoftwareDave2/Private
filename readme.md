@@ -8,6 +8,7 @@
     - [Option 2: Manueller Start](#option-1-manueller-start)
     - [Option 3: Start-Skript](#option-2-start-skript)
     - [Option 4: Start mit IntelliJ IDE](#option-4-start-mit-intellij-ide)
+5. [Authentifizierung](#-authentifizierung)
 4. [Ordnerstruktur](#-ordnerstruktur)
     - [Backend](#backend)
     - [Frontend](#frontend)
@@ -113,6 +114,18 @@ Für die lokale Entwicklung **muss** die Datei `docker-compose-development.yml` 
 Um die Debuggung-Funktionen der IntelliJ IDE verwenden zu können, kann die Anwendung auch direkt aus der
 Entwicklungsumgebung gestartet werden. Dazu muss das Spring Boot-Backend über den Run-Befehl der IDE gestartet werden
 (`Umschalt`+`F10`). Das Next.js Frontend kann wie bei Option 1 über das Terminal gestartet werden.
+
+## 🔐 Authentifizierung
+- Beim Start werden Backend und Frontend mit einer einfachen Session-Authentifizierung geschützt.  
+- Standard-Zugangsdaten (nur für lokale Entwicklung!):
+  - Benutzername: `admin`
+  - Passwort: `tablohm`
+- Werte werden in `src/main/resources/application.properties` über die Properties `app.auth.username` und `app.auth.password` definiert.
+- Nach erfolgreichem Login speichert das Frontend den Session-Token lokal und in einem Cookie; ohne gültigen Token werden alle Seiten auf `/login` umgeleitet.
+- Für schnelle lokale Tests kann der Button **Dev-Zugang nutzen** genutzt werden. Dieser ruft `/auth/dev-login` auf und benötigt keine Zugangsdaten.  
+  - Die Funktionsfähigkeit hängt von `app.auth.dev-enabled=true` ab.
+  - Vor Produktionseinsatz unbedingt auf `false` setzen und den Button aus der UI entfernen.
+- Abmelden ist jederzeit über den Navbar-Button möglich; dabei werden Token und Cookie gelöscht.
 
 
 ## 📂 Ordnerstruktur
