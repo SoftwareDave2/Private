@@ -1,9 +1,9 @@
-import {useEffect, useMemo, useState} from 'react'
-
-import {DisplayData} from '@/types/displayData'
-import {getBackendApiUrl} from '@/utils/backendApiUrl'
-
-import {DisplayTypeKey} from '../types'
+import { useEffect, useMemo, useState } from 'react'
+import { DisplayData } from '@/types/displayData'
+import { getBackendApiUrl } from '@/utils/backendApiUrl'
+import { authFetch } from '@/utils/authFetch'
+import { DisplayTypeKey } from '../types'
+import {previewDimensions} from "@/app/events/constants";
 
 type UseDisplaySelectionResult = {
     displays: DisplayData[]
@@ -21,19 +21,21 @@ export const useDisplaySelection = (displayType: DisplayTypeKey): UseDisplaySele
     const [isLoadingDisplays, setIsLoadingDisplays] = useState<boolean>(true)
     const [displayError, setDisplayError] = useState<string>('')
 
+    // Load Displays
     useEffect(() => {
         let isCancelled = false
 
         const fetchDisplays = async () => {
+            setIsLoadingDisplays(true)
+            setDisplayError('')
+
             try {
-                const response = await fetch(backendApiUrl + '/display/all')
-                if (!response.ok) {
-                    throw new Error('Konnte Displays nicht abrufen')
-                }
-                const data = await response.json() as DisplayData[]
-                if (isCancelled) {
-                    return
-                }
+                const response = await authFetch(`${backendApiUrl}/display/all`)
+                if (!response.ok) throw new Error('Konnte Displays nicht abrufen')
+
+                const data = (await response.json()) as DisplayData[]
+                if (isCancelled) return
+
                 setDisplays(data)
                 if (data.length > 0) {
                     setSelectedDisplay(data[0].macAddress)
@@ -50,27 +52,24 @@ export const useDisplaySelection = (displayType: DisplayTypeKey): UseDisplaySele
             }
         }
 
-        setIsLoadingDisplays(true)
-        setDisplayError('')
-        fetchDisplays()
-            .catch((error) => console.error(error))
+        fetchDisplays().catch(console.error)
 
         return () => {
             isCancelled = true
         }
     }, [backendApiUrl])
 
+    // Filter displays
     const filteredDisplays = useMemo(() => {
-        if (displayType === 'event-board') {
-            return displays.filter((display) => display.width === 400 && display.height === 300)
-        }
-        return displays
-    }, [displayType, displays])
+        const previewSize = previewDimensions[displayType] ?? previewDimensions['door-sign']
+        return displays.filter(
+            (d) => d.width === previewSize.width && d.height === previewSize.height
+        )
+    }, [displays, displayType])
+
 
     useEffect(() => {
-        if (isLoadingDisplays) {
-            return
-        }
+        if (isLoadingDisplays) return
 
         if (filteredDisplays.length === 0) {
             if (selectedDisplay !== '') {
@@ -79,7 +78,10 @@ export const useDisplaySelection = (displayType: DisplayTypeKey): UseDisplaySele
             return
         }
 
-        const isCurrentSelectionAvailable = filteredDisplays.some((display) => display.macAddress === selectedDisplay)
+        const isCurrentSelectionAvailable = filteredDisplays.some(
+            (display) => display.macAddress === selectedDisplay
+        )
+
         if (!isCurrentSelectionAvailable) {
             setSelectedDisplay(filteredDisplays[0].macAddress)
         }

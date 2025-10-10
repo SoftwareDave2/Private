@@ -19,6 +19,8 @@ public class Display {
     private Integer width;
     private Integer height;
     private String orientation;
+    private String displayType;
+    private String displayTechnology;
 
     @ElementCollection
     @CollectionTable(name = "display_errors", joinColumns = @JoinColumn(name = "display_id"))
@@ -101,6 +103,14 @@ public class Display {
     public void setOrientation(String orientation) {
         this.orientation = orientation;
     }
+
+    public void setDisplayType(String displayType) {this.displayType = displayType; }
+
+    public String getDisplayType() {return displayType;}
+
+    public void setDisplayTechnology(String displayTechnology) {this.displayTechnology = displayTechnology; }
+
+    public String getDisplayTechnology() {return displayTechnology;}
 
     public List<DisplayError> getErrors() {
         return errors;

@@ -12,6 +12,7 @@ import {authFetch} from "@/utils/authFetch";
 
 type SelectImageProps = {
     selectedFilename?: string,
+    selectedDisplayMac?: string,
     screenWidth?: number,
     screenHeight?: number,
     screenOrientation?: string,
@@ -19,7 +20,8 @@ type SelectImageProps = {
     onUnselect: () => void
 }
 
-export default function SelectImage({selectedFilename, screenWidth, screenHeight, screenOrientation, onSelect, onUnselect}: SelectImageProps) {
+
+export default function SelectImage({selectedFilename, selectedDisplayMac, screenWidth, screenHeight, screenOrientation, onSelect, onUnselect}: SelectImageProps) {
 
     const backendApiUrl = getBackendApiUrl();
 
@@ -100,7 +102,7 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
             screenRatio = screenHeight / screenWidth;
         }
 
-        const tolerance = 0.05; // 5% Toleranz
+        const tolerance = 0.10; // 10% Toleranz
 
 
         const imgRatio = imgWidth / imgHeight;
@@ -136,10 +138,34 @@ export default function SelectImage({selectedFilename, screenWidth, screenHeight
 
     const handleDialogOpen = () => setDialogOpen(!dialogOpen)
 
-    const selectHandler = (filename: string) => {
-        onSelect(filename)
-        handleDialogOpen()
-    }
+    const selectHandler = async (filename: string) => {
+
+        onSelect(filename);
+        handleDialogOpen();
+
+        if (!selectedDisplayMac) {
+            console.error("Mac is missing!");
+            return;
+        }
+
+        try {
+            const response = await authFetch(`${backendApiUrl}/oepl/send-image`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, mac: selectedDisplayMac }),
+            });
+
+            if (!response.ok) {
+                console.error("Error while sending image:", await response.text());
+            } else {
+                console.log(`Image "${filename}" successfully sent to backend.`);
+            }
+        } catch (error) {
+            console.error("Network error:", error);
+        }
+    };
+
+
 
     return (
         <>
