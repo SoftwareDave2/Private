@@ -1,11 +1,41 @@
 services:
-  mysql:
-    container_name: 'guide-mysql'
-    image: 'mysql:latest'
+  backend:
+    build:
+      context: .
+      target: runtime
+    container_name: tablohm-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
-      - 'MYSQL_DATABASE=tablohm'
-      - 'MYSQL_PASSWORD=tablohm'
-      - 'MYSQL_ROOT_PASSWORD=tablohm'
-      - 'MYSQL_USER=winkler'
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/tablohm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: winkler
+      SPRING_DATASOURCE_PASSWORD: tablohm
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./src/frontend/public/uploads:/app/src/frontend/public/uploads
+
+  mysql:
+    container_name: guide-mysql
+    image: mysql:latest
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tablohm
+      MYSQL_PASSWORD: tablohm
+      MYSQL_ROOT_PASSWORD: tablohm
+      MYSQL_USER: winkler
     ports:
       - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mysql-data:
