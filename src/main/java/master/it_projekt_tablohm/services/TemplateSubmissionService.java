@@ -20,11 +20,14 @@ public class TemplateSubmissionService {
 
     private final DisplayTemplateRepository templateRepository;
     private final DisplayTemplateDataRepository templateDataRepository;
+    private final TemplateDisplayUpdateService displayUpdateService;
 
     public TemplateSubmissionService(DisplayTemplateRepository templateRepository,
-                                     DisplayTemplateDataRepository templateDataRepository) {
+                                     DisplayTemplateDataRepository templateDataRepository,
+                                     TemplateDisplayUpdateService displayUpdateService) {
         this.templateRepository = templateRepository;
         this.templateDataRepository = templateDataRepository;
+        this.displayUpdateService = displayUpdateService;
     }
 
     @Transactional
@@ -83,6 +86,8 @@ public class TemplateSubmissionService {
         }
 
         templateData = templateDataRepository.save(templateData);
+
+        displayUpdateService.requestUpdate(templateData);
 
         return new TemplateSubmissionResponseDTO(
                 template.getId(),

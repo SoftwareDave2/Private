@@ -2,6 +2,8 @@ package master.it_projekt_tablohm.repositories;
 
 import master.it_projekt_tablohm.models.DisplayTemplateData;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,11 @@ public interface DisplayTemplateDataRepository extends JpaRepository<DisplayTemp
     List<DisplayTemplateData> findByTemplateType(String templateType);
 
     Optional<DisplayTemplateData> findByDisplayMacAndTemplateType(String displayMac, String templateType);
+
+    List<DisplayTemplateData> findByEventEndNotNullAndEventEndLessThanEqual(LocalDateTime cutoff);
+
+    @Query("SELECT DISTINCT d FROM DisplayTemplateData d JOIN d.subItems s WHERE s.end IS NOT NULL AND s.end <= :cutoff")
+    List<DisplayTemplateData> findWithExpiredSubItems(@Param("cutoff") LocalDateTime cutoff);
 
     Optional<DisplayTemplateData> findFirstByDisplayMacAndTemplateTypeAndEventEndAfterOrderByEventStartAsc(
             String displayMac,
