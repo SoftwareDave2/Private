@@ -1,7 +1,11 @@
 package master.it_projekt_tablohm.controller;
 
+import jakarta.validation.Valid;
+import master.it_projekt_tablohm.dto.TemplateSubmissionDTO;
+import master.it_projekt_tablohm.dto.TemplateSubmissionResponseDTO;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.services.OpenEPaperSyncService;
+import master.it_projekt_tablohm.services.TemplateSubmissionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -17,11 +21,14 @@ public class OEPLController {
 
     private final OpenEPaperSyncService openEPaperSyncService;
     private final DisplayRepository displayRepository;
+    private final TemplateSubmissionService templateSubmissionService;
 
     public OEPLController(OpenEPaperSyncService openEPaperSyncService,
-                          DisplayRepository displayRepository) {
+                          DisplayRepository displayRepository,
+                          TemplateSubmissionService templateSubmissionService) {
         this.openEPaperSyncService = openEPaperSyncService;
         this.displayRepository = displayRepository;
+        this.templateSubmissionService = templateSubmissionService;
     }
 
     @PostMapping(path = "/send-image")
@@ -53,5 +60,12 @@ public class OEPLController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error while sending image: " + e.getMessage());
         }
+    }
+
+    @PostMapping(path = "/template")
+    public @ResponseBody ResponseEntity<TemplateSubmissionResponseDTO> submitTemplate(
+            @Valid @RequestBody TemplateSubmissionDTO submissionDTO) {
+        var response = templateSubmissionService.handleSubmission(submissionDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
