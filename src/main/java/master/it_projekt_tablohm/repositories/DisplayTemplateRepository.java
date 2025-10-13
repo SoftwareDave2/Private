@@ -7,10 +7,5 @@ import java.util.Optional;
 
 public interface DisplayTemplateRepository extends JpaRepository<DisplayTemplate, Long> {
 
-    Optional<DisplayTemplate> findFirstByTemplateTypeAndDisplayWidthAndDisplayHeightAndOrientationOrderByUpdatedAtDesc(
-            String templateType,
-            Integer displayWidth,
-            Integer displayHeight,
-            String orientation
-    );
+    Optional<DisplayTemplate> findByTemplateType(String templateType);
 }

@@ -13,7 +13,6 @@ import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -38,28 +37,25 @@ public class TemplateSubmissionService {
         }
 
         DisplayTemplate template = templateRepository
-                .findFirstByTemplateTypeAndDisplayWidthAndDisplayHeightAndOrientationOrderByUpdatedAtDesc(
-                        templateDto.getTemplateType(),
-                        templateDto.getDisplayWidth(),
-                        templateDto.getDisplayHeight(),
-                        templateDto.getOrientation()
-                )
+                .findByTemplateType(templateDto.getTemplateType())
                 .orElseGet(() -> {
                     DisplayTemplate t = new DisplayTemplate();
                     t.setTemplateType(templateDto.getTemplateType());
-                    t.setDisplayWidth(templateDto.getDisplayWidth());
-                    t.setDisplayHeight(templateDto.getDisplayHeight());
-                    t.setOrientation(templateDto.getOrientation());
                     return t;
                 });
 
         template.setName(templateDto.getName());
         template.setDescription(templateDto.getDescription());
         template.setSvgContent(templateDto.getSvgContent());
+        template.setDisplayWidth(templateDto.getDisplayWidth());
+        template.setDisplayHeight(templateDto.getDisplayHeight());
 
         template = templateRepository.save(template);
 
-        DisplayTemplateData templateData = new DisplayTemplateData();
+        DisplayTemplateData templateData = templateDataRepository
+                .findByDisplayMacAndTemplateType(displayDataDto.getDisplayMac(), displayDataDto.getTemplateType())
+                .orElseGet(DisplayTemplateData::new);
+
         templateData.setTemplate(template);
         templateData.setTemplateType(displayDataDto.getTemplateType());
         templateData.setDisplayMac(displayDataDto.getDisplayMac());
@@ -67,7 +63,8 @@ public class TemplateSubmissionService {
         templateData.setEventEnd(displayDataDto.getEventEnd());
         templateData.setFields(displayDataDto.getFields());
 
-        List<DisplayTemplateSubData> subItems = new ArrayList<>();
+        templateData.getSubItems().clear();
+
         List<TemplateSubDataDTO> subDataDtos = displayDataDto.getSubItems();
         if (subDataDtos != null) {
             for (int i = 0; i < subDataDtos.size(); i++) {
@@ -81,10 +78,9 @@ public class TemplateSubmissionService {
                 subEntity.setHighlighted(subDto.getHighlighted());
                 subEntity.setNotes(subDto.getNotes());
                 subEntity.setQrCodeUrl(subDto.getQrCodeUrl());
-                subItems.add(subEntity);
+                templateData.getSubItems().add(subEntity);
             }
         }
-        templateData.setSubItems(subItems);
 
         templateData = templateDataRepository.save(templateData);
 

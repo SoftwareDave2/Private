@@ -28,9 +28,6 @@ public class DisplayTemplate {
     @Column(nullable = false)
     private Integer displayHeight;
 
-    @Column(nullable = false)
-    private String orientation;
-
     @Lob
     @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String svgContent;
@@ -100,14 +97,6 @@ public class DisplayTemplate {
         this.displayHeight = displayHeight;
     }
 
-    public String getOrientation() {
-        return orientation;
-    }
-
-    public void setOrientation(String orientation) {
-        this.orientation = orientation;
-    }
-
     public String getSvgContent() {
         return svgContent;
     }
@@ -132,4 +121,3 @@ public class DisplayTemplate {
         this.dataEntries = dataEntries;
     }
 }
-

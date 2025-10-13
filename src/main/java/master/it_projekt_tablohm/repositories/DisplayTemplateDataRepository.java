@@ -13,10 +13,11 @@ public interface DisplayTemplateDataRepository extends JpaRepository<DisplayTemp
 
     List<DisplayTemplateData> findByTemplateType(String templateType);
 
+    Optional<DisplayTemplateData> findByDisplayMacAndTemplateType(String displayMac, String templateType);
+
     Optional<DisplayTemplateData> findFirstByDisplayMacAndTemplateTypeAndEventEndAfterOrderByEventStartAsc(
             String displayMac,
             String templateType,
             LocalDateTime eventEnd
     );
 }
-

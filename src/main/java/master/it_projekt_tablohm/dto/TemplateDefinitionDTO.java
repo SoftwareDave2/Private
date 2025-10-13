@@ -20,9 +20,6 @@ public class TemplateDefinitionDTO {
     private Integer displayHeight;
 
     @NotBlank
-    private String orientation;
-
-    @NotBlank
     private String svgContent;
 
     public String getTemplateType() {
@@ -65,14 +62,6 @@ public class TemplateDefinitionDTO {
         this.displayHeight = displayHeight;
     }
 
-    public String getOrientation() {
-        return orientation;
-    }
-
-    public void setOrientation(String orientation) {
-        this.orientation = orientation;
-    }
-
     public String getSvgContent() {
         return svgContent;
     }
@@ -81,4 +70,3 @@ public class TemplateDefinitionDTO {
         this.svgContent = svgContent;
     }
 }
-

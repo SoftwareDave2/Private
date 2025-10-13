@@ -9,7 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 @Entity
-@Table(name = "display_template_data")
+@Table(
+        name = "display_template_data",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"display_mac", "template_type"})
+)
 public class DisplayTemplateData {
 
     @Id
@@ -20,10 +23,10 @@ public class DisplayTemplateData {
     @JoinColumn(name = "template_id")
     private DisplayTemplate template;
 
-    @Column(nullable = false)
+    @Column(name = "template_type", nullable = false)
     private String templateType;
 
-    @Column(nullable = false)
+    @Column(name = "display_mac", nullable = false)
     private String displayMac;
 
     private LocalDateTime eventStart;
@@ -133,4 +136,3 @@ public class DisplayTemplateData {
         this.subItems = subItems;
     }
 }
-
