@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DisplayEventService {
@@ -77,5 +78,48 @@ public class DisplayEventService {
                 templateData.getId(),
                 template.getUpdatedAt()
         );
+    }
+
+    public List<TemplateDisplayDataDTO> getDisplayDataByTemplateType(String templateType) {
+        return templateDataRepository.findByTemplateType(templateType)
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<TemplateDisplayDataDTO> getDisplayDataByDisplayMac(String displayMac) {
+        return templateDataRepository.findByDisplayMac(displayMac)
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    private TemplateDisplayDataDTO toDto(DisplayTemplateData entity) {
+        TemplateDisplayDataDTO dto = new TemplateDisplayDataDTO();
+        dto.setTemplateType(entity.getTemplateType());
+        dto.setDisplayMac(entity.getDisplayMac());
+        dto.setEventStart(entity.getEventStart());
+        dto.setEventEnd(entity.getEventEnd());
+        dto.setFields(entity.getFields());
+
+        if (entity.getSubItems() != null) {
+            dto.setSubItems(
+                    entity.getSubItems()
+                            .stream()
+                            .map(sub -> {
+                                TemplateSubDataDTO subDto = new TemplateSubDataDTO();
+                                subDto.setTitle(sub.getTitle());
+                                subDto.setStart(sub.getStart());
+                                subDto.setEnd(sub.getEnd());
+                                subDto.setHighlighted(sub.getHighlighted());
+                                subDto.setNotes(sub.getNotes());
+                                subDto.setQrCodeUrl(sub.getQrCodeUrl());
+                                return subDto;
+                            })
+                            .collect(Collectors.toList())
+            );
+        }
+
+        return dto;
     }
 }

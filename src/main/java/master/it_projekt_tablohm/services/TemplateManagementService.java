@@ -71,6 +71,9 @@ public class TemplateManagementService {
         template.setDescription(dto.getDescription());
         template.setDisplayWidth(dto.getDisplayWidth());
         template.setDisplayHeight(dto.getDisplayHeight());
+        if (dto.getDisplayWidth() != null && dto.getDisplayHeight() != null) {
+            template.setOrientation(dto.getDisplayWidth() >= dto.getDisplayHeight() ? "landscape" : "portrait");
+        }
         template.setSvgContent(dto.getSvgContent());
     }
 

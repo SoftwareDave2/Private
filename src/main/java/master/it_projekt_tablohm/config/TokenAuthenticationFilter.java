@@ -54,7 +54,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         return path.startsWith("/auth/login")
                 || path.startsWith("/auth/dev-login")
                 || path.startsWith("/error")
-                || path.startsWith("/actuator");
+                || path.startsWith("/actuator")
+                || path.startsWith("/oepl");
     }
 
     private Optional<String> resolveToken(String authorizationHeader) {
