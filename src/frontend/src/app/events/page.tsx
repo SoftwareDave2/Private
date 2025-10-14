@@ -89,6 +89,7 @@ const buildEventBoardPayload = (form: EventBoardForm) => {
         title: (event.title ?? '').trim(),
         date: event.date ?? '',
         time: event.time ?? '',
+        endTime: event.endTime ?? '',
         qrLink: (event.qrLink ?? '').trim(),
     }))
     return {
@@ -374,6 +375,7 @@ export default function EventsPage() {
             title: eventDraft.title,
             date: eventDraft.date,
             time: eventDraft.time,
+            endTime: eventDraft.endTime,
             qrLink: eventDraft.qrLink,
         })
         closeEventDialog()

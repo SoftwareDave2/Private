@@ -33,6 +33,8 @@ export function EventBoardEventDialog({ open, event, onClose, onChange, onSave }
                                onChange={(inputEvent) => handleFieldChange('date', inputEvent.target.value)} />
                         <Input type={'time'} label={'Zeit'} value={event.time}
                                onChange={(inputEvent) => handleFieldChange('time', inputEvent.target.value)} />
+                        <Input type={'time'} label={'Endzeit'} value={event.endTime || ''}
+                               onChange={(inputEvent) => handleFieldChange('endTime', inputEvent.target.value)} />
                         <Input type={'url'} label={'Link für QR-Code'} value={event.qrLink}
                                onChange={(inputEvent) => handleFieldChange('qrLink', inputEvent.target.value)}
                                placeholder={'https://...'} />

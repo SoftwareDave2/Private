@@ -69,6 +69,7 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                             const title = event.title.trim() || 'Titel festlegen'
                             const date = formatDateLabel(event.date.trim()) || 'Datum folgt'
                             const time = event.time.trim() || 'Zeit folgt'
+                            const endTime = event.endTime?.trim() || ''
                             const hasQrLink = event.qrLink.trim().length > 0
 
                             return (
@@ -76,8 +77,8 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                                      className={`flex items-center justify-between rounded-lg border border-red-600/40 bg-white ${isDenseLayout ? 'px-2 py-1' : 'px-2.5 py-1.5'} ${isDenseLayout ? 'gap-1.5' : 'gap-2'}`}>
                                     <div className={`flex-1 min-w-0 ${isDenseLayout ? 'space-y-0.5' : 'space-y-0.5'}`}>
                                         <p className={`${isDenseLayout ? 'text-[0.78rem]' : 'text-[0.82rem]'} font-semibold text-black truncate`} title={title}>{title}</p>
-                                        <p className={`${isDenseLayout ? 'text-[0.68rem]' : 'text-[0.72rem]'} text-black truncate`} title={`${date} · ${time}`}>
-                                            {date} · {time}
+                                        <p className={`${isDenseLayout ? 'text-[0.68rem]' : 'text-[0.72rem]'} text-black truncate`} title={`${date} · ${time}${endTime ? ' - ' + endTime : ''}`}>
+                                            {date} · {time}{endTime ? ' - ' + endTime : ''}
                                         </p>
                                     </div>
                                     <div className={`flex items-center justify-center rounded-md uppercase text-center leading-tight px-1 border ${hasQrLink ? 'border-black bg-red-50 text-red-700' : 'border-dashed border-black text-black'} ${isDenseLayout ? 'h-10 w-10 text-[0.45rem]' : 'h-11 w-11 text-[0.48rem]'}`}>

@@ -37,6 +37,7 @@ export function EventBoardFormSection({
                                 <p className={'font-semibold text-sm text-black'}>{event.title.trim() || 'Neues Ereignis'}</p>
                                 <p className={'text-xs text-blue-gray-500 mt-1'}>
                                     {(event.date.trim() || 'Datum festlegen')} · {(event.time.trim() || 'Uhrzeit festlegen')}
+                                    {event.endTime?.trim() ? ` - ${event.endTime.trim()}` : ''}
                                 </p>
                                 {event.qrLink.trim() && (
                                     <p className={'text-xs text-blue-gray-500 mt-1 break-words'}>{event.qrLink}</p>

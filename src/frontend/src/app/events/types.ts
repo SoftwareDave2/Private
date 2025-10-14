@@ -20,6 +20,7 @@ export type EventBoardEvent = {
     title: string
     date: string
     time: string
+    endTime?: string
     qrLink: string
 }
 
