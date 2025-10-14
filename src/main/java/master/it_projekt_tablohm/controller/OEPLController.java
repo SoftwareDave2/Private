@@ -1,17 +1,20 @@
 package master.it_projekt_tablohm.controller;
 
 import jakarta.validation.Valid;
-import master.it_projekt_tablohm.dto.TemplateSubmissionDTO;
-import master.it_projekt_tablohm.dto.TemplateSubmissionResponseDTO;
+import master.it_projekt_tablohm.dto.DisplayEventSubmissionResponseDTO;
+import master.it_projekt_tablohm.dto.TemplateDefinitionDTO;
+import master.it_projekt_tablohm.dto.TemplateDisplayDataDTO;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
+import master.it_projekt_tablohm.services.DisplayEventService;
 import master.it_projekt_tablohm.services.OpenEPaperSyncService;
-import master.it_projekt_tablohm.services.TemplateSubmissionService;
+import master.it_projekt_tablohm.services.TemplateManagementService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -21,14 +24,17 @@ public class OEPLController {
 
     private final OpenEPaperSyncService openEPaperSyncService;
     private final DisplayRepository displayRepository;
-    private final TemplateSubmissionService templateSubmissionService;
+    private final DisplayEventService displayEventService;
+    private final TemplateManagementService templateManagementService;
 
     public OEPLController(OpenEPaperSyncService openEPaperSyncService,
                           DisplayRepository displayRepository,
-                          TemplateSubmissionService templateSubmissionService) {
+                          DisplayEventService displayEventService,
+                          TemplateManagementService templateManagementService) {
         this.openEPaperSyncService = openEPaperSyncService;
         this.displayRepository = displayRepository;
-        this.templateSubmissionService = templateSubmissionService;
+        this.displayEventService = displayEventService;
+        this.templateManagementService = templateManagementService;
     }
 
     @PostMapping(path = "/send-image")
@@ -62,10 +68,36 @@ public class OEPLController {
         }
     }
 
-    @PostMapping(path = "/template")
-    public @ResponseBody ResponseEntity<TemplateSubmissionResponseDTO> submitTemplate(
-            @Valid @RequestBody TemplateSubmissionDTO submissionDTO) {
-        var response = templateSubmissionService.handleSubmission(submissionDTO);
+    @PostMapping(path = "/display-data")
+    public @ResponseBody ResponseEntity<DisplayEventSubmissionResponseDTO> submitDisplayData(
+            @Valid @RequestBody TemplateDisplayDataDTO displayDataDTO) {
+        var response = displayEventService.saveDisplayData(displayDataDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping(path = "/templates")
+    public @ResponseBody ResponseEntity<List<TemplateDefinitionDTO>> listTemplates() {
+        return ResponseEntity.ok(templateManagementService.listTemplates());
+    }
+
+    @GetMapping(path = "/templates/{templateType}")
+    public @ResponseBody ResponseEntity<TemplateDefinitionDTO> getTemplate(
+            @PathVariable String templateType) {
+        return ResponseEntity.ok(templateManagementService.getTemplate(templateType));
+    }
+
+    @PostMapping(path = "/templates")
+    public @ResponseBody ResponseEntity<TemplateDefinitionDTO> createTemplate(
+            @Valid @RequestBody TemplateDefinitionDTO templateDefinitionDTO) {
+        var created = templateManagementService.createTemplate(templateDefinitionDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping(path = "/templates/{templateType}")
+    public @ResponseBody ResponseEntity<TemplateDefinitionDTO> updateTemplate(
+            @PathVariable String templateType,
+            @Valid @RequestBody TemplateDefinitionDTO templateDefinitionDTO) {
+        var updated = templateManagementService.updateTemplate(templateType, templateDefinitionDTO);
+        return ResponseEntity.ok(updated);
     }
 }
