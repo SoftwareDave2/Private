@@ -23,14 +23,17 @@ public class TemplateMaintenanceService {
 
     private final DisplayTemplateDataRepository templateDataRepository;
     private final TemplateDisplayUpdateService displayUpdateService;
+    private final DisplayEventService displayEventService;
 
     @Value("${oepl.template.cleanup-enabled:true}")
     private boolean cleanupEnabled;
 
     public TemplateMaintenanceService(DisplayTemplateDataRepository templateDataRepository,
-                                      TemplateDisplayUpdateService displayUpdateService) {
+                                      TemplateDisplayUpdateService displayUpdateService,
+                                      DisplayEventService displayEventService) {
         this.templateDataRepository = templateDataRepository;
         this.displayUpdateService = displayUpdateService;
+        this.displayEventService = displayEventService;
     }
 
     @Scheduled(fixedRate = 6000)
@@ -108,6 +111,7 @@ public class TemplateMaintenanceService {
             String[] parts = entry.split("\\|");
             String mac = parts[0];
             String templateType = parts[1];
+            displayEventService.applyDefaultState(mac, templateType);
             displayUpdateService.requestUpdate(mac, templateType);
         }
     }

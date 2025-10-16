@@ -24,13 +24,16 @@ public class DisplayEventService {
     private final DisplayTemplateRepository templateRepository;
     private final DisplayTemplateDataRepository templateDataRepository;
     private final TemplateDisplayUpdateService displayUpdateService;
+    private final TemplateDefaultContentProvider defaultContentProvider;
 
     public DisplayEventService(DisplayTemplateRepository templateRepository,
                                DisplayTemplateDataRepository templateDataRepository,
-                               TemplateDisplayUpdateService displayUpdateService) {
+                               TemplateDisplayUpdateService displayUpdateService,
+                               TemplateDefaultContentProvider defaultContentProvider) {
         this.templateRepository = templateRepository;
         this.templateDataRepository = templateDataRepository;
         this.displayUpdateService = displayUpdateService;
+        this.defaultContentProvider = defaultContentProvider;
     }
 
     @Transactional
@@ -114,6 +117,11 @@ public class DisplayEventService {
                 .collect(Collectors.toList());
     }
 
+    public void applyDefaultState(String displayMac, String templateType) {
+        TemplateDisplayDataDTO defaultDto = defaultContentProvider.createDefaultDisplayData(templateType, displayMac);
+        displayUpdateService.requestDefault(displayMac, templateType, defaultDto);
+    }
+
     private TemplateDisplayDataDTO toDto(DisplayTemplateData entity) {
         TemplateDisplayDataDTO dto = new TemplateDisplayDataDTO();
         dto.setTemplateType(entity.getTemplateType());
@@ -156,3 +164,4 @@ public class DisplayEventService {
         return dto;
     }
 }
+
