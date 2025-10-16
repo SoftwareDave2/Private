@@ -169,6 +169,7 @@ const addMinutes = (date: Date, minutes: number) => new Date(date.getTime() + mi
 
 const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): TemplateDisplayDataRequest => {
     const now = new Date()
+    const inOneMinute = addMinutes(now, 1)
     const inThirty = addMinutes(now, 30)
     const inSixty = addMinutes(now, 60)
     const inNinety = addMinutes(now, 90)
@@ -214,8 +215,8 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
             subItems: [
                 {
                     title: 'Infoveranstaltung KI',
-                    start: toLocalDateTimeString(inThirty),
-                    end: toLocalDateTimeString(inSixty),
+                    start: toLocalDateTimeString(now),
+                    end: toLocalDateTimeString(inOneMinute),
                     qrCodeUrl: 'https://ohm.example/events/ki',
                 },
                 {
@@ -231,12 +232,12 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
             templateType: displayType,
             displayMac: mac,
             eventStart: toLocalDateTimeString(now),
-            eventEnd: toLocalDateTimeString(inTwoHours),
+            eventEnd: toLocalDateTimeString(inOneMinute),
             fields: {
                 title: 'Wartungsarbeiten',
                 body: 'Am Campus finden zwischen 14:00 und 16:00 Uhr Wartungsarbeiten statt.',
                 start: toLocalDateTimeString(now),
-                end: toLocalDateTimeString(inTwoHours),
+                end: toLocalDateTimeString(inOneMinute),
             },
         }
     case 'room-booking':

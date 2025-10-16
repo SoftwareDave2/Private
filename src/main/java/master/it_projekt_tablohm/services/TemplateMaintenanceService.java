@@ -33,14 +33,14 @@ public class TemplateMaintenanceService {
         this.displayUpdateService = displayUpdateService;
     }
 
-    @Scheduled(fixedDelayString = "${oepl.template.cleanup-interval-ms:60000}")
+    @Scheduled(fixedRate = 6000)
     @Transactional
     public void pruneExpiredTemplates() {
         if (!cleanupEnabled) {
             return;
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Europe/Berlin"));
 
         handleExpiredTemplates(now);
         handleExpiredSubItems(now);
@@ -89,7 +89,13 @@ public class TemplateMaintenanceService {
             }
 
             if (modified) {
-                templateDataRepository.save(data);
+                if (data.getSubItems().isEmpty() && data.getEventEnd() == null) {
+                    logger.info("Removing template data id={} mac={} templateType={} because all sub items expired",
+                            data.getId(), data.getDisplayMac(), data.getTemplateType());
+                    templateDataRepository.delete(data);
+                } else {
+                    templateDataRepository.save(data);
+                }
                 affectedDisplays.add(data.getDisplayMac() + "|" + data.getTemplateType());
             }
         }
@@ -106,4 +112,3 @@ public class TemplateMaintenanceService {
         }
     }
 }
-

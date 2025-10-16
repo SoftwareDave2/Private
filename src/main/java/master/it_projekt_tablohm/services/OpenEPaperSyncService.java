@@ -56,7 +56,7 @@ public class OpenEPaperSyncService {
     }
 
     @Transactional
-    @Scheduled(fixedRate = 6000)
+    @Scheduled(fixedRate = 60000)
     public void initialTagSynchronization() {
         if (!initialized) {
             logger.info("Initially loading oepl data from {}", OEPL_HOST);

@@ -2,6 +2,7 @@ package master.it_projekt_tablohm.services;
 
 import jakarta.transaction.Transactional;
 import master.it_projekt_tablohm.dto.DisplayEventSubmissionResponseDTO;
+import master.it_projekt_tablohm.dto.DisplaySubDataDTO;
 import master.it_projekt_tablohm.dto.TemplateDisplayDataDTO;
 import master.it_projekt_tablohm.dto.TemplateSubDataDTO;
 import master.it_projekt_tablohm.models.DisplayTemplate;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,9 +41,18 @@ public class DisplayEventService {
                         HttpStatus.NOT_FOUND,
                         "Template type " + displayDataDto.getTemplateType() + " not found"));
 
-        DisplayTemplateData templateData = templateDataRepository
-                .findByDisplayMacAndTemplateType(displayDataDto.getDisplayMac(), displayDataDto.getTemplateType())
+        var existingEntries = templateDataRepository.findByDisplayMac(displayDataDto.getDisplayMac());
+
+        DisplayTemplateData templateData = existingEntries.stream()
+                .max(Comparator.comparing(DisplayTemplateData::getUpdatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
                 .orElseGet(DisplayTemplateData::new);
+
+        final Long retainedId = templateData.getId();
+
+        existingEntries.stream()
+                .filter(entry -> entry.getId() != null && !entry.getId().equals(retainedId))
+                .forEach(templateDataRepository::delete);
 
         templateData.setTemplate(template);
         templateData.setTemplateType(displayDataDto.getTemplateType());
@@ -94,6 +105,15 @@ public class DisplayEventService {
                 .collect(Collectors.toList());
     }
 
+    public List<DisplaySubDataDTO> getSubDataByDisplayMac(String displayMac) {
+        return templateDataRepository.findByDisplayMac(displayMac)
+                .stream()
+                .flatMap(data -> data.getSubItems()
+                        .stream()
+                        .map(sub -> toSubDataDto(data, sub)))
+                .collect(Collectors.toList());
+    }
+
     private TemplateDisplayDataDTO toDto(DisplayTemplateData entity) {
         TemplateDisplayDataDTO dto = new TemplateDisplayDataDTO();
         dto.setTemplateType(entity.getTemplateType());
@@ -120,6 +140,19 @@ public class DisplayEventService {
             );
         }
 
+        return dto;
+    }
+
+    private DisplaySubDataDTO toSubDataDto(DisplayTemplateData parent, DisplayTemplateSubData sub) {
+        DisplaySubDataDTO dto = new DisplaySubDataDTO();
+        dto.setTemplateType(parent.getTemplateType());
+        dto.setDisplayMac(parent.getDisplayMac());
+        dto.setTitle(sub.getTitle());
+        dto.setStart(sub.getStart());
+        dto.setEnd(sub.getEnd());
+        dto.setHighlighted(sub.getHighlighted());
+        dto.setNotes(sub.getNotes());
+        dto.setQrCodeUrl(sub.getQrCodeUrl());
         return dto;
     }
 }

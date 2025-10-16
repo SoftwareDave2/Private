@@ -17,6 +17,8 @@ public interface DisplayTemplateDataRepository extends JpaRepository<DisplayTemp
 
     Optional<DisplayTemplateData> findByDisplayMacAndTemplateType(String displayMac, String templateType);
 
+    Optional<DisplayTemplateData> findFirstByDisplayMac(String displayMac);
+
     List<DisplayTemplateData> findByEventEndNotNullAndEventEndLessThanEqual(LocalDateTime cutoff);
 
     @Query("SELECT DISTINCT d FROM DisplayTemplateData d JOIN d.subItems s WHERE s.end IS NOT NULL AND s.end <= :cutoff")
