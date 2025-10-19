@@ -1,15 +1,14 @@
-# Build stage: compile the Spring Boot application into a runnable JAR
-FROM maven:3.9.6-eclipse-temurin-17 AS build
-WORKDIR /workspace
-COPY pom.xml ./
-COPY src/main ./src/main
-COPY src/test ./src/test
-RUN mvn -B -DskipTests package
+# Use openjdk 17 as base image for Spring Boot
+FROM openjdk:17-jdk-slim
 
-# Runtime stage: lightweight image to run the packaged JAR
-FROM openjdk:17-jdk-slim AS runtime
+# Set the working directory
 WORKDIR /app
-COPY --from=build /workspace/target/*.jar app.jar
-RUN mkdir -p /app/src/frontend/public/uploads
+
+# Copy the JAR file built by Maven into the container
+COPY target/it_projekt_tablohm-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose the port that Spring Boot is listening on
 EXPOSE 8080
+
+# Command to run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
