@@ -38,6 +38,16 @@ import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import {authFetch} from '@/utils/authFetch'
 import {useDisplaySelection} from './hooks/useDisplaySelection'
 import {usePreviewScale} from './hooks/usePreviewScale'
+import {
+    createTemplateSubItem,
+    getEventDisplayEndDateTime,
+    getEventStartDateTime,
+    getNextUpcomingEvent,
+    getUpcomingEvents,
+    normalizeEvent,
+    sortEventsBySchedule,
+    toIsoLocalString,
+} from './utils/eventBoard'
 
 type TemplateDisplayDataRequest = {
     templateType: DisplayTypeKey
@@ -71,6 +81,13 @@ type DisplayPayloadForms = {
     roomBookingForm: RoomBookingForm
 }
 
+type DisplayPayload = {
+    fields: Record<string, unknown>
+    subItems?: TemplateDisplayDataRequest['subItems']
+    eventStart?: string | null
+    eventEnd?: string | null
+}
+
 const formatDoorSignDate = (value: string) => {
     if (!value) {
         return '—'
@@ -102,19 +119,27 @@ const buildDoorSignPayload = (form: DoorSignForm) => {
     }
 }
 
-const buildEventBoardPayload = (form: EventBoardForm) => {
+const buildEventBoardPayload = (form: EventBoardForm): DisplayPayload => {
     const eventsSource = Array.isArray(form.events) ? form.events : []
-    const normalizedEvents = eventsSource.map((event) => ({
-        id: event.id,
-        title: (event.title ?? '').trim(),
-        date: event.date ?? '',
-        time: event.time ?? '',
-        qrLink: (event.qrLink ?? '').trim(),
-    }))
+    const normalizedEvents = eventsSource.map(normalizeEvent)
+    const sortedEvents = sortEventsBySchedule(normalizedEvents)
+    const upcomingEvents = getUpcomingEvents(sortedEvents)
+    const subItems = upcomingEvents.map(createTemplateSubItem)
+
+    const firstUpcomingStart = upcomingEvents.length > 0 ? getEventStartDateTime(upcomingEvents[0]) : null
+    const lastUpcomingEnd = upcomingEvents.length > 0
+        ? getEventDisplayEndDateTime(upcomingEvents[upcomingEvents.length - 1])
+        : null
+
     return {
-        title: (form.title ?? '').trim(),
-        description: (form.description ?? '').trim(),
-        events: normalizedEvents,
+        fields: {
+            title: (form.title ?? '').trim(),
+            events: sortedEvents,
+            upcomingEvents,
+        },
+        subItems,
+        eventStart: firstUpcomingStart ? toIsoLocalString(firstUpcomingStart) : null,
+        eventEnd: lastUpcomingEnd ? toIsoLocalString(lastUpcomingEnd) : null,
     }
 }
 
@@ -140,18 +165,18 @@ const buildRoomBookingPayload = (form: RoomBookingForm) => {
     }
 }
 
-const buildDisplayPayload = (displayType: DisplayTypeKey, forms: DisplayPayloadForms) => {
+const buildDisplayPayload = (displayType: DisplayTypeKey, forms: DisplayPayloadForms): DisplayPayload => {
     switch (displayType) {
     case 'door-sign':
-        return buildDoorSignPayload(forms.doorSignForm)
+        return { fields: buildDoorSignPayload(forms.doorSignForm) }
     case 'event-board':
         return buildEventBoardPayload(forms.eventBoardForm)
     case 'notice-board':
-        return buildNoticeBoardPayload(forms.noticeBoardForm)
+        return { fields: buildNoticeBoardPayload(forms.noticeBoardForm) }
     case 'room-booking':
-        return buildRoomBookingPayload(forms.roomBookingForm)
+        return { fields: buildRoomBookingPayload(forms.roomBookingForm) }
     default:
-        return {}
+        return { fields: {} }
     }
 }
 
@@ -202,31 +227,77 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
                 },
             ],
         }
-    case 'event-board':
+    case 'event-board': {
+        const toDateOnly = (value: Date) => toLocalDateTimeString(value).slice(0, 10)
+        const toTimeOnly = (value: Date) => toLocalDateTimeString(value).slice(11, 16)
+        const sampleEvents = [
+            {
+                id: 1,
+                title: 'Infoveranstaltung KI',
+                start: now,
+                end: inOneMinute,
+                qrCodeUrl: 'https://ohm.example/events/ki',
+            },
+            {
+                id: 2,
+                title: 'Laborführung',
+                start: inThirty,
+                end: inSixty,
+                qrCodeUrl: 'https://ohm.example/events/labor',
+            },
+            {
+                id: 3,
+                title: 'Workshop Projektmanagement',
+                start: inSixty,
+                end: inNinety,
+                qrCodeUrl: 'https://ohm.example/events/projekt',
+            },
+            {
+                id: 4,
+                title: 'After-Work Networking',
+                start: inTwoHours,
+                end: inFourHours,
+                qrCodeUrl: 'https://ohm.example/events/networking',
+            },
+            {
+                id: 5,
+                title: 'Gastvortrag Robotik',
+                start: addMinutes(inFourHours, 90),
+                end: addMinutes(inFourHours, 180),
+                qrCodeUrl: 'https://ohm.example/events/robotik',
+            },
+        ]
+        const upcomingSamples = sampleEvents.slice(0, 4)
         return {
             templateType: displayType,
             displayMac: mac,
-            eventStart: toLocalDateTimeString(now),
-            eventEnd: toLocalDateTimeString(inFourHours),
+            eventStart: toLocalDateTimeString(sampleEvents[0].start),
+            eventEnd: toLocalDateTimeString(upcomingSamples[upcomingSamples.length - 1].end),
             fields: {
                 title: 'Heute im OHM',
-                description: 'Anstehende Veranstaltungen',
+                events: sampleEvents.map((event) => ({
+                    id: event.id,
+                    title: event.title,
+                    date: toDateOnly(event.start),
+                    time: toTimeOnly(event.start),
+                    qrLink: event.qrCodeUrl,
+                })),
+                upcomingEvents: upcomingSamples.map((event) => ({
+                    id: event.id,
+                    title: event.title,
+                    date: toDateOnly(event.start),
+                    time: toTimeOnly(event.start),
+                    qrLink: event.qrCodeUrl,
+                })),
             },
-            subItems: [
-                {
-                    title: 'Infoveranstaltung KI',
-                    start: toLocalDateTimeString(now),
-                    end: toLocalDateTimeString(inOneMinute),
-                    qrCodeUrl: 'https://ohm.example/events/ki',
-                },
-                {
-                    title: 'Laborführung',
-                    start: toLocalDateTimeString(inSixty),
-                    end: toLocalDateTimeString(inTwoHours),
-                    qrCodeUrl: 'https://ohm.example/events/labor',
-                },
-            ],
+            subItems: upcomingSamples.map((event) => ({
+                title: event.title,
+                start: toLocalDateTimeString(event.start),
+                end: toLocalDateTimeString(event.end),
+                qrCodeUrl: event.qrCodeUrl,
+            })),
         }
+    }
     case 'notice-board':
         return {
             templateType: displayType,
@@ -425,9 +496,6 @@ export default function EventsPage() {
     }
 
     const startCreateCalendarEvent = (dateString: string) => {
-        if (eventBoardForm.events.length >= 4) {
-            return
-        }
         const nextId = eventBoardForm.events.length === 0
             ? 1
             : Math.max(...eventBoardForm.events.map((event) => event.id)) + 1
@@ -451,7 +519,8 @@ export default function EventsPage() {
     const openCalendarWithoutSelection = () => {
         setEventDraftMode(null)
         setEventDraft(null)
-        openEventCalendar()
+        const nextUpcoming = getNextUpcomingEvent(eventBoardForm.events)
+        openEventCalendar(nextUpcoming?.date ?? null)
     }
 
     const openCalendarForEvent = (event: EventBoardEvent) => {
@@ -463,6 +532,9 @@ export default function EventsPage() {
         setEventDraft((prev) => {
             if (!prev) {
                 return prev
+            }
+            if (key === 'date') {
+                setEventCalendarFocusDate(value.trim() || null)
             }
             return {
                 ...prev,
@@ -478,18 +550,19 @@ export default function EventsPage() {
         if (!eventDraft.date.trim()) {
             return
         }
-        const targetDate = eventDraft.date
+        const normalizedDraft = normalizeEvent(eventDraft)
+        const targetDate = normalizedDraft.date
         if (eventDraftMode === 'create') {
             setEventBoardForm((prev) => ({
                 ...prev,
-                events: [...prev.events, eventDraft],
+                events: [...prev.events, normalizedDraft],
             }))
         } else if (eventDraftMode === 'edit') {
             updateEventBoardEvent(eventDraft.id, {
-                title: eventDraft.title,
-                date: eventDraft.date,
-                time: eventDraft.time,
-                qrLink: eventDraft.qrLink,
+                title: normalizedDraft.title,
+                date: normalizedDraft.date,
+                time: normalizedDraft.time,
+                qrLink: normalizedDraft.qrLink,
             })
         }
         setEventDraftMode(null)
@@ -503,17 +576,12 @@ export default function EventsPage() {
         if (!eventDraft) {
             return
         }
-        const targetDate = eventDraft.date
         removeEventBoardEvent(eventDraft.id)
-        setEventDraftMode(null)
-        setEventDraft(null)
-        if (targetDate.trim()) {
-            setEventCalendarFocusDate(targetDate)
-        }
     }
 
     const removeEventBoardEvent = (eventId: number) => {
         const isDraftTarget = eventDraft?.id === eventId
+        const remainingEvents = eventBoardForm.events.filter((event) => event.id !== eventId)
         setEventBoardForm((prev) => ({
             ...prev,
             events: prev.events.filter((event) => event.id !== eventId),
@@ -522,6 +590,8 @@ export default function EventsPage() {
             setEventDraftMode(null)
             setEventDraft(null)
         }
+        const nextUpcoming = getNextUpcomingEvent(remainingEvents)
+        setEventCalendarFocusDate(nextUpcoming?.date ?? null)
     }
 
     const updateEventBoardEvent = (eventId: number, updates: Partial<EventBoardEvent>) => {
@@ -598,7 +668,7 @@ export default function EventsPage() {
         closeBookingDialog()
     }
 
-    const handleSendToDisplay = () => {
+    const handleSendToDisplay = async () => {
         if (!selectedDisplay) {
             setSendFeedback({ type: 'error', message: 'Bitte wählen Sie zuerst ein Display aus.' })
             return
@@ -606,21 +676,52 @@ export default function EventsPage() {
 
         setSendFeedback(null)
         setIsSendInProgress(true)
-        const payload = buildDisplayPayload(displayType, {
+        const payloadMeta = buildDisplayPayload(displayType, {
             doorSignForm,
             eventBoardForm,
             noticeBoardForm,
             roomBookingForm,
         })
+        const requestBody: TemplateDisplayDataRequest = {
+            templateType: displayType,
+            displayMac: selectedDisplay,
+            eventStart: payloadMeta.eventStart ?? undefined,
+            eventEnd: payloadMeta.eventEnd ?? undefined,
+            fields: payloadMeta.fields,
+            subItems: payloadMeta.subItems ?? undefined,
+        }
+
         console.log('Prepared display payload', {
             macAddress: selectedDisplay,
             displayType,
-            payload,
+            payload: requestBody,
         })
-        setTimeout(() => {
-            setSendFeedback({ type: 'success', message: 'Die Live-Vorschau wurde (Demo) erfolgreich an das Display übermittelt.' })
+
+        try {
+            const response = await authFetch(`${getBackendApiUrl()}/oepl/display-data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(errorText || `HTTP ${response.status}`)
+            }
+
+            setSendFeedback({
+                type: 'success',
+                message: 'Ereignisdaten wurden gespeichert und zur Aktualisierung des Displays übermittelt.',
+            })
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
+            setSendFeedback({
+                type: 'error',
+                message: `Fehler beim Speichern der Daten: ${message}`,
+            })
+        } finally {
             setIsSendInProgress(false)
-        }, 400)
+        }
     }
 
     const handleSendTestData = async () => {
@@ -865,7 +966,6 @@ export default function EventsPage() {
                 selectedEvent={eventDraft}
                 mode={eventDraftMode}
                 focusDate={eventCalendarFocusDate}
-                maxEventsReached={eventBoardForm.events.length >= 4}
                 onClose={closeEventCalendar}
                 onDateSelect={startCreateCalendarEvent}
                 onEventSelect={startEditCalendarEvent}

@@ -1,4 +1,5 @@
 import {EventBoardForm} from '../../types'
+import {EVENT_BOARD_DISPLAY_LIMIT, getUpcomingEvents} from '../../utils/eventBoard'
 
 type EventBoardPreviewProps = {
     form: EventBoardForm
@@ -20,39 +21,15 @@ const formatDateLabel = (value: string) => {
 
 export function EventBoardPreview({ form }: EventBoardPreviewProps) {
     const events = Array.isArray(form.events)
-        ? form.events
-            .filter((event) =>
+        ? getUpcomingEvents(
+            form.events.filter((event) =>
                 (event.title ?? '').trim().length > 0
                 || (event.date ?? '').trim().length > 0
                 || (event.time ?? '').trim().length > 0,
-            )
-            .sort((a, b) => {
-                const dateA = a.date.trim()
-                const dateB = b.date.trim()
-
-                // Wenn beide Daten leer sind, ursprüngliche Reihenfolge beibehalten
-                if (!dateA && !dateB) return 0
-                // Leere Daten nach hinten
-                if (!dateA) return 1
-                if (!dateB) return -1
-
-                // Daten vergleichen
-                const dateCompare = dateA.localeCompare(dateB)
-                if (dateCompare !== 0) return dateCompare
-
-                // Bei gleichem Datum nach Uhrzeit sortieren
-                const timeA = a.time.trim()
-                const timeB = b.time.trim()
-
-                if (!timeA && !timeB) return 0
-                if (!timeA) return 1
-                if (!timeB) return -1
-
-                return timeA.localeCompare(timeB)
-            })
-            .slice(0, 4)
+            ),
+        )
         : []
-    const isDenseLayout = events.length >= 4
+    const isDenseLayout = events.length >= EVENT_BOARD_DISPLAY_LIMIT
 
     return (
         <div className={'rounded-2xl bg-white border-2 border-black p-4 text-black flex flex-col gap-2 overflow-hidden'}
@@ -64,7 +41,7 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
             )}
             <div className={'flex-1 overflow-hidden'}>
                 {events.length > 0 ? (
-                    <div className={`flex flex-col h-full ${events.length < 4 ? 'justify-start' : 'justify-between'} ${isDenseLayout ? 'gap-1' : 'gap-1.5'}`}>
+                    <div className={`flex flex-col h-full ${events.length < EVENT_BOARD_DISPLAY_LIMIT ? 'justify-start' : 'justify-between'} ${isDenseLayout ? 'gap-1' : 'gap-1.5'}`}>
                         {events.map((event) => {
                             const title = event.title.trim() || 'Titel festlegen'
                             const date = formatDateLabel(event.date.trim()) || 'Datum folgt'
