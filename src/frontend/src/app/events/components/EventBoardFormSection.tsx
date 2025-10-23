@@ -4,7 +4,7 @@ import {EventBoardEvent, EventBoardForm} from '../types'
 type EventBoardFormSectionProps = {
     form: EventBoardForm
     onFormChange: (next: EventBoardForm) => void
-    onAddEvent: () => void
+    onOpenCalendar: () => void
     onEditEvent: (event: EventBoardEvent) => void
     onRemoveEvent: (eventId: number) => void
 }
@@ -12,7 +12,7 @@ type EventBoardFormSectionProps = {
 export function EventBoardFormSection({
     form,
     onFormChange,
-    onAddEvent,
+    onOpenCalendar,
     onEditEvent,
     onRemoveEvent,
 }: EventBoardFormSectionProps) {
@@ -50,9 +50,8 @@ export function EventBoardFormSection({
                     ))}
                 </div>
                 <Button variant={'outlined'} size={'sm'} className={'normal-case w-full sm:w-auto'}
-                        disabled={form.events.length >= 4}
-                        onClick={onAddEvent}>
-                    Ereignis hinzufügen
+                        onClick={onOpenCalendar}>
+                    Kalender öffnen
                 </Button>
             </div>
         </div>

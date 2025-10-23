@@ -31,7 +31,7 @@ import {NoticeBoardFormSection} from './components/NoticeBoardFormSection'
 import {RoomBookingFormSection} from './components/RoomBookingFormSection'
 import {DisplayPreview} from './components/previews/DisplayPreview'
 import {DoorSignPersonDialog} from './components/dialogs/DoorSignPersonDialog'
-import {EventBoardEventDialog} from './components/dialogs/EventBoardEventDialog'
+import {EventBoardCalendarDialog} from './components/dialogs/EventBoardCalendarDialog'
 import {RoomBookingEntryDialog} from './components/dialogs/RoomBookingEntryDialog'
 import {TemplateCodeDialog} from './components/dialogs/TemplateCodeDialog'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
@@ -281,7 +281,9 @@ export default function EventsPage() {
 
     const [isPersonDialogOpen, setIsPersonDialogOpen] = useState<boolean>(false)
     const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
-    const [isEventDialogOpen, setIsEventDialogOpen] = useState<boolean>(false)
+    const [isEventCalendarOpen, setIsEventCalendarOpen] = useState<boolean>(false)
+    const [eventCalendarFocusDate, setEventCalendarFocusDate] = useState<string | null>(null)
+    const [eventDraftMode, setEventDraftMode] = useState<'create' | 'edit' | null>(null)
     const [eventDraft, setEventDraft] = useState<EventBoardEvent | null>(null)
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState<boolean>(false)
     const [bookingDraft, setBookingDraft] = useState<BookingDraft | null>(null)
@@ -321,13 +323,15 @@ export default function EventsPage() {
         setPersonDraft(null)
     }
 
-    const openEventDialog = (event: EventBoardEvent) => {
-        setEventDraft({ ...event })
-        setIsEventDialogOpen(true)
+    const openEventCalendar = (focusDate?: string | null) => {
+        setEventCalendarFocusDate(focusDate ?? null)
+        setIsEventCalendarOpen(true)
     }
 
-    const closeEventDialog = () => {
-        setIsEventDialogOpen(false)
+    const closeEventCalendar = () => {
+        setIsEventCalendarOpen(false)
+        setEventCalendarFocusDate(null)
+        setEventDraftMode(null)
         setEventDraft(null)
     }
 
@@ -420,29 +424,104 @@ export default function EventsPage() {
         }))
     }
 
-    const addEventBoardEvent = () => {
-        let createdEvent: EventBoardEvent | null = null
-        setEventBoardForm((prev) => {
-            if (prev.events.length >= 4) {
+    const startCreateCalendarEvent = (dateString: string) => {
+        if (eventBoardForm.events.length >= 4) {
+            return
+        }
+        const nextId = eventBoardForm.events.length === 0
+            ? 1
+            : Math.max(...eventBoardForm.events.map((event) => event.id)) + 1
+        setEventDraft({ id: nextId, title: '', date: dateString, time: '', qrLink: '' })
+        setEventDraftMode('create')
+        setEventCalendarFocusDate(dateString)
+    }
+
+    const startEditCalendarEvent = (eventId: number) => {
+        const existing = eventBoardForm.events.find((event) => event.id === eventId)
+        if (!existing) {
+            return
+        }
+        setEventDraft({ ...existing })
+        setEventDraftMode('edit')
+        if (existing.date.trim()) {
+            setEventCalendarFocusDate(existing.date)
+        }
+    }
+
+    const openCalendarWithoutSelection = () => {
+        setEventDraftMode(null)
+        setEventDraft(null)
+        openEventCalendar()
+    }
+
+    const openCalendarForEvent = (event: EventBoardEvent) => {
+        startEditCalendarEvent(event.id)
+        openEventCalendar(event.date || null)
+    }
+
+    const handleEventDraftFieldChange = (key: keyof EventBoardEvent, value: string) => {
+        setEventDraft((prev) => {
+            if (!prev) {
                 return prev
             }
-            const nextId = prev.events.length === 0 ? 1 : Math.max(...prev.events.map((event) => event.id)) + 1
-            createdEvent = { id: nextId, title: '', date: '', time: '', qrLink: '' }
             return {
                 ...prev,
-                events: [...prev.events, createdEvent],
+                [key]: value,
             }
         })
-        if (createdEvent) {
-            openEventDialog(createdEvent)
+    }
+
+    const saveEventDraft = () => {
+        if (!eventDraft || !eventDraftMode) {
+            return
+        }
+        if (!eventDraft.date.trim()) {
+            return
+        }
+        const targetDate = eventDraft.date
+        if (eventDraftMode === 'create') {
+            setEventBoardForm((prev) => ({
+                ...prev,
+                events: [...prev.events, eventDraft],
+            }))
+        } else if (eventDraftMode === 'edit') {
+            updateEventBoardEvent(eventDraft.id, {
+                title: eventDraft.title,
+                date: eventDraft.date,
+                time: eventDraft.time,
+                qrLink: eventDraft.qrLink,
+            })
+        }
+        setEventDraftMode(null)
+        setEventDraft(null)
+        if (targetDate.trim()) {
+            setEventCalendarFocusDate(targetDate)
+        }
+    }
+
+    const deleteEventDraft = () => {
+        if (!eventDraft) {
+            return
+        }
+        const targetDate = eventDraft.date
+        removeEventBoardEvent(eventDraft.id)
+        setEventDraftMode(null)
+        setEventDraft(null)
+        if (targetDate.trim()) {
+            setEventCalendarFocusDate(targetDate)
         }
     }
 
     const removeEventBoardEvent = (eventId: number) => {
+        const isDraftTarget = eventDraft?.id === eventId
         setEventBoardForm((prev) => ({
             ...prev,
             events: prev.events.filter((event) => event.id !== eventId),
         }))
+        if (isDraftTarget) {
+            setEventDraftMode(null)
+            setEventDraft(null)
+        }
     }
 
     const updateEventBoardEvent = (eventId: number, updates: Partial<EventBoardEvent>) => {
@@ -499,19 +578,6 @@ export default function EventsPage() {
             busyUntil: personDraft.status === 'busy' ? personDraft.busyUntil : '',
         })
         closePersonDialog()
-    }
-
-    const saveEventDialog = () => {
-        if (!eventDraft) {
-            return
-        }
-        updateEventBoardEvent(eventDraft.id, {
-            title: eventDraft.title,
-            date: eventDraft.date,
-            time: eventDraft.time,
-            qrLink: eventDraft.qrLink,
-        })
-        closeEventDialog()
     }
 
     const saveBookingDialog = () => {
@@ -627,8 +693,8 @@ export default function EventsPage() {
                 <EventBoardFormSection
                     form={eventBoardForm}
                     onFormChange={setEventBoardForm}
-                    onAddEvent={addEventBoardEvent}
-                    onEditEvent={openEventDialog}
+                    onOpenCalendar={openCalendarWithoutSelection}
+                    onEditEvent={openCalendarForEvent}
                     onRemoveEvent={removeEventBoardEvent}
                 />
             )
@@ -793,12 +859,24 @@ export default function EventsPage() {
                 onConfirm={closeTemplateCreateDialog}
             />
 
-            <EventBoardEventDialog
-                open={isEventDialogOpen}
-                event={eventDraft}
-                onClose={closeEventDialog}
-                onChange={(nextEvent) => setEventDraft(nextEvent)}
-                onSave={saveEventDialog}
+            <EventBoardCalendarDialog
+                open={isEventCalendarOpen}
+                events={eventBoardForm.events}
+                selectedEvent={eventDraft}
+                mode={eventDraftMode}
+                focusDate={eventCalendarFocusDate}
+                maxEventsReached={eventBoardForm.events.length >= 4}
+                onClose={closeEventCalendar}
+                onDateSelect={startCreateCalendarEvent}
+                onEventSelect={startEditCalendarEvent}
+                onFieldChange={handleEventDraftFieldChange}
+                onSave={saveEventDraft}
+                onDelete={deleteEventDraft}
+                onClearSelection={() => {
+                    setEventDraftMode(null)
+                    setEventDraft(null)
+                    setEventCalendarFocusDate(null)
+                }}
             />
 
             <RoomBookingEntryDialog
