@@ -290,8 +290,7 @@ const buildNoticeBoardPayload = (form: NoticeBoardForm): DisplayContentPayload =
         fields: {
             title: (form.title ?? '').trim(),
             body: (form.body ?? '').trim(),
-            start: form.start ?? '',
-            end: form.end ?? '',
+            qrContent: (form.qrContent ?? '').trim(),
         },
         eventStart: start === null ? null : start ?? undefined,
         eventEnd: end === null ? null : end ?? undefined,
@@ -397,6 +396,8 @@ const toLocalDateTimeString = (date: Date) => {
 
 const addMinutes = (date: Date, minutes: number) => new Date(date.getTime() + minutes * 60 * 1000)
 
+//Funktion zum Testen des Datentransfers zwischen Frontend und Backend API (Bitte entfernen im Finalen Design)
+
 const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): TemplateDisplayDataRequest => {
     const now = new Date()
     const inOneMinute = addMinutes(now, 1)
@@ -466,8 +467,7 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
             fields: {
                 title: 'Wartungsarbeiten',
                 body: 'Am Campus finden zwischen 14:00 und 16:00 Uhr Wartungsarbeiten statt.',
-                start: toLocalDateTimeString(now),
-                end: toLocalDateTimeString(inOneMinute),
+                qrContent: 'https://ohm.example/notice/details',
             },
         }
     case 'room-booking':
@@ -501,6 +501,8 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
         }
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export default function EventsPage() {
     const [displayType, setDisplayType] = useState<DisplayTypeKey>('door-sign')
@@ -807,6 +809,8 @@ export default function EventsPage() {
         }
     }
 
+    //Funktion zum Testen des Datentransfers zwischen Frontend und Backend API (Bitte entfernen im Finalen Design)
+
     const handleSendTestData = async () => {
         const mac = TEST_DISPLAY_MAC
         const usingDummyDisplay = true
@@ -845,6 +849,7 @@ export default function EventsPage() {
         }
     }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     const handleDisplaySelectChange = (value: string | undefined) => {
         if (typeof value === 'string') {
