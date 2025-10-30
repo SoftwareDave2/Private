@@ -259,18 +259,12 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
             return
         }
 
-        const subItem: NonNullable<TemplateDisplayDataRequest['subItems']>[number] = {
+        subItems.push({
             title: title || null,
-            start,
+            start: start ?? null,
+            end: null,
             qrCodeUrl: qrLink || undefined,
-        }
-
-        const noteParts = [date, time].filter((part) => part.length > 0)
-        if (noteParts.length > 0) {
-            subItem.notes = noteParts.join(' ')
-        }
-
-        subItems.push(subItem)
+        })
     })
 
     return {
