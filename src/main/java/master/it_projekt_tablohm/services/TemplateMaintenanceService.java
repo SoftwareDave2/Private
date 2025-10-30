@@ -79,15 +79,28 @@ public class TemplateMaintenanceService {
 
         for (DisplayTemplateData data : templatesWithExpiredSubItems) {
             boolean modified = false;
+            boolean isDoorSign = "door-sign".equalsIgnoreCase(data.getTemplateType());
             Iterator<DisplayTemplateSubData> iterator = data.getSubItems().iterator();
             while (iterator.hasNext()) {
                 DisplayTemplateSubData subData = iterator.next();
                 LocalDateTime end = subData.getEnd();
                 if (end != null && !end.isAfter(now)) {
-                    logger.info("Removing expired sub item id={} parentId={} mac={} templateType={} end={}",
-                            subData.getId(), data.getId(), data.getDisplayMac(), data.getTemplateType(), end);
-                    iterator.remove();
-                    modified = true;
+                    if (isDoorSign) {
+                        boolean wasBusy = Boolean.TRUE.equals(subData.getBusy()) || Boolean.TRUE.equals(subData.getHighlighted());
+                        if (wasBusy || subData.getEnd() != null) {
+                            logger.info("Resetting busy state for door-sign sub item id={} parentId={} mac={} end={}",
+                                    subData.getId(), data.getId(), data.getDisplayMac(), end);
+                            subData.setBusy(false);
+                            subData.setHighlighted(false);
+                            subData.setEnd(null);
+                            modified = true;
+                        }
+                    } else {
+                        logger.info("Removing expired sub item id={} parentId={} mac={} templateType={} end={}",
+                                subData.getId(), data.getId(), data.getDisplayMac(), data.getTemplateType(), end);
+                        iterator.remove();
+                        modified = true;
+                    }
                 }
             }
 

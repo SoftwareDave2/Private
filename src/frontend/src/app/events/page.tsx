@@ -50,7 +50,7 @@ type TemplateDisplayDataRequest = {
         start?: string | null
         end?: string | null
         highlighted?: boolean | null
-        notes?: string | null
+        busy?: boolean | null
         qrCodeUrl?: string | null
     }>
 }
@@ -77,10 +77,6 @@ type DisplayContentPayload = {
     eventStart?: string | null
     eventEnd?: string | null
 }
-
-const doorSignStatusLabelMap = Object.fromEntries(
-    doorSignPersonStatuses.map((status) => [status.value, status.label]),
-) as Record<DoorSignPerson['status'], string>
 
 const formatDoorSignDate = (value: string) => {
     if (!value) {
@@ -126,24 +122,6 @@ const formatDateTimeForBackend = (value: string | null | undefined) => {
         return null
     }
     return toLocalDateTimeString(parsed)
-}
-
-const formatDateTimeForDisplay = (value: string | null | undefined) => {
-    const formatted = formatDateTimeForBackend(value)
-    if (!formatted) {
-        return null
-    }
-    const parsed = new Date(formatted)
-    if (Number.isNaN(parsed.getTime())) {
-        return null
-    }
-    return parsed.toLocaleString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    })
 }
 
 const formatDateAndTimeForBackend = (dateValue?: string, timeValue?: string) => {
@@ -212,26 +190,23 @@ const buildDoorSignPayload = (form: DoorSignForm): DisplayContentPayload => {
             return
         }
 
-        const busyEnd = person.status === 'busy' ? formatDateTimeForBackend(person.busyUntil) : null
-        const notes =
-            person.status === 'busy'
-                ? (() => {
-                    const label = formatDateTimeForDisplay(person.busyUntil)
-                    return label ? `Beschaeftigt bis ${label}` : 'Beschaeftigt'
-                })()
-                : doorSignStatusLabelMap[person.status] ?? ''
+        const busyEndRaw = person.status === 'busy' ? formatDateTimeForBackend(person.busyUntil) : null
+        let isBusy = person.status === 'busy'
 
-        const personSubItem: NonNullable<TemplateDisplayDataRequest['subItems']>[number] = {
+        if (isBusy && busyEndRaw) {
+            const busyEndDate = new Date(busyEndRaw)
+            if (!Number.isNaN(busyEndDate.getTime()) && busyEndDate.getTime() <= Date.now()) {
+                isBusy = false
+            }
+        }
+
+        subItems.push({
             title: name,
-            end: busyEnd,
-            highlighted: person.status === 'busy',
-        }
-
-        if (notes.trim().length > 0) {
-            personSubItem.notes = notes
-        }
-
-        subItems.push(personSubItem)
+            start: null,
+            end: isBusy ? busyEndRaw : null,
+            highlighted: isBusy,
+            busy: isBusy,
+        })
     })
 
     return {
@@ -308,18 +283,12 @@ const buildRoomBookingPayload = (form: RoomBookingForm): DisplayContentPayload =
         const end = formatDateTimeForBackend(endTime)
         const shouldHighlight = subItems.length === 0
 
-        const subItem: NonNullable<TemplateDisplayDataRequest['subItems']>[number] = {
+        subItems.push({
             title: title || null,
             start,
             end,
             highlighted: shouldHighlight,
-        }
-
-        if (timeLabel) {
-            subItem.notes = timeLabel
-        }
-
-        subItems.push(subItem)
+        })
     })
 
     const startBoundary = pickBoundaryDateTime(subItems.map((item) => item.start), 'earliest')
@@ -413,17 +382,17 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
             subItems: [
                 {
                     title: 'Anna Schneider',
-                    notes: 'Verfügbar',
-                    start: toLocalDateTimeString(now),
-                    end: toLocalDateTimeString(inSixty),
+                    start: null,
+                    end: null,
                     highlighted: false,
+                    busy: false,
                 },
                 {
                     title: 'Ben Maier',
-                    notes: 'Beschäftigt bis 15:00',
                     start: toLocalDateTimeString(now),
                     end: toLocalDateTimeString(inTwoHours),
                     highlighted: true,
+                    busy: true,
                 },
             ],
         }
@@ -1069,4 +1038,5 @@ export default function EventsPage() {
         </div>
     )
 }
+
 
