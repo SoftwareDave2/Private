@@ -294,15 +294,23 @@ const buildRoomBookingPayload = (form: RoomBookingForm): DisplayContentPayload =
     const startBoundary = pickBoundaryDateTime(subItems.map((item) => item.start), 'earliest')
     const endBoundary = pickBoundaryDateTime(subItems.map((item) => item.end), 'latest')
 
-    return {
+    const payload: DisplayContentPayload = {
         fields: {
             roomNumber: (form.roomNumber ?? '').trim(),
             roomType: (form.roomType ?? '').trim(),
         },
         subItems: subItems.length > 0 ? subItems : undefined,
-        eventStart: startBoundary ?? undefined,
-        eventEnd: endBoundary ?? undefined,
     }
+
+    if (startBoundary !== undefined) {
+        payload.eventStart = startBoundary
+    }
+
+    if (endBoundary !== undefined) {
+        payload.eventEnd = endBoundary
+    }
+
+    return payload
 }
 
 const buildDisplayContent = (displayType: DisplayTypeKey, forms: DisplayPayloadForms): DisplayContentPayload => {
