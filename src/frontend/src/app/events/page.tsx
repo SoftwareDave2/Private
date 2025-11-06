@@ -34,8 +34,28 @@ import {DoorSignPersonDialog} from './components/dialogs/DoorSignPersonDialog'
 import {EventBoardEventDialog} from './components/dialogs/EventBoardEventDialog'
 import {RoomBookingEntryDialog} from './components/dialogs/RoomBookingEntryDialog'
 import {TemplateCodeDialog} from './components/dialogs/TemplateCodeDialog'
+import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import {authFetch} from '@/utils/authFetch'
 import {useDisplaySelection} from './hooks/useDisplaySelection'
 import {usePreviewScale} from './hooks/usePreviewScale'
+
+type TemplateDisplayDataRequest = {
+    templateType: DisplayTypeKey
+    displayMac: string
+    eventStart?: string | null
+    eventEnd?: string | null
+    fields: Record<string, unknown>
+    subItems?: Array<{
+        title?: string | null
+        start?: string | null
+        end?: string | null
+        highlighted?: boolean | null
+        notes?: string | null
+        qrCodeUrl?: string | null
+    }>
+}
+
+const TEST_DISPLAY_MAC = '00:11:22:33:44:55'
 
 type BookingDraft = {
     id: number
@@ -138,6 +158,120 @@ const buildDisplayPayload = (displayType: DisplayTypeKey, forms: DisplayPayloadF
 const resolveDisplayLabel = (type: DisplayTypeKey) =>
     displayTypeOptions.find((option) => option.value === type)?.label ?? type
 
+const toLocalDateTimeString = (date: Date) => {
+    const pad = (value: number) => value.toString().padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(
+        date.getMinutes(),
+    )}:${pad(date.getSeconds())}`
+}
+
+const addMinutes = (date: Date, minutes: number) => new Date(date.getTime() + minutes * 60 * 1000)
+
+const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): TemplateDisplayDataRequest => {
+    const now = new Date()
+    const inOneMinute = addMinutes(now, 1)
+    const inThirty = addMinutes(now, 30)
+    const inSixty = addMinutes(now, 60)
+    const inNinety = addMinutes(now, 90)
+    const inTwoHours = addMinutes(now, 120)
+    const inFourHours = addMinutes(now, 240)
+
+    switch (displayType) {
+    case 'door-sign':
+        return {
+            templateType: displayType,
+            displayMac: mac,
+            fields: {
+                roomNumber: 'A-101',
+                footerNote: 'Ansprechpartner: Hochschuljobbörse',
+            },
+            subItems: [
+                {
+                    title: 'Anna Schneider',
+                    notes: 'Verfügbar',
+                    start: toLocalDateTimeString(now),
+                    end: toLocalDateTimeString(inSixty),
+                    highlighted: false,
+                },
+                {
+                    title: 'Ben Maier',
+                    notes: 'Beschäftigt bis 15:00',
+                    start: toLocalDateTimeString(now),
+                    end: toLocalDateTimeString(inTwoHours),
+                    highlighted: true,
+                },
+            ],
+        }
+    case 'event-board':
+        return {
+            templateType: displayType,
+            displayMac: mac,
+            eventStart: toLocalDateTimeString(now),
+            eventEnd: toLocalDateTimeString(inFourHours),
+            fields: {
+                title: 'Heute im OHM',
+                description: 'Anstehende Veranstaltungen',
+            },
+            subItems: [
+                {
+                    title: 'Infoveranstaltung KI',
+                    start: toLocalDateTimeString(now),
+                    end: toLocalDateTimeString(inOneMinute),
+                    qrCodeUrl: 'https://ohm.example/events/ki',
+                },
+                {
+                    title: 'Laborführung',
+                    start: toLocalDateTimeString(inSixty),
+                    end: toLocalDateTimeString(inTwoHours),
+                    qrCodeUrl: 'https://ohm.example/events/labor',
+                },
+            ],
+        }
+    case 'notice-board':
+        return {
+            templateType: displayType,
+            displayMac: mac,
+            eventStart: toLocalDateTimeString(now),
+            eventEnd: toLocalDateTimeString(inOneMinute),
+            fields: {
+                title: 'Wartungsarbeiten',
+                body: 'Am Campus finden zwischen 14:00 und 16:00 Uhr Wartungsarbeiten statt.',
+                start: toLocalDateTimeString(now),
+                end: toLocalDateTimeString(inOneMinute),
+            },
+        }
+    case 'room-booking':
+        return {
+            templateType: displayType,
+            displayMac: mac,
+            fields: {
+                roomNumber: 'R2.042',
+                roomType: 'Besprechungsraum',
+            },
+            subItems: [
+                {
+                    title: 'Projektmeeting',
+                    start: toLocalDateTimeString(now),
+                    end: toLocalDateTimeString(inThirty),
+                    highlighted: true,
+                },
+                {
+                    title: 'Sprint Planning',
+                    start: toLocalDateTimeString(inThirty),
+                    end: toLocalDateTimeString(inNinety),
+                    highlighted: false,
+                },
+            ],
+        }
+    default:
+        return {
+            templateType: displayType,
+            displayMac: mac,
+            fields: {},
+        }
+    }
+}
+
 export default function EventsPage() {
     const [displayType, setDisplayType] = useState<DisplayTypeKey>('door-sign')
     const [doorSignForm, setDoorSignForm] = useState<DoorSignForm>(defaultDoorSignForm)
@@ -156,6 +290,7 @@ export default function EventsPage() {
     const [templateEditorContent, setTemplateEditorContent] = useState<string>('')
     const [templateCreatorContent, setTemplateCreatorContent] = useState<string>('')
     const [isSendInProgress, setIsSendInProgress] = useState<boolean>(false)
+    const [isTestSendInProgress, setIsTestSendInProgress] = useState<boolean>(false)
     const [sendFeedback, setSendFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
     const {
@@ -422,6 +557,45 @@ export default function EventsPage() {
         }, 400)
     }
 
+    const handleSendTestData = async () => {
+        const mac = TEST_DISPLAY_MAC
+        const usingDummyDisplay = true
+
+        const payload = buildTestDisplayDataPayload(displayType, mac)
+        setSendFeedback(null)
+        setIsTestSendInProgress(true)
+
+        try {
+            const response = await authFetch(`${getBackendApiUrl()}/oepl/display-data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(errorText || `HTTP ${response.status}`)
+            }
+
+            const baseMessage = 'Testdaten wurden erfolgreich an das Backend gesendet.'
+            setSendFeedback({
+                type: 'success',
+                message: usingDummyDisplay ? `${baseMessage} (Dummy-Display ${mac} verwendet.)` : baseMessage,
+            })
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
+            setSendFeedback({
+                type: 'error',
+                message: usingDummyDisplay
+                    ? `Fehler beim Senden der Testdaten (Dummy-Display): ${message}`
+                    : `Fehler beim Senden der Testdaten: ${message}`,
+            })
+        } finally {
+            setIsTestSendInProgress(false)
+        }
+    }
+
+
     const handleDisplaySelectChange = (value: string | undefined) => {
         if (typeof value === 'string') {
             setSelectedDisplay(value)
@@ -569,6 +743,15 @@ export default function EventsPage() {
                                 </Button>
                                 <Button variant={'filled'} color={'red'} className={'normal-case w-full xl:w-auto'} onClick={openTemplateCreateDialog}>
                                     Template erstellen
+                                </Button>
+                                <Button
+                                    variant={'outlined'}
+                                    color={'green'}
+                                    className={'normal-case w-full xl:w-auto'}
+                                    disabled={isTestSendInProgress || isLoadingDisplays}
+                                    onClick={handleSendTestData}
+                                >
+                                    {isTestSendInProgress ? 'Test wird gesendet...' : 'Testdaten an Backend senden'}
                                 </Button>
                             </div>
                             <Button
