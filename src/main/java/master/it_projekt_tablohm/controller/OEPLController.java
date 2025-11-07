@@ -116,6 +116,16 @@ public class OEPLController {
         return ResponseEntity.ok(displayEventService.getSubDataByDisplayMac(displayMac));
     }
 
+    @GetMapping(path = "/display-data/display/{displayMac}/active")
+    public @ResponseBody ResponseEntity<TemplateDisplayDataDTO> getActiveDisplayDataForDisplay(
+            @PathVariable String displayMac) {
+        TemplateDisplayDataDTO dto = displayEventService.getActiveDisplayDataForDisplay(displayMac);
+        if (dto == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(dto);
+    }
+
     @GetMapping(path = "/templates")
     public @ResponseBody ResponseEntity<List<TemplateDefinitionDTO>> listTemplates() {
         return ResponseEntity.ok(templateManagementService.listTemplates());

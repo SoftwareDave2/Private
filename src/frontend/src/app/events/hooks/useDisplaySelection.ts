@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
-import { DisplayData } from '@/types/displayData'
-import { getBackendApiUrl } from '@/utils/backendApiUrl'
-import { authFetch } from '@/utils/authFetch'
-import { DisplayTypeKey } from '../types'
-import {previewDimensions} from "@/app/events/constants";
+import {useEffect, useMemo, useState} from 'react'
+import {DisplayData} from '@/types/displayData'
+import {getBackendApiUrl} from '@/utils/backendApiUrl'
+import {authFetch} from '@/utils/authFetch'
+import {DisplayTypeKey} from '../types'
+import {previewDimensions} from '@/app/events/constants'
 
 type UseDisplaySelectionResult = {
     displays: DisplayData[]
@@ -12,6 +12,29 @@ type UseDisplaySelectionResult = {
     setSelectedDisplay: (macAddress: string) => void
     isLoadingDisplays: boolean
     displayError: string
+}
+
+const buildDummyDisplay = (type: DisplayTypeKey, index: number): DisplayData => {
+    const previewSize = previewDimensions[type] ?? previewDimensions['door-sign']
+    const mac = index === 0 ? '00:11:22:33:44:55' : '00:11:22:33:44:66'
+    return {
+        displayName: `Dummy Display ${index + 1}`,
+        macAddress: mac,
+        id: -1 - index,
+        brand: 'Mock',
+        model: 'Preview',
+        width: previewSize.width,
+        height: previewSize.height,
+        orientation: 'landscape',
+        filename: '',
+        defaultFilename: '',
+        runningSince: '',
+        wakeTime: '',
+        nextEventTime: '',
+        battery_percentage: 100,
+        timeOfBattery: '',
+        errors: [],
+    }
 }
 
 export const useDisplaySelection = (displayType: DisplayTypeKey): UseDisplaySelectionResult => {
@@ -62,9 +85,13 @@ export const useDisplaySelection = (displayType: DisplayTypeKey): UseDisplaySele
     // Filter displays
     const filteredDisplays = useMemo(() => {
         const previewSize = previewDimensions[displayType] ?? previewDimensions['door-sign']
-        return displays.filter(
-            (d) => d.width === previewSize.width && d.height === previewSize.height
+        const matching = displays.filter(
+            (d) => d.width === previewSize.width && d.height === previewSize.height,
         )
+        if (matching.length > 0) {
+            return matching
+        }
+        return [buildDummyDisplay(displayType, 0), buildDummyDisplay(displayType, 1)]
     }, [displays, displayType])
 
 
