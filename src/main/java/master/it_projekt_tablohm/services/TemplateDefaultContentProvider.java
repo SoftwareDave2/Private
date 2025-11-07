@@ -53,11 +53,11 @@ public class TemplateDefaultContentProvider {
     private List<TemplateSubDataDTO> buildDefaultSubItems(String templateType) {
         List<TemplateSubDataDTO> subItems = new ArrayList<>();
         if ("door-sign".equals(templateType)) {
-            addPerson(subItems, "Aktuell frei", null, null, false, null);
+            addPerson(subItems, "Aktuell frei", null, null, false);
         } else if ("event-board".equals(templateType)) {
-            addSubItem(subItems, "Keine Ereignisse", null, null, false, null, null);
+            addSubItem(subItems, "Keine Ereignisse", null, null, false, null);
         } else if ("room-booking".equals(templateType)) {
-            addSubItem(subItems, "Keine Termine", null, null, false, null, null);
+            addSubItem(subItems, "Keine Termine", null, null, false, null);
         }
         return subItems;
     }
@@ -66,14 +66,13 @@ public class TemplateDefaultContentProvider {
                            String title,
                            LocalDateTime start,
                            LocalDateTime end,
-                           boolean highlighted,
-                           String notes) {
+                           boolean highlighted) {
         TemplateSubDataDTO sub = new TemplateSubDataDTO();
         sub.setTitle(title);
         sub.setStart(start);
         sub.setEnd(end);
         sub.setHighlighted(highlighted);
-        sub.setNotes(notes);
+        sub.setBusy(highlighted);
         subItems.add(sub);
     }
 
@@ -82,14 +81,13 @@ public class TemplateDefaultContentProvider {
                             LocalDateTime start,
                             LocalDateTime end,
                             boolean highlighted,
-                            String notes,
                             String qrLink) {
         TemplateSubDataDTO sub = new TemplateSubDataDTO();
         sub.setTitle(title);
         sub.setStart(start);
         sub.setEnd(end);
         sub.setHighlighted(highlighted);
-        sub.setNotes(notes);
+        sub.setBusy(highlighted);
         sub.setQrCodeUrl(qrLink);
         subItems.add(sub);
     }
