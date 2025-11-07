@@ -50,7 +50,7 @@ type TemplateDisplayDataRequest = {
         start?: string | null
         end?: string | null
         highlighted?: boolean | null
-        notes?: string | null
+        busy?: boolean | null
         qrCodeUrl?: string | null
     }>
 }
@@ -71,6 +71,13 @@ type DisplayPayloadForms = {
     roomBookingForm: RoomBookingForm
 }
 
+type DisplayContentPayload = {
+    fields: Record<string, unknown>
+    subItems?: TemplateDisplayDataRequest['subItems']
+    eventStart?: string | null
+    eventEnd?: string | null
+}
+
 const formatDoorSignDate = (value: string) => {
     if (!value) {
         return '—'
@@ -87,60 +94,226 @@ const formatDoorSignDate = (value: string) => {
     })
 }
 
-const buildDoorSignPayload = (form: DoorSignForm) => {
+const formatDateTimeForBackend = (value: string | null | undefined) => {
+    if (!value) {
+        return null
+    }
+    const trimmed = value.trim()
+    if (!trimmed) {
+        return null
+    }
+
+    let candidate = trimmed
+    if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) {
+        candidate = `${candidate}T00:00:00`
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(candidate)) {
+        candidate = `${candidate}:00`
+    } else if (/^\d{2}:\d{2}$/.test(candidate)) {
+        const reference = new Date()
+        const pad = (segment: number) => segment.toString().padStart(2, '0')
+        const datePart = `${reference.getFullYear()}-${pad(reference.getMonth() + 1)}-${pad(reference.getDate())}`
+        candidate = `${datePart}T${candidate}:00`
+    } else if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(candidate)) {
+        candidate = `${candidate.replace(' ', 'T')}:00`
+    }
+
+    const parsed = new Date(candidate)
+    if (Number.isNaN(parsed.getTime())) {
+        return null
+    }
+    return toLocalDateTimeString(parsed)
+}
+
+const formatDateAndTimeForBackend = (dateValue?: string, timeValue?: string) => {
+    const date = (dateValue ?? '').trim()
+    const time = (timeValue ?? '').trim()
+
+    if (!date && !time) {
+        return null
+    }
+    if (!date) {
+        return formatDateTimeForBackend(time)
+    }
+    if (!time) {
+        return formatDateTimeForBackend(`${date}T00:00`)
+    }
+    return formatDateTimeForBackend(`${date}T${time}`)
+}
+
+const pickBoundaryDateTime = (values: Array<string | null | undefined>, boundary: 'earliest' | 'latest') => {
+    const normalized = values
+        .map((value) => {
+            if (!value) {
+                return null
+            }
+            const parsed = new Date(value)
+            if (Number.isNaN(parsed.getTime())) {
+                return null
+            }
+            return { value, timestamp: parsed.getTime() }
+        })
+        .filter((entry): entry is { value: string; timestamp: number } => entry !== null)
+
+    if (normalized.length === 0) {
+        return undefined
+    }
+
+    const selected = normalized.reduce((current, candidate) => {
+        if (boundary === 'earliest') {
+            return candidate.timestamp < current.timestamp ? candidate : current
+        }
+        return candidate.timestamp > current.timestamp ? candidate : current
+    })
+
+    return selected.value
+}
+
+const extractTimeRange = (value: string) => {
+    const segments = value
+        .split('-')
+        .map((segment) => segment.trim())
+        .filter((segment) => segment.length > 0)
+
+    return {
+        startTime: segments.length >= 1 ? segments[0] : '',
+        endTime: segments.length >= 2 ? segments[1] : '',
+    }
+}
+
+const buildDoorSignPayload = (form: DoorSignForm): DisplayContentPayload => {
     const peopleSource = Array.isArray(form.people) ? form.people : []
-    const normalizedPeople = peopleSource.map((person) => ({
-        id: person.id,
-        name: (person.name ?? '').trim(),
-        status: person.status,
-        busyUntil: person.status === 'busy' ? (person.busyUntil ?? '') : '',
-    }))
+    const subItems: NonNullable<TemplateDisplayDataRequest['subItems']>[number][] = []
+
+    peopleSource.forEach((person) => {
+        const name = (person.name ?? '').trim()
+        if (!name) {
+            return
+        }
+
+        const busyEndRaw = person.status === 'busy' ? formatDateTimeForBackend(person.busyUntil) : null
+        let isBusy = person.status === 'busy'
+
+        if (isBusy && busyEndRaw) {
+            const busyEndDate = new Date(busyEndRaw)
+            if (!Number.isNaN(busyEndDate.getTime()) && busyEndDate.getTime() <= Date.now()) {
+                isBusy = false
+            }
+        }
+
+        subItems.push({
+            title: name,
+            start: null,
+            end: isBusy ? busyEndRaw : null,
+            highlighted: isBusy,
+            busy: isBusy,
+        })
+    })
+
     return {
-        roomNumber: (form.roomNumber ?? '').trim(),
-        people: normalizedPeople,
-        footerNote: (form.footerNote ?? '').trim(),
+        fields: {
+            roomNumber: (form.roomNumber ?? '').trim(),
+            footerNote: (form.footerNote ?? '').trim(),
+        },
+        subItems: subItems.length > 0 ? subItems : undefined,
+        eventEnd: null,
     }
 }
 
-const buildEventBoardPayload = (form: EventBoardForm) => {
+const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => {
     const eventsSource = Array.isArray(form.events) ? form.events : []
-    const normalizedEvents = eventsSource.map((event) => ({
-        id: event.id,
-        title: (event.title ?? '').trim(),
-        date: event.date ?? '',
-        time: event.time ?? '',
-        qrLink: (event.qrLink ?? '').trim(),
-    }))
+    const subItems: NonNullable<TemplateDisplayDataRequest['subItems']>[number][] = []
+
+    eventsSource.forEach((event) => {
+        const title = (event.title ?? '').trim()
+        const date = (event.date ?? '').trim()
+        const time = (event.time ?? '').trim()
+        const qrLink = (event.qrLink ?? '').trim()
+        const start = formatDateAndTimeForBackend(date, time)
+
+        if (!title && !date && !time && !qrLink) {
+            return
+        }
+
+        subItems.push({
+            title: title || null,
+            start: start ?? null,
+            end: null,
+            qrCodeUrl: qrLink || undefined,
+        })
+    })
+
     return {
-        title: (form.title ?? '').trim(),
-        description: (form.description ?? '').trim(),
-        events: normalizedEvents,
+        fields: {
+            title: (form.title ?? '').trim(),
+        },
+        subItems: subItems.length > 0 ? subItems : undefined,
+        eventStart: pickBoundaryDateTime(subItems.map((item) => item.start), 'earliest'),
     }
 }
 
-const buildNoticeBoardPayload = (form: NoticeBoardForm) => ({
-    title: (form.title ?? '').trim(),
-    body: (form.body ?? '').trim(),
-    qrContent: (form.qrContent ?? '').trim(),
-    start: form.start ?? '',
-    end: form.end ?? '',
-})
+const buildNoticeBoardPayload = (form: NoticeBoardForm): DisplayContentPayload => {
+    const start = formatDateTimeForBackend(form.start)
+    const end = formatDateTimeForBackend(form.end)
 
-const buildRoomBookingPayload = (form: RoomBookingForm) => {
+    return {
+        fields: {
+            title: (form.title ?? '').trim(),
+            body: (form.body ?? '').trim(),
+            qrContent: (form.qrContent ?? '').trim(),
+        },
+        eventStart: start === null ? null : start ?? undefined,
+        eventEnd: end === null ? null : end ?? undefined,
+    }
+}
+
+const buildRoomBookingPayload = (form: RoomBookingForm): DisplayContentPayload => {
     const entriesSource = Array.isArray(form.entries) ? form.entries : []
-    const normalizedEntries = entriesSource.map((entry) => ({
-        id: entry.id,
-        title: (entry.title ?? '').trim(),
-        time: entry.time ?? '',
-    }))
-    return {
-        roomNumber: (form.roomNumber ?? '').trim(),
-        roomType: (form.roomType ?? '').trim(),
-        entries: normalizedEntries,
+    const subItems: NonNullable<TemplateDisplayDataRequest['subItems']>[number][] = []
+
+    entriesSource.forEach((entry) => {
+        const title = (entry.title ?? '').trim()
+        const timeLabel = (entry.time ?? '').trim()
+
+        if (!title && !timeLabel) {
+            return
+        }
+
+        const { startTime, endTime } = extractTimeRange(timeLabel)
+        const start = formatDateTimeForBackend(startTime)
+        const end = formatDateTimeForBackend(endTime)
+        const shouldHighlight = subItems.length === 0
+
+        subItems.push({
+            title: title || null,
+            start,
+            end,
+            highlighted: shouldHighlight,
+        })
+    })
+
+    const startBoundary = pickBoundaryDateTime(subItems.map((item) => item.start), 'earliest')
+    const endBoundary = pickBoundaryDateTime(subItems.map((item) => item.end), 'latest')
+
+    const payload: DisplayContentPayload = {
+        fields: {
+            roomNumber: (form.roomNumber ?? '').trim(),
+            roomType: (form.roomType ?? '').trim(),
+        },
+        subItems: subItems.length > 0 ? subItems : undefined,
     }
+
+    if (startBoundary !== undefined) {
+        payload.eventStart = startBoundary
+    }
+
+    if (endBoundary !== undefined) {
+        payload.eventEnd = endBoundary
+    }
+
+    return payload
 }
 
-const buildDisplayPayload = (displayType: DisplayTypeKey, forms: DisplayPayloadForms) => {
+const buildDisplayContent = (displayType: DisplayTypeKey, forms: DisplayPayloadForms): DisplayContentPayload => {
     switch (displayType) {
     case 'door-sign':
         return buildDoorSignPayload(forms.doorSignForm)
@@ -151,8 +324,35 @@ const buildDisplayPayload = (displayType: DisplayTypeKey, forms: DisplayPayloadF
     case 'room-booking':
         return buildRoomBookingPayload(forms.roomBookingForm)
     default:
-        return {}
+        return {
+            fields: {},
+        }
     }
+}
+
+const buildDisplayRequest = (
+    displayType: DisplayTypeKey,
+    displayMac: string,
+    forms: DisplayPayloadForms,
+): TemplateDisplayDataRequest => {
+    const content = buildDisplayContent(displayType, forms)
+    const defaultStart = toLocalDateTimeString(new Date())
+    const eventStart = content.eventStart === undefined ? defaultStart : content.eventStart
+    const eventEnd = content.eventEnd === undefined ? null : content.eventEnd
+
+    const request: TemplateDisplayDataRequest = {
+        templateType: displayType,
+        displayMac,
+        eventStart,
+        eventEnd,
+        fields: content.fields,
+    }
+
+    if (content.subItems) {
+        request.subItems = content.subItems
+    }
+
+    return request
 }
 
 const resolveDisplayLabel = (type: DisplayTypeKey) =>
@@ -166,6 +366,8 @@ const toLocalDateTimeString = (date: Date) => {
 }
 
 const addMinutes = (date: Date, minutes: number) => new Date(date.getTime() + minutes * 60 * 1000)
+
+//Funktion zum Testen des Datentransfers zwischen Frontend und Backend API (Bitte entfernen im Finalen Design)
 
 const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): TemplateDisplayDataRequest => {
     const now = new Date()
@@ -188,17 +390,17 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
             subItems: [
                 {
                     title: 'Anna Schneider',
-                    notes: 'Verfügbar',
-                    start: toLocalDateTimeString(now),
-                    end: toLocalDateTimeString(inSixty),
+                    start: null,
+                    end: null,
                     highlighted: false,
+                    busy: false,
                 },
                 {
                     title: 'Ben Maier',
-                    notes: 'Beschäftigt bis 15:00',
                     start: toLocalDateTimeString(now),
                     end: toLocalDateTimeString(inTwoHours),
                     highlighted: true,
+                    busy: true,
                 },
             ],
         }
@@ -236,8 +438,7 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
             fields: {
                 title: 'Wartungsarbeiten',
                 body: 'Am Campus finden zwischen 14:00 und 16:00 Uhr Wartungsarbeiten statt.',
-                start: toLocalDateTimeString(now),
-                end: toLocalDateTimeString(inOneMinute),
+                qrContent: 'https://ohm.example/notice/details',
             },
         }
     case 'room-booking':
@@ -271,6 +472,8 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
         }
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export default function EventsPage() {
     const [displayType, setDisplayType] = useState<DisplayTypeKey>('door-sign')
@@ -532,30 +735,52 @@ export default function EventsPage() {
         closeBookingDialog()
     }
 
-    const handleSendToDisplay = () => {
-        if (!selectedDisplay) {
-            setSendFeedback({ type: 'error', message: 'Bitte wählen Sie zuerst ein Display aus.' })
-            return
-        }
-
+    const handleSendToDisplay = async () => {
         setSendFeedback(null)
         setIsSendInProgress(true)
-        const payload = buildDisplayPayload(displayType, {
+        const normalizedDisplayMac = typeof selectedDisplay === 'string' ? selectedDisplay.trim() : ''
+        const targetDisplayMac = normalizedDisplayMac.length > 0 ? normalizedDisplayMac : TEST_DISPLAY_MAC
+        const usingDummyDisplay = normalizedDisplayMac.length === 0
+        const payload = buildDisplayRequest(displayType, targetDisplayMac, {
             doorSignForm,
             eventBoardForm,
             noticeBoardForm,
             roomBookingForm,
         })
-        console.log('Prepared display payload', {
-            macAddress: selectedDisplay,
-            displayType,
-            payload,
-        })
-        setTimeout(() => {
-            setSendFeedback({ type: 'success', message: 'Die Live-Vorschau wurde (Demo) erfolgreich an das Display übermittelt.' })
+
+        try {
+            const response = await authFetch(`${getBackendApiUrl()}/oepl/display-data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                const description = errorText.trim() || `HTTP ${response.status}`
+                throw new Error(description)
+            }
+
+            setSendFeedback({
+                type: 'success',
+                message: usingDummyDisplay
+                    ? `Das Event wurde erfolgreich an das Dummy-Display (${targetDisplayMac}) gesendet.`
+                    : 'Das Event wurde erfolgreich an das Display gesendet.',
+            })
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
+            setSendFeedback({
+                type: 'error',
+                message: usingDummyDisplay
+                    ? `Fehler beim Senden an das Dummy-Display (${targetDisplayMac}): ${message}`
+                    : `Fehler beim Senden an das Display: ${message}`,
+            })
+        } finally {
             setIsSendInProgress(false)
-        }, 400)
+        }
     }
+
+    //Funktion zum Testen des Datentransfers zwischen Frontend und Backend API (Bitte entfernen im Finalen Design)
 
     const handleSendTestData = async () => {
         const mac = TEST_DISPLAY_MAC
@@ -595,6 +820,7 @@ export default function EventsPage() {
         }
     }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     const handleDisplaySelectChange = (value: string | undefined) => {
         if (typeof value === 'string') {
@@ -758,7 +984,7 @@ export default function EventsPage() {
                                 variant={'filled'}
                                 color={'green'}
                                 className={'normal-case w-full xl:w-auto'}
-                                disabled={isSendInProgress || isLoadingDisplays || !selectedDisplay}
+                                disabled={isSendInProgress || isLoadingDisplays}
                                 onClick={handleSendToDisplay}
                             >
                                 {isSendInProgress ? 'Wird gesendet…' : 'An Display senden'}
@@ -820,3 +1046,5 @@ export default function EventsPage() {
         </div>
     )
 }
+
+

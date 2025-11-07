@@ -17,7 +17,7 @@ public class DisplaySubDataDTO {
     private LocalDateTime end;
 
     private Boolean highlighted;
-    private String notes;
+    private Boolean busy;
     private String qrCodeUrl;
 
     public String getTemplateType() {
@@ -68,12 +68,12 @@ public class DisplaySubDataDTO {
         this.highlighted = highlighted;
     }
 
-    public String getNotes() {
-        return notes;
+    public Boolean getBusy() {
+        return busy;
     }
 
-    public void setNotes(String notes) {
-        this.notes = notes;
+    public void setBusy(Boolean busy) {
+        this.busy = busy;
     }
 
     public String getQrCodeUrl() {
