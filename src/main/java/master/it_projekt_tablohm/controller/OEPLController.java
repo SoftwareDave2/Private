@@ -10,6 +10,8 @@ import master.it_projekt_tablohm.services.DisplayEventService;
 import master.it_projekt_tablohm.services.OpenEPaperSyncService;
 import master.it_projekt_tablohm.services.TemplateManagementService;
 import master.it_projekt_tablohm.services.TemplateMaintenanceService;
+import org.apache.batik.anim.dom.SVG12DOMImplementation;
+import org.apache.batik.anim.dom.SVGDOMImplementation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -51,9 +53,6 @@ public class OEPLController {
         }
 
         try {
-            //sending Image to OEPL
-            openEPaperSyncService.uploadImageToOEPLForDisplay(filename, mac);
-
             //updating Display
             displayRepository.findByMacAddress(mac).ifPresent(display -> {
                 LocalDateTime now = LocalDateTime.now();
@@ -61,6 +60,7 @@ public class OEPLController {
                 display.setDefaultFilename(filename);
                 display.setLastSwitch(now);
                 display.setDoSwitch(false);
+                // triggering update and image sending to OEPL
                 displayRepository.save(display);
             });
 

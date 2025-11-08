@@ -8,4 +8,13 @@ import java.util.Optional;
 public interface DisplayTemplateRepository extends JpaRepository<DisplayTemplate, Long> {
 
     Optional<DisplayTemplate> findByTemplateType(String templateType);
+
+    // find a template based on templatetype and matching display width/ height
+    Optional<DisplayTemplate> findByTemplateTypeAndDisplayWidthAndDisplayHeight(
+            String templateType,
+            Integer displayWidth,
+            Integer displayHeight
+    );
+
+
 }
