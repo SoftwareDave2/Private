@@ -1,4 +1,5 @@
 import {EventBoardForm} from '../../types'
+import {EVENT_BOARD_PREVIEW_LIMIT} from '../../constants'
 
 type EventBoardPreviewProps = {
     form: EventBoardForm
@@ -50,7 +51,7 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
 
                 return timeA.localeCompare(timeB)
             })
-            .slice(0, 4)
+            .slice(0, EVENT_BOARD_PREVIEW_LIMIT)
         : []
     const isDenseLayout = events.length >= 4
 

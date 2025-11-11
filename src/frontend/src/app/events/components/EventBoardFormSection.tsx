@@ -1,59 +1,64 @@
 import {Button, Input, Typography} from '@material-tailwind/react'
-import {EventBoardEvent, EventBoardForm} from '../types'
+import {EventBoardForm} from '../types'
 
 type EventBoardFormSectionProps = {
     form: EventBoardForm
     onFormChange: (next: EventBoardForm) => void
-    onAddEvent: () => void
-    onEditEvent: (event: EventBoardEvent) => void
-    onRemoveEvent: (eventId: number) => void
+    onOpenCalendar: () => void
 }
 
 export function EventBoardFormSection({
     form,
     onFormChange,
-    onAddEvent,
-    onEditEvent,
-    onRemoveEvent,
+    onOpenCalendar,
 }: EventBoardFormSectionProps) {
-    const handleFieldChange = (key: keyof EventBoardForm, value: string | EventBoardEvent[]) => {
+    const handleFieldChange = (key: keyof EventBoardForm, value: string) => {
         onFormChange({ ...form, [key]: value } as EventBoardForm)
     }
+
+    const hasEvents = form.events.length > 0
 
     return (
         <div className={'space-y-4'}>
             <Input label={'Titel'} value={form.title}
                    onChange={(event) => handleFieldChange('title', event.target.value)} />
-            <div className={'space-y-3'}>
-                <Typography variant={'small'} color={'blue-gray'} className={'font-medium'}>
-                    Ereignisse (max. 4 Einträge)
-                </Typography>
-                <div className={'space-y-3'}>
-                    {form.events.map((event) => (
-                        <div key={event.id} className={'grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center rounded-lg border border-blue-gray-100 bg-white p-4'}>
-                            <button type={'button'}
-                                    className={'text-left w-full focus:outline-none'}
-                                    onClick={() => onEditEvent(event)}>
-                                <p className={'font-semibold text-sm text-black'}>{event.title.trim() || 'Neues Ereignis'}</p>
-                                <p className={'text-xs text-blue-gray-500 mt-1'}>
-                                    {(event.date.trim() || 'Datum festlegen')} · {(event.time.trim() || 'Uhrzeit festlegen')}
-                                </p>
-                                {event.qrLink.trim() && (
-                                    <p className={'text-xs text-blue-gray-500 mt-1 break-words'}>{event.qrLink}</p>
-                                )}
-                            </button>
-                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-stretch sm:justify-self-end w-full sm:w-auto'}
-                                    onClick={() => onRemoveEvent(event.id)}>
-                                Entfernen
-                            </Button>
-                        </div>
-                    ))}
+            <div className={'space-y-4 rounded-2xl border border-blue-gray-100 bg-white p-4 shadow-sm'}>
+                <div className={'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'}>
+                    <div>
+                        <Typography variant={'small'} color={'blue-gray'} className={'font-medium'}>
+                            Ereignisse verwalten
+                        </Typography>
+                        <p className={'text-xs text-blue-gray-500'}>
+                            {form.events.length} Einträge geplant
+                        </p>
+                    </div>
+                    <Button variant={'filled'} color={'red'} size={'sm'} className={'normal-case w-full sm:w-auto'}
+                            onClick={onOpenCalendar}>
+                        Kalender öffnen
+                    </Button>
                 </div>
-                <Button variant={'outlined'} size={'sm'} className={'normal-case w-full sm:w-auto'}
-                        disabled={form.events.length >= 4}
-                        onClick={onAddEvent}>
-                    Ereignis hinzufügen
-                </Button>
+                <div className={'rounded-xl border border-blue-gray-50 bg-blue-gray-50/60 p-3'}>
+                    {hasEvents ? (
+                        <div className={'space-y-2'}>
+                            {[...form.events]
+                                .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+                                .map((event) => (
+                                    <div key={event.id} className={'rounded-lg bg-white/80 p-3'}>
+                                        <p className={'text-sm font-semibold text-blue-gray-900'}>
+                                            {event.title.trim() || 'Ohne Titel'}
+                                        </p>
+                                        <p className={'text-xs text-blue-gray-500'}>
+                                            {(event.date.trim() || 'Datum offen')} · {(event.time.trim() || 'Uhrzeit offen')}
+                                        </p>
+                                    </div>
+                                ))}
+                        </div>
+                    ) : (
+                        <p className={'text-sm text-blue-gray-500'}>
+                            Noch keine Ereignisse hinterlegt. Öffnen Sie den Kalender, um Termine anzulegen.
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     )

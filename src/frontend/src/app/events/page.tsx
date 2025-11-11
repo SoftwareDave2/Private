@@ -31,7 +31,7 @@ import {NoticeBoardFormSection} from './components/NoticeBoardFormSection'
 import {RoomBookingFormSection} from './components/RoomBookingFormSection'
 import {DisplayPreview} from './components/previews/DisplayPreview'
 import {DoorSignPersonDialog} from './components/dialogs/DoorSignPersonDialog'
-import {EventBoardEventDialog} from './components/dialogs/EventBoardEventDialog'
+import {EventBoardCalendarDialog} from './components/dialogs/EventBoardCalendarDialog'
 import {RoomBookingEntryDialog} from './components/dialogs/RoomBookingEntryDialog'
 import {TemplateCodeDialog} from './components/dialogs/TemplateCodeDialog'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
@@ -484,8 +484,7 @@ export default function EventsPage() {
 
     const [isPersonDialogOpen, setIsPersonDialogOpen] = useState<boolean>(false)
     const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
-    const [isEventDialogOpen, setIsEventDialogOpen] = useState<boolean>(false)
-    const [eventDraft, setEventDraft] = useState<EventBoardEvent | null>(null)
+    const [isEventCalendarOpen, setIsEventCalendarOpen] = useState<boolean>(false)
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState<boolean>(false)
     const [bookingDraft, setBookingDraft] = useState<BookingDraft | null>(null)
     const [isTemplateEditDialogOpen, setIsTemplateEditDialogOpen] = useState<boolean>(false)
@@ -512,6 +511,7 @@ export default function EventsPage() {
         setEventBoardForm(defaultEventBoardForm)
         setNoticeBoardForm(defaultNoticeBoardForm)
         setRoomBookingForm(defaultRoomBookingForm)
+        setIsEventCalendarOpen(false)
     }, [displayType])
 
     const openPersonDialog = (person: DoorSignPerson) => {
@@ -524,15 +524,8 @@ export default function EventsPage() {
         setPersonDraft(null)
     }
 
-    const openEventDialog = (event: EventBoardEvent) => {
-        setEventDraft({ ...event })
-        setIsEventDialogOpen(true)
-    }
-
-    const closeEventDialog = () => {
-        setIsEventDialogOpen(false)
-        setEventDraft(null)
-    }
+    const openEventCalendar = () => setIsEventCalendarOpen(true)
+    const closeEventCalendar = () => setIsEventCalendarOpen(false)
 
     const openBookingDialog = (entry: BookingEntry) => {
         const raw = typeof entry.time === 'string' ? entry.time : ''
@@ -623,39 +616,23 @@ export default function EventsPage() {
         }))
     }
 
-    const addEventBoardEvent = () => {
-        let createdEvent: EventBoardEvent | null = null
+    const upsertEventBoardEvent = (nextEvent: EventBoardEvent) => {
         setEventBoardForm((prev) => {
-            if (prev.events.length >= 4) {
-                return prev
-            }
-            const nextId = prev.events.length === 0 ? 1 : Math.max(...prev.events.map((event) => event.id)) + 1
-            createdEvent = { id: nextId, title: '', date: '', time: '', qrLink: '' }
+            const exists = prev.events.some((event) => event.id === nextEvent.id)
+            const updatedEvents = exists
+                ? prev.events.map((event) => (event.id === nextEvent.id ? nextEvent : event))
+                : [...prev.events, nextEvent]
             return {
                 ...prev,
-                events: [...prev.events, createdEvent],
+                events: updatedEvents,
             }
         })
-        if (createdEvent) {
-            openEventDialog(createdEvent)
-        }
     }
 
     const removeEventBoardEvent = (eventId: number) => {
         setEventBoardForm((prev) => ({
             ...prev,
             events: prev.events.filter((event) => event.id !== eventId),
-        }))
-    }
-
-    const updateEventBoardEvent = (eventId: number, updates: Partial<EventBoardEvent>) => {
-        setEventBoardForm((prev) => ({
-            ...prev,
-            events: prev.events.map((event) =>
-                event.id === eventId
-                    ? { ...event, ...updates }
-                    : event,
-            ),
         }))
     }
 
@@ -702,19 +679,6 @@ export default function EventsPage() {
             busyUntil: personDraft.status === 'busy' ? personDraft.busyUntil : '',
         })
         closePersonDialog()
-    }
-
-    const saveEventDialog = () => {
-        if (!eventDraft) {
-            return
-        }
-        updateEventBoardEvent(eventDraft.id, {
-            title: eventDraft.title,
-            date: eventDraft.date,
-            time: eventDraft.time,
-            qrLink: eventDraft.qrLink,
-        })
-        closeEventDialog()
     }
 
     const saveBookingDialog = () => {
@@ -853,9 +817,7 @@ export default function EventsPage() {
                 <EventBoardFormSection
                     form={eventBoardForm}
                     onFormChange={setEventBoardForm}
-                    onAddEvent={addEventBoardEvent}
-                    onEditEvent={openEventDialog}
-                    onRemoveEvent={removeEventBoardEvent}
+                    onOpenCalendar={openEventCalendar}
                 />
             )
         case 'notice-board':
@@ -1019,12 +981,12 @@ export default function EventsPage() {
                 onConfirm={closeTemplateCreateDialog}
             />
 
-            <EventBoardEventDialog
-                open={isEventDialogOpen}
-                event={eventDraft}
-                onClose={closeEventDialog}
-                onChange={(nextEvent) => setEventDraft(nextEvent)}
-                onSave={saveEventDialog}
+            <EventBoardCalendarDialog
+                open={isEventCalendarOpen}
+                events={eventBoardForm.events}
+                onClose={closeEventCalendar}
+                onSaveEvent={upsertEventBoardEvent}
+                onDeleteEvent={removeEventBoardEvent}
             />
 
             <RoomBookingEntryDialog
@@ -1046,5 +1008,3 @@ export default function EventsPage() {
         </div>
     )
 }
-
-

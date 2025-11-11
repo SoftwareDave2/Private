@@ -1,0 +1,901 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogFooter,
+  DialogHeader,
+  Input,
+  Switch,
+  Typography,
+} from "@material-tailwind/react";
+
+import { EventBoardEvent } from "../../types";
+
+type EventBoardCalendarDialogProps = {
+  open: boolean;
+  events: EventBoardEvent[];
+  onClose: () => void;
+  onSaveEvent: (event: EventBoardEvent) => void;
+  onDeleteEvent: (eventId: number) => void;
+};
+
+type CalendarDay = {
+  iso: string;
+  label: number;
+  inCurrentMonth: boolean;
+};
+
+type EventDraft = {
+  id: number | null;
+  title: string;
+  date: string;
+  time: string;
+  qrLink: string;
+};
+
+const WEEKDAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+const toISODate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getMonthStart = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), 1);
+const getMonthEnd = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+const getCalendarDays = (anchor: Date): CalendarDay[] => {
+  const firstOfMonth = getMonthStart(anchor);
+  const lastOfMonth = getMonthEnd(anchor);
+
+  const startDay = (firstOfMonth.getDay() + 6) % 7;
+  const daysBefore = startDay;
+
+  const totalDays = daysBefore + lastOfMonth.getDate();
+  const totalCells = Math.ceil(totalDays / 7) * 7;
+
+  const startDate = new Date(firstOfMonth);
+  startDate.setDate(firstOfMonth.getDate() - daysBefore);
+
+  return Array.from({ length: totalCells }).map((_, index) => {
+    const cellDate = new Date(startDate);
+    cellDate.setDate(startDate.getDate() + index);
+    return {
+      iso: toISODate(cellDate),
+      label: cellDate.getDate(),
+      inCurrentMonth: cellDate.getMonth() === anchor.getMonth(),
+    };
+  });
+};
+
+const parseDate = (value?: string) => {
+  if (!value) {
+    return null;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed;
+};
+
+const normalizeDateString = (value?: string) => {
+  const parsed = parseDate(value);
+  return parsed ? toISODate(parsed) : "";
+};
+
+const formatDateLabel = (value?: string) => {
+  if (!value) {
+    return "Datum offen";
+  }
+  const parsed = parseDate(value);
+  if (!parsed) {
+    return value;
+  }
+  return parsed.toLocaleDateString("de-DE", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+export function EventBoardCalendarDialog({
+  open,
+  events,
+  onClose,
+  onSaveEvent,
+  onDeleteEvent,
+}: EventBoardCalendarDialogProps) {
+  const [viewDate, setViewDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [draft, setDraft] = useState<EventDraft | null>(null);
+  const [showEventTitles, setShowEventTitles] = useState(true);
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedDate(null);
+      setSelectedEventId(null);
+      setDraft(null);
+      setViewDate(new Date());
+      return;
+    }
+
+    if (!selectedDate) {
+      const firstEventDate = events.find(
+        (event) => event.date && event.date.trim().length > 0
+      )?.date;
+      const baseDate =
+        normalizeDateString(firstEventDate) || toISODate(new Date());
+      setSelectedDate(baseDate);
+      const parsed = parseDate(baseDate);
+      if (parsed) {
+        setViewDate(parsed);
+      }
+    }
+  }, [open, events, selectedDate]);
+
+  const eventsByDate = useMemo(() => {
+    return events.reduce<Record<string, EventBoardEvent[]>>((acc, event) => {
+      const dateKey = (event.date ?? "").trim();
+      if (!dateKey) {
+        return acc;
+      }
+      if (!acc[dateKey]) {
+        acc[dateKey] = [];
+      }
+      acc[dateKey].push(event);
+      return acc;
+    }, {});
+  }, [events]);
+
+  const undatedEvents = useMemo(
+    () =>
+      events.filter((event) => !(event.date && event.date.trim().length > 0)),
+    [events]
+  );
+
+  const nextEventId = useMemo(() => {
+    if (events.length === 0) {
+      return 1;
+    }
+    return Math.max(...events.map((event) => event.id)) + 1;
+  }, [events]);
+
+  const calendarDays = useMemo(() => getCalendarDays(viewDate), [viewDate]);
+  const selectedDateEvents = selectedDate
+    ? eventsByDate[selectedDate] ?? []
+    : [];
+
+  const changeMonth = (offset: number) => {
+    setViewDate((current) => {
+      const next = new Date(current);
+      next.setMonth(current.getMonth() + offset);
+      return next;
+    });
+  };
+
+  const jumpToToday = () => {
+    const today = new Date();
+    const iso = toISODate(today);
+    setViewDate(today);
+    setSelectedDate(iso);
+    setSelectedEventId(null);
+    setDraft((prev) => {
+      if (prev && prev.id === null) {
+        return { ...prev, date: iso };
+      }
+      return prev;
+    });
+  };
+
+  const handleDayClick = (dayIso: string) => {
+    setSelectedDate(dayIso);
+    setSelectedEventId(null);
+    setDraft((prev) => {
+      if (prev && prev.id === null) {
+        return { ...prev, date: dayIso };
+      }
+      return prev;
+    });
+  };
+
+  const handleSelectEvent = (event: EventBoardEvent) => {
+    setSelectedEventId(event.id);
+    const normalizedDate = normalizeDateString(event.date);
+    if (normalizedDate) {
+      setSelectedDate(normalizedDate);
+      const parsed = parseDate(normalizedDate);
+      if (parsed) {
+        setViewDate(parsed);
+      }
+    }
+    setDraft({
+      id: event.id,
+      title: event.title,
+      date: normalizedDate || "",
+      time: event.time,
+      qrLink: event.qrLink,
+    });
+  };
+
+  const handleStartNewDraft = () => {
+    if (!selectedDate) {
+      return;
+    }
+    setSelectedEventId(null);
+    setDraft({
+      id: null,
+      title: "",
+      date: selectedDate,
+      time: "",
+      qrLink: "",
+    });
+  };
+
+  const handleDraftChange = (key: keyof EventDraft, value: string) => {
+    setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const handleSaveDraft = () => {
+    if (!draft || !draft.date) {
+      return;
+    }
+    const payload: EventBoardEvent = {
+      id: draft.id ?? nextEventId,
+      title: draft.title.trim(),
+      date: draft.date,
+      time: draft.time.trim(),
+      qrLink: draft.qrLink.trim(),
+    };
+    onSaveEvent(payload);
+    setDraft(payload);
+    setSelectedEventId(payload.id);
+    setSelectedDate(payload.date);
+  };
+
+  const handleDeleteEvent = (eventId: number) => {
+    onDeleteEvent(eventId);
+    if (draft?.id === eventId) {
+      setDraft(null);
+    }
+    if (selectedEventId === eventId) {
+      setSelectedEventId(null);
+    }
+  };
+
+  const monthLabel = viewDate.toLocaleDateString("de-DE", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const saveDisabled = !draft || !draft.date;
+
+  return (
+    <Dialog
+      open={open}
+      handler={onClose}
+      size={"xl"}
+      placeholder={""}
+      onPointerEnterCapture={undefined}
+      onPointerLeaveCapture={undefined}
+    >
+      <DialogHeader
+        className={"flex flex-col gap-1"}
+        placeholder={""}
+        onPointerEnterCapture={undefined}
+        onPointerLeaveCapture={undefined}
+      >
+        <Typography
+          variant={"h5"}
+          className={"text-red-700"}
+          placeholder={""}
+          onPointerEnterCapture={undefined}
+          onPointerLeaveCapture={undefined}
+        >
+          Kalenderübersicht
+        </Typography>
+        <Typography
+          variant={"small"}
+          color={"gray"}
+          className={"font-normal"}
+          placeholder={""}
+          onPointerEnterCapture={undefined}
+          onPointerLeaveCapture={undefined}
+        >
+          Wählen Sie einen Tag aus, sehen Sie bestehende Einträge und erstellen
+          Sie neue Ereignisse direkt aus diesem Kalender.
+        </Typography>
+      </DialogHeader>
+      <DialogBody
+        className={"space-y-6 max-h-[75vh] overflow-y-auto pr-1"}
+        placeholder={""}
+        onPointerEnterCapture={undefined}
+        onPointerLeaveCapture={undefined}
+      >
+        <div className={"flex flex-col gap-6 lg:flex-row"}>
+          <div className={"lg:flex-1 space-y-4"}>
+            <div
+              className={
+                "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+              }
+            >
+              <div
+                className={
+                  "flex flex-wrap items-center justify-between gap-2 sm:justify-start"
+                }
+              >
+                <Button
+                  variant={"text"}
+                  color={"gray"}
+                  size={"sm"}
+                  className={"normal-case"}
+                  onClick={() => changeMonth(-1)}
+                  placeholder={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                >
+                  Zurück
+                </Button>
+                <Typography
+                  variant={"h6"}
+                  className={"capitalize"}
+                  placeholder={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                >
+                  {monthLabel}
+                </Typography>
+                <Button
+                  variant={"text"}
+                  color={"gray"}
+                  size={"sm"}
+                  className={"normal-case"}
+                  onClick={() => changeMonth(1)}
+                  placeholder={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                >
+                  Weiter
+                </Button>
+                <Button
+                  variant={"outlined"}
+                  color={"red"}
+                  size={"sm"}
+                  className={"normal-case"}
+                  onClick={jumpToToday}
+                  placeholder={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                >
+                  Heute
+                </Button>
+              </div>
+              <div className={"flex items-center justify-end gap-2"}>
+                <Typography
+                  variant={"small"}
+                  className={"text-xs font-medium text-blue-gray-600"}
+                  placeholder={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                >
+                  Titel anzeigen
+                </Typography>
+                <Switch
+                  crossOrigin={""}
+                  label={""}
+                  checked={showEventTitles}
+                  onChange={(event) => setShowEventTitles(event.target.checked)}
+                  ripple={false}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                />
+              </div>
+            </div>
+            <div
+              className={
+                "flex flex-wrap items-center gap-4 rounded-xl bg-blue-gray-50/80 px-3 py-2 text-xs text-blue-gray-600"
+              }
+            >
+              <div className={"flex items-center gap-1"}>
+                <span className={"h-2.5 w-2.5 rounded-full bg-red-400"}></span>
+                <span>Geplante Ereignisse</span>
+              </div>
+              <div className={"flex items-center gap-1"}>
+                <span
+                  className={
+                    "h-2.5 w-2.5 rounded-full border border-blue-gray-200"
+                  }
+                ></span>
+                <span>Keine Einträge</span>
+              </div>
+              <div className={"flex items-center gap-1"}>
+                <span
+                  className={
+                    "rounded-full border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-600"
+                  }
+                >
+                  Heute
+                </span>
+                <span>Aktueller Tag</span>
+              </div>
+            </div>
+            <div className={"overflow-x-auto"}>
+              <div
+                className={
+                  "grid grid-cols-7 gap-2 min-w-[560px] text-center text-xs font-semibold uppercase text-blue-gray-400"
+                }
+              >
+                {WEEKDAY_LABELS.map((label) => (
+                  <span key={label}>{label}</span>
+                ))}
+              </div>
+            </div>
+            <div className={"overflow-x-auto pb-2"}>
+              <div className={"grid grid-cols-7 gap-2 min-w-[560px]"}>
+                {calendarDays.map((day) => {
+                  const dayEvents = eventsByDate[day.iso] ?? [];
+                  const hasEvents = dayEvents.length > 0;
+                  const isSelected = selectedDate === day.iso;
+                  const baseClasses = [
+                    "rounded-xl",
+                    "border",
+                    "bg-gradient-to-b",
+                    "p-3",
+                    "text-left",
+                    "transition-all",
+                    "duration-200",
+                    "cursor-pointer",
+                    "min-h-[100px]",
+                    "sm:min-h-[120px]",
+                    "relative",
+                  ];
+                  if (isSelected) {
+                    baseClasses.push(
+                      "from-white",
+                      "to-red-50",
+                      "border-red-400",
+                      "shadow-lg",
+                      "ring-2",
+                      "ring-red-100"
+                    );
+                  } else {
+                    baseClasses.push(
+                      "from-white",
+                      hasEvents ? "to-red-50/40" : "to-white",
+                      "border-blue-gray-100",
+                      "hover:-translate-y-1",
+                      "hover:shadow-md",
+                      "hover:border-red-200"
+                    );
+                  }
+                  if (!day.inCurrentMonth) {
+                    baseClasses.push("opacity-60");
+                  }
+                  return (
+                    <button
+                      key={day.iso}
+                      type={"button"}
+                      className={baseClasses.join(" ")}
+                      title={formatDateLabel(day.iso)}
+                      onClick={() => handleDayClick(day.iso)}
+                    >
+                      <div className={"flex items-center justify-between"}>
+                        <span
+                          className={"text-sm font-semibold text-blue-gray-800"}
+                        >
+                          {day.label}
+                        </span>
+                        {hasEvents && (
+                          <span
+                            className={
+                              "rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700"
+                            }
+                          >
+                            {dayEvents.length}x
+                          </span>
+                        )}
+                      </div>
+                      <div className={"mt-2 space-y-1"}>
+                        {showEventTitles ? (
+                          <>
+                            {dayEvents.slice(0, 3).map((event) => {
+                              const isActive = selectedEventId === event.id;
+                              const chipClasses = [
+                                "w-full",
+                                "rounded-md",
+                                "px-2",
+                                "py-1",
+                                "text-[11px]",
+                                "font-medium",
+                                "text-left",
+                                "transition",
+                                "duration-200",
+                              ];
+                              if (isActive) {
+                                chipClasses.push(
+                                  "bg-red-500",
+                                  "text-white",
+                                  "shadow-md"
+                                );
+                              } else {
+                                chipClasses.push(
+                                  "bg-red-50",
+                                  "text-red-700",
+                                  "hover:bg-red-100"
+                                );
+                              }
+                              return (
+                                <button
+                                  key={event.id}
+                                  type={"button"}
+                                  className={chipClasses.join(" ")}
+                                  onClick={(evt) => {
+                                    evt.stopPropagation();
+                                    handleSelectEvent(event);
+                                  }}
+                                >
+                                  <span className={"block break-words"}>
+                                    {event.title.trim() || "Ohne Titel"}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                            {dayEvents.length > 3 && (
+                              <div className={"text-[10px] text-blue-gray-400"}>
+                                +{dayEvents.length - 3} weitere
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className={"flex flex-wrap gap-1"}>
+                            {dayEvents.slice(0, 8).map((event) => (
+                              <button
+                                key={event.id}
+                                type={"button"}
+                                className={`h-2.5 w-2.5 rounded-full ${
+                                  selectedEventId === event.id
+                                    ? "bg-red-500 shadow-md shadow-red-200"
+                                    : "bg-red-200 hover:bg-red-300"
+                                } transition`}
+                                onClick={(evt) => {
+                                  evt.stopPropagation();
+                                  handleSelectEvent(event);
+                                }}
+                                title={event.title.trim() || "Ohne Titel"}
+                              />
+                            ))}
+                            {dayEvents.length > 8 && (
+                              <span
+                                className={"text-[10px] text-blue-gray-400"}
+                              >
+                                +{dayEvents.length - 8}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <div className={"lg:w-96 space-y-4"}>
+            <div
+              className={
+                "rounded-2xl border border-blue-gray-100 bg-blue-gray-50/70 p-4"
+              }
+            >
+              <Typography
+                variant={"small"}
+                className={"font-semibold text-blue-gray-900"}
+                placeholder={""}
+                onPointerEnterCapture={undefined}
+                onPointerLeaveCapture={undefined}
+              >
+                Ausgewählter Tag
+              </Typography>
+              {selectedDate ? (
+                <div className={"mt-2 space-y-2"}>
+                  <p className={"text-sm text-blue-gray-600"}>
+                    {formatDateLabel(selectedDate)}
+                  </p>
+                  <div
+                    className={
+                      "flex items-center justify-between text-xs text-blue-gray-500"
+                    }
+                  >
+                    <span>Ereignisse</span>
+                    <span>{selectedDateEvents.length}</span>
+                  </div>
+                  {selectedDateEvents.length > 0 ? (
+                    <div className={"space-y-2 max-h-64 overflow-y-auto pr-1"}>
+                      {selectedDateEvents.map((event) => {
+                        const isActive = selectedEventId === event.id;
+                        return (
+                          <button
+                            key={event.id}
+                            type={"button"}
+                            onClick={() => handleSelectEvent(event)}
+                            className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-md ${
+                              isActive
+                                ? "border-red-300 bg-white shadow-sm"
+                                : "border-white bg-white/80"
+                            }`}
+                          >
+                            <p
+                              className={
+                                "text-sm font-semibold text-blue-gray-900 break-words"
+                              }
+                            >
+                              {event.title.trim() || "Ohne Titel"}
+                            </p>
+                            <p className={"text-xs text-blue-gray-500"}>
+                              {event.time.trim() || "Uhrzeit offen"}
+                            </p>
+                            {event.qrLink.trim() && (
+                              <p
+                                className={
+                                  "mt-1 text-[11px] text-blue-gray-400 truncate"
+                                }
+                              >
+                                {event.qrLink}
+                              </p>
+                            )}
+                            <div className={"mt-2 flex justify-end"}>
+                              <Button
+                                variant={"text"}
+                                size={"sm"}
+                                color={"gray"}
+                                className={"normal-case text-xs"}
+                                onClick={(evt) => {
+                                  evt.stopPropagation();
+                                  handleDeleteEvent(event.id);
+                                }}
+                                placeholder={""}
+                                onPointerEnterCapture={undefined}
+                                onPointerLeaveCapture={undefined}
+                              >
+                                Entfernen
+                              </Button>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className={"text-sm text-blue-gray-500"}>
+                      Für diesen Tag gibt es noch keine Ereignisse.
+                    </p>
+                  )}
+                  <Button
+                    variant={"outlined"}
+                    color={"red"}
+                    size={"sm"}
+                    className={"normal-case w-full"}
+                    onClick={handleStartNewDraft}
+                    disabled={!selectedDate}
+                    placeholder={""}
+                    onPointerEnterCapture={undefined}
+                    onPointerLeaveCapture={undefined}
+                  >
+                    Neues Ereignis
+                  </Button>
+                  {undatedEvents.length > 0 && (
+                    <div
+                      className={
+                        "mt-3 rounded-xl border border-dashed border-blue-gray-100 bg-white/80 p-3"
+                      }
+                    >
+                      <Typography
+                        variant={"small"}
+                        className={"font-semibold text-blue-gray-900"}
+                        placeholder={""}
+                        onPointerEnterCapture={undefined}
+                        onPointerLeaveCapture={undefined}
+                      >
+                        Einträge ohne Datum
+                      </Typography>
+                      <p className={"text-xs text-blue-gray-500"}>
+                        Wählen Sie einen Eintrag aus und übernehmen Sie
+                        anschließend einen Tag aus dem Kalender.
+                      </p>
+                      <div
+                        className={
+                          "mt-2 space-y-2 max-h-48 overflow-y-auto pr-1"
+                        }
+                      >
+                        {undatedEvents.map((event) => {
+                          const isActive = selectedEventId === event.id;
+                          return (
+                            <button
+                              key={event.id}
+                              type={"button"}
+                              onClick={() => handleSelectEvent(event)}
+                              className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-md ${
+                                isActive
+                                  ? "border-red-300 bg-white shadow-sm"
+                                  : "border-white bg-blue-gray-50/70"
+                              }`}
+                            >
+                              <p
+                                className={
+                                  "text-sm font-semibold text-blue-gray-900 break-words"
+                                }
+                              >
+                                {event.title.trim() || "Ohne Titel"}
+                              </p>
+                              <p className={"text-xs text-blue-gray-500"}>
+                                {event.time.trim() || "Uhrzeit offen"}
+                              </p>
+                              <div className={"mt-2 flex justify-end"}>
+                                <Button
+                                  variant={"text"}
+                                  size={"sm"}
+                                  color={"gray"}
+                                  className={"normal-case text-xs"}
+                                  onClick={(evt) => {
+                                    evt.stopPropagation();
+                                    handleDeleteEvent(event.id);
+                                  }}
+                                  placeholder={""}
+                                  onPointerEnterCapture={undefined}
+                                  onPointerLeaveCapture={undefined}
+                                >
+                                  Entfernen
+                                </Button>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className={"mt-2 text-sm text-blue-gray-500"}>
+                  Bitte wählen Sie zuerst einen Tag aus.
+                </p>
+              )}
+            </div>
+
+            {draft && (
+              <div
+                className={
+                  "rounded-2xl border border-blue-gray-100 bg-white p-4 shadow-sm space-y-4"
+                }
+              >
+                <div className={"flex flex-col gap-2"}>
+                  <Typography
+                    variant={"small"}
+                    className={"font-semibold text-blue-gray-900"}
+                    placeholder={""}
+                    onPointerEnterCapture={undefined}
+                    onPointerLeaveCapture={undefined}
+                  >
+                    {draft.id ? "Ereignis bearbeiten" : "Neues Ereignis"}
+                  </Typography>
+                  <div className={"rounded-lg bg-blue-gray-50/80 p-3 text-sm"}>
+                    <p
+                      className={
+                        "text-xs uppercase tracking-wide text-blue-gray-500"
+                      }
+                    >
+                      Zugewiesenes Datum
+                    </p>
+                    <p className={"font-semibold text-blue-gray-900"}>
+                      {formatDateLabel(draft.date)}
+                    </p>
+                    {selectedDate && draft.date !== selectedDate && (
+                      <Button
+                        variant={"text"}
+                        size={"sm"}
+                        color={"red"}
+                        className={"normal-case mt-2"}
+                        onClick={() => handleDraftChange("date", selectedDate)}
+                        placeholder={""}
+                        onPointerEnterCapture={undefined}
+                        onPointerLeaveCapture={undefined}
+                      >
+                        Auswahl übernehmen
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <Input
+                  label={"Titel"}
+                  value={draft.title}
+                  onChange={(event) =>
+                    handleDraftChange("title", event.target.value)
+                  }
+                  crossOrigin={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                />
+                <Input
+                  type={"time"}
+                  label={"Zeit"}
+                  value={draft.time}
+                  onChange={(event) =>
+                    handleDraftChange("time", event.target.value)
+                  }
+                  crossOrigin={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                />
+                <Input
+                  type={"url"}
+                  label={"Link für QR-Code"}
+                  value={draft.qrLink}
+                  onChange={(event) =>
+                    handleDraftChange("qrLink", event.target.value)
+                  }
+                  placeholder={"https://..."}
+                  crossOrigin={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                />
+                <div
+                  className={
+                    "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                  }
+                >
+                  {draft.id !== null && (
+                    <Button
+                      variant={"text"}
+                      color={"gray"}
+                      className={"normal-case w-full sm:w-auto"}
+                      onClick={() => handleDeleteEvent(draft.id!)}
+                      placeholder={""}
+                      onPointerEnterCapture={undefined}
+                      onPointerLeaveCapture={undefined}
+                    >
+                      Löschen
+                    </Button>
+                  )}
+                  <Button
+                    variant={"filled"}
+                    color={"red"}
+                    className={"normal-case w-full sm:w-auto"}
+                    onClick={handleSaveDraft}
+                    disabled={saveDisabled}
+                    placeholder={""}
+                    onPointerEnterCapture={undefined}
+                    onPointerLeaveCapture={undefined}
+                  >
+                    Speichern
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogBody>
+      <DialogFooter
+        placeholder={""}
+        onPointerEnterCapture={undefined}
+        onPointerLeaveCapture={undefined}
+      >
+        <Button
+          variant={"text"}
+          color={"gray"}
+          className={"normal-case"}
+          onClick={onClose}
+          placeholder={""}
+          onPointerEnterCapture={undefined}
+          onPointerLeaveCapture={undefined}
+        >
+          Schließen
+        </Button>
+      </DialogFooter>
+    </Dialog>
+  );
+}
