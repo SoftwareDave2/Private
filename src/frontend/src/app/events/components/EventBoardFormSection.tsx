@@ -48,7 +48,8 @@ export function EventBoardFormSection({
                                             {event.title.trim() || 'Ohne Titel'}
                                         </p>
                                         <p className={'text-xs text-blue-gray-500'}>
-                                            {(event.date.trim() || 'Datum offen')} · {(event.time.trim() || 'Uhrzeit offen')}
+                                            {(event.date.trim() || 'Datum offen')} · {(event.startTime.trim() || 'Startzeit offen')}
+                                            {event.endTime.trim() ? ` – ${event.endTime.trim()}` : ''}
                                         </p>
                                     </div>
                                 ))}

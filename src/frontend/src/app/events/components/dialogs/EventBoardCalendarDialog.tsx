@@ -32,7 +32,8 @@ type EventDraft = {
   id: number | null;
   title: string;
   date: string;
-  time: string;
+  startTime: string;
+  endTime: string;
   qrLink: string;
 };
 
@@ -221,10 +222,11 @@ export function EventBoardCalendarDialog({
       id: event.id,
       title: event.title,
       date: normalizedDate || "",
-      time: event.time,
+      startTime: event.startTime,
+      endTime: event.endTime,
       qrLink: event.qrLink,
     });
-  };
+ };
 
   const handleStartNewDraft = () => {
     if (!selectedDate) {
@@ -235,7 +237,8 @@ export function EventBoardCalendarDialog({
       id: null,
       title: "",
       date: selectedDate,
-      time: "",
+      startTime: "",
+      endTime: "",
       qrLink: "",
     });
   };
@@ -252,7 +255,8 @@ export function EventBoardCalendarDialog({
       id: draft.id ?? nextEventId,
       title: draft.title.trim(),
       date: draft.date,
-      time: draft.time.trim(),
+      startTime: draft.startTime.trim(),
+      endTime: draft.endTime.trim(),
       qrLink: draft.qrLink.trim(),
     };
     onSaveEvent(payload);
@@ -416,16 +420,6 @@ export function EventBoardCalendarDialog({
                 ></span>
                 <span>Keine Einträge</span>
               </div>
-              <div className={"flex items-center gap-1"}>
-                <span
-                  className={
-                    "rounded-full border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-600"
-                  }
-                >
-                  Heute
-                </span>
-                <span>Aktueller Tag</span>
-              </div>
             </div>
             <div className={"overflow-x-auto"}>
               <div
@@ -545,6 +539,16 @@ export function EventBoardCalendarDialog({
                                   <span className={"block break-words"}>
                                     {event.title.trim() || "Ohne Titel"}
                                   </span>
+                                  <p className={"text-[10px] text-blue-gray-400"}>
+                                    {(() => {
+                                      const start = event.startTime.trim();
+                                      const end = event.endTime.trim();
+                                      if (start) {
+                                        return end ? `${start} – ${end}` : start;
+                                      }
+                                      return "";
+                                    })()}
+                                  </p>
                                 </button>
                               );
                             })}
@@ -639,12 +643,19 @@ export function EventBoardCalendarDialog({
                               {event.title.trim() || "Ohne Titel"}
                             </p>
                             <p className={"text-xs text-blue-gray-500"}>
-                              {event.time.trim() || "Uhrzeit offen"}
+                              {(() => {
+                                const start = event.startTime.trim()
+                                const end = event.endTime.trim()
+                                if (start) {
+                                  return end ? `${start} – ${end}` : start
+                                }
+                                return "Uhrzeit offen"
+                              })()}
                             </p>
                             {event.qrLink.trim() && (
                               <p
                                 className={
-                                  "mt-1 text-[11px] text-blue-gray-400 truncate"
+                                  'mt-1 text-[11px] font-semibold text-blue-gray-600 break-words'
                                 }
                               >
                                 {event.qrLink}
@@ -733,9 +744,16 @@ export function EventBoardCalendarDialog({
                               >
                                 {event.title.trim() || "Ohne Titel"}
                               </p>
-                              <p className={"text-xs text-blue-gray-500"}>
-                                {event.time.trim() || "Uhrzeit offen"}
-                              </p>
+                                <p className={"text-xs text-blue-gray-500"}>
+                                  {(() => {
+                                    const start = event.startTime.trim()
+                                    const end = event.endTime.trim()
+                                    if (start) {
+                                      return end ? `${start} – ${end}` : start
+                                    }
+                                    return "Uhrzeit offen"
+                                  })()}
+                                </p>
                               <div className={"mt-2 flex justify-end"}>
                                 <Button
                                   variant={"text"}
@@ -820,17 +838,30 @@ export function EventBoardCalendarDialog({
                   onPointerEnterCapture={undefined}
                   onPointerLeaveCapture={undefined}
                 />
-                <Input
-                  type={"time"}
-                  label={"Zeit"}
-                  value={draft.time}
-                  onChange={(event) =>
-                    handleDraftChange("time", event.target.value)
-                  }
-                  crossOrigin={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
-                />
+                <div className={"space-y-3"}>
+                  <Input
+                    type={"time"}
+                    label={"Startzeit"}
+                    value={draft.startTime}
+                    onChange={(event) =>
+                      handleDraftChange("startTime", event.target.value)
+                    }
+                    crossOrigin={""}
+                    onPointerEnterCapture={undefined}
+                    onPointerLeaveCapture={undefined}
+                  />
+                  <Input
+                    type={"time"}
+                    label={"Endzeit"}
+                    value={draft.endTime}
+                    onChange={(event) =>
+                      handleDraftChange("endTime", event.target.value)
+                    }
+                    crossOrigin={""}
+                    onPointerEnterCapture={undefined}
+                    onPointerLeaveCapture={undefined}
+                  />
+                </div>
                 <Input
                   type={"url"}
                   label={"Link für QR-Code"}

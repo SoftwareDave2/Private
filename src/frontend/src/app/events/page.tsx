@@ -226,9 +226,11 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
     eventsSource.forEach((event) => {
         const title = (event.title ?? '').trim()
         const date = (event.date ?? '').trim()
-        const time = (event.time ?? '').trim()
+        const startTime = (event.startTime ?? '').trim()
+        const endTime = (event.endTime ?? '').trim()
         const qrLink = (event.qrLink ?? '').trim()
-        const start = formatDateAndTimeForBackend(date, time)
+        const start = formatDateAndTimeForBackend(date, startTime)
+        const end = formatDateAndTimeForBackend(date, endTime)
 
         if (!title && !date && !time && !qrLink) {
             return
@@ -237,7 +239,7 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
         subItems.push({
             title: title || null,
             start: start ?? null,
-            end: null,
+            end: end ?? null,
             qrCodeUrl: qrLink || undefined,
         })
     })

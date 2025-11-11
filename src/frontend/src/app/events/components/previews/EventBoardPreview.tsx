@@ -22,11 +22,15 @@ const formatDateLabel = (value: string) => {
 export function EventBoardPreview({ form }: EventBoardPreviewProps) {
     const events = Array.isArray(form.events)
         ? form.events
-            .filter((event) =>
-                (event.title ?? '').trim().length > 0
-                || (event.date ?? '').trim().length > 0
-                || (event.time ?? '').trim().length > 0,
-            )
+                .filter((event) => {
+                    const data = [
+                        (event.title ?? '').trim(),
+                        (event.date ?? '').trim(),
+                        (event.startTime ?? '').trim(),
+                        (event.endTime ?? '').trim(),
+                    ]
+                    return data.some((value) => value.length > 0)
+                })
             .sort((a, b) => {
                 const dateA = a.date.trim()
                 const dateB = b.date.trim()
@@ -42,8 +46,8 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                 if (dateCompare !== 0) return dateCompare
 
                 // Bei gleichem Datum nach Uhrzeit sortieren
-                const timeA = a.time.trim()
-                const timeB = b.time.trim()
+                const timeA = a.startTime.trim()
+                const timeB = b.startTime.trim()
 
                 if (!timeA && !timeB) return 0
                 if (!timeA) return 1
@@ -69,7 +73,13 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                         {events.map((event) => {
                             const title = event.title.trim() || 'Titel festlegen'
                             const date = formatDateLabel(event.date.trim()) || 'Datum folgt'
-                            const time = event.time.trim() || 'Zeit folgt'
+                            const startTime = event.startTime.trim()
+                            const endTime = event.endTime.trim()
+                            const time = startTime
+                                ? endTime
+                                    ? `${startTime} – ${endTime}`
+                                    : startTime
+                                : 'Zeit folgt'
                             const hasQrLink = event.qrLink.trim().length > 0
 
                             return (
