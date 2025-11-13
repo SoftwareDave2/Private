@@ -10,10 +10,12 @@ import master.it_projekt_tablohm.models.DisplayTemplateData;
 import master.it_projekt_tablohm.models.DisplayTemplateSubData;
 import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -115,6 +117,16 @@ public class DisplayEventService {
                         .stream()
                         .map(sub -> toSubDataDto(data, sub)))
                 .collect(Collectors.toList());
+    }
+
+    public TemplateDisplayDataDTO getActiveDisplayDataForDisplay(String displayMac) {
+        LocalDateTime now = LocalDateTime.now();
+        return templateDataRepository
+                .findActiveByDisplayMac(displayMac, now, PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .map(this::toDto)
+                .orElse(null);
     }
 
     public void applyDefaultState(String displayMac, String templateType) {
