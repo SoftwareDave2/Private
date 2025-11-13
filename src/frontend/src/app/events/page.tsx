@@ -268,25 +268,18 @@ const hydrateDoorSignForm = (data: TemplateDisplayDataResponse): DoorSignForm =>
 }
 
 const hydrateEventBoardForm = (data: TemplateDisplayDataResponse): EventBoardForm => {
-    const events = (data.subItems ?? [])
-        .map((item, index) => {
-            const { date, time } = getIsoDateParts(item.start)
-            return {
-                id: index + 1,
-                title: (item.title ?? '').trim(),
-                date,
-                time,
-                qrLink: (item.qrCodeUrl ?? '').trim(),
-            }
-        })
-        .slice(0, 4)
-
-    while (events.length < defaultEventBoardForm.events.length) {
-        events.push({
-            ...defaultEventBoardForm.events[events.length],
-            id: events.length + 1,
-        })
-    }
+    const events = (data.subItems ?? []).map((item, index) => {
+        const dateSource = item.start ?? item.end ?? data.eventStart
+        const { date } = getIsoDateParts(dateSource)
+        return {
+            id: index + 1,
+            title: (item.title ?? '').trim(),
+            date,
+            startTime: formatTimeOnly(item.start),
+            endTime: formatTimeOnly(item.end),
+            qrLink: (item.qrCodeUrl ?? '').trim(),
+        }
+    })
 
     return {
         title: typeof data.fields.title === 'string' ? data.fields.title : defaultEventBoardForm.title,
@@ -376,7 +369,7 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
         const start = formatDateAndTimeForBackend(date, startTime)
         const end = formatDateAndTimeForBackend(date, endTime)
 
-        if (!title && !date && !time && !qrLink) {
+        if (!title && !date && !startTime && !endTime && !qrLink) {
             return
         }
 
