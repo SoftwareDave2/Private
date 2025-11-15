@@ -409,7 +409,6 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
             title: (form.title ?? '').trim(),
         },
         subItems: subItems.length > 0 ? subItems : undefined,
-        eventStart: pickBoundaryDateTime(subItems.map((item) => item.start), 'earliest'),
     }
 }
 
