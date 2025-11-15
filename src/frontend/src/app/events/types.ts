@@ -21,6 +21,7 @@ export type EventBoardEvent = {
     date: string
     startTime: string
     endTime: string
+    allDay: boolean
     qrLink: string
 }
 

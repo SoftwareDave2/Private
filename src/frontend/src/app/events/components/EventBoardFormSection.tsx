@@ -48,8 +48,17 @@ export function EventBoardFormSection({
                                             {event.title.trim() || 'Ohne Titel'}
                                         </p>
                                         <p className={'text-xs text-blue-gray-500'}>
-                                            {(event.date.trim() || 'Datum offen')} · {(event.startTime.trim() || 'Startzeit offen')}
-                                            {event.endTime.trim() ? ` – ${event.endTime.trim()}` : ''}
+                                            {(event.date.trim() || 'Datum offen')} · {(() => {
+                                                if (event.allDay) {
+                                                    return 'Ganztägig'
+                                                }
+                                                const start = event.startTime.trim()
+                                                const end = event.endTime.trim()
+                                                if (start) {
+                                                    return end ? `${start} – ${end}` : start
+                                                }
+                                                return 'Startzeit offen'
+                                            })()}
                                         </p>
                                     </div>
                                 ))}

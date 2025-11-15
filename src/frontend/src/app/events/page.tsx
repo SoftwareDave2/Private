@@ -52,6 +52,7 @@ type TemplateDisplayDataRequest = {
         highlighted?: boolean | null
         busy?: boolean | null
         qrCodeUrl?: string | null
+        allDay?: boolean | null
     }>
 }
 
@@ -78,6 +79,7 @@ type TemplateDisplaySubItem = {
     highlighted?: boolean | null
     busy?: boolean | null
     qrCodeUrl?: string | null
+    allDay?: boolean | null
 }
 
 type TemplateDisplayDataResponse = {
@@ -277,6 +279,7 @@ const hydrateEventBoardForm = (data: TemplateDisplayDataResponse): EventBoardFor
             date,
             startTime: formatTimeOnly(item.start),
             endTime: formatTimeOnly(item.end),
+            allDay: Boolean(item.allDay),
             qrLink: (item.qrCodeUrl ?? '').trim(),
         }
     })
@@ -378,6 +381,7 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
             start: start ?? null,
             end: end ?? null,
             qrCodeUrl: qrLink || undefined,
+            allDay: event.allDay,
         })
     })
 

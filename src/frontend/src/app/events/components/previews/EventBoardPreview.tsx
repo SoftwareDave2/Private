@@ -46,6 +46,12 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                 if (dateCompare !== 0) return dateCompare
 
                 // Bei gleichem Datum nach Uhrzeit sortieren
+                const isAllDayA = Boolean(a.allDay)
+                const isAllDayB = Boolean(b.allDay)
+
+                if (isAllDayA && !isAllDayB) return -1
+                if (!isAllDayA && isAllDayB) return 1
+
                 const timeA = a.startTime.trim()
                 const timeB = b.startTime.trim()
 
@@ -75,11 +81,13 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                             const date = formatDateLabel(event.date.trim()) || 'Datum folgt'
                             const startTime = event.startTime.trim()
                             const endTime = event.endTime.trim()
-                            const time = startTime
-                                ? endTime
-                                    ? `${startTime} – ${endTime}`
-                                    : startTime
-                                : 'Zeit folgt'
+                            const time = event.allDay
+                                ? 'Ganztägig'
+                                : startTime
+                                    ? endTime
+                                        ? `${startTime} – ${endTime}`
+                                        : startTime
+                                    : 'Zeit folgt'
                             const hasQrLink = event.qrLink.trim().length > 0
 
                             return (

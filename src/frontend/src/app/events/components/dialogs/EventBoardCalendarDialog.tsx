@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogBody,
   DialogFooter,
@@ -34,6 +35,7 @@ type EventDraft = {
   date: string;
   startTime: string;
   endTime: string;
+  allDay: boolean;
   qrLink: string;
 };
 
@@ -224,6 +226,7 @@ export function EventBoardCalendarDialog({
       date: normalizedDate || "",
       startTime: event.startTime,
       endTime: event.endTime,
+      allDay: Boolean(event.allDay),
       qrLink: event.qrLink,
     });
  };
@@ -239,12 +242,29 @@ export function EventBoardCalendarDialog({
       date: selectedDate,
       startTime: "",
       endTime: "",
+      allDay: false,
       qrLink: "",
     });
   };
 
-  const handleDraftChange = (key: keyof EventDraft, value: string) => {
+  const handleDraftChange = <K extends keyof EventDraft>(
+    key: K,
+    value: EventDraft[K]
+  ) => {
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const handleAllDayToggle = (checked: boolean) => {
+    setDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            allDay: checked,
+            startTime: checked ? "" : prev.startTime,
+            endTime: checked ? "" : prev.endTime,
+          }
+        : prev
+    );
   };
 
   const handleSaveDraft = () => {
@@ -257,6 +277,7 @@ export function EventBoardCalendarDialog({
       date: draft.date,
       startTime: draft.startTime.trim(),
       endTime: draft.endTime.trim(),
+      allDay: draft.allDay,
       qrLink: draft.qrLink.trim(),
     };
     onSaveEvent(payload);
@@ -281,6 +302,19 @@ export function EventBoardCalendarDialog({
   });
 
   const saveDisabled = !draft || !draft.date;
+  const resolveTimeLabel = (
+    event: Pick<EventBoardEvent, "startTime" | "endTime" | "allDay">
+  ) => {
+    if (event.allDay) {
+      return "Ganztägig";
+    }
+    const start = (event.startTime ?? "").trim();
+    const end = (event.endTime ?? "").trim();
+    if (start) {
+      return end ? `${start} – ${end}` : start;
+    }
+    return "Uhrzeit offen";
+  };
 
   return (
     <Dialog
@@ -541,12 +575,8 @@ export function EventBoardCalendarDialog({
                                   </span>
                                   <p className={"text-[10px] text-blue-gray-400"}>
                                     {(() => {
-                                      const start = event.startTime.trim();
-                                      const end = event.endTime.trim();
-                                      if (start) {
-                                        return end ? `${start} – ${end}` : start;
-                                      }
-                                      return "";
+                                      const label = resolveTimeLabel(event);
+                                      return label === "Uhrzeit offen" ? "" : label;
                                     })()}
                                   </p>
                                 </button>
@@ -643,14 +673,7 @@ export function EventBoardCalendarDialog({
                               {event.title.trim() || "Ohne Titel"}
                             </p>
                             <p className={"text-xs text-blue-gray-500"}>
-                              {(() => {
-                                const start = event.startTime.trim()
-                                const end = event.endTime.trim()
-                                if (start) {
-                                  return end ? `${start} – ${end}` : start
-                                }
-                                return "Uhrzeit offen"
-                              })()}
+                              {resolveTimeLabel(event)}
                             </p>
                             {event.qrLink.trim() && (
                               <p
@@ -745,14 +768,7 @@ export function EventBoardCalendarDialog({
                                 {event.title.trim() || "Ohne Titel"}
                               </p>
                                 <p className={"text-xs text-blue-gray-500"}>
-                                  {(() => {
-                                    const start = event.startTime.trim()
-                                    const end = event.endTime.trim()
-                                    if (start) {
-                                      return end ? `${start} – ${end}` : start
-                                    }
-                                    return "Uhrzeit offen"
-                                  })()}
+                                  {resolveTimeLabel(event)}
                                 </p>
                               <div className={"mt-2 flex justify-end"}>
                                 <Button
@@ -843,6 +859,7 @@ export function EventBoardCalendarDialog({
                     type={"time"}
                     label={"Startzeit"}
                     value={draft.startTime}
+                    disabled={draft.allDay}
                     onChange={(event) =>
                       handleDraftChange("startTime", event.target.value)
                     }
@@ -854,12 +871,18 @@ export function EventBoardCalendarDialog({
                     type={"time"}
                     label={"Endzeit"}
                     value={draft.endTime}
+                    disabled={draft.allDay}
                     onChange={(event) =>
                       handleDraftChange("endTime", event.target.value)
                     }
                     crossOrigin={""}
                     onPointerEnterCapture={undefined}
                     onPointerLeaveCapture={undefined}
+                  />
+                  <Checkbox
+                    label={"Ganztägig"}
+                    checked={draft.allDay}
+                    onChange={(event) => handleAllDayToggle(event.target.checked)}
                   />
                 </div>
                 <Input

@@ -81,6 +81,7 @@ public class DisplayEventService {
                 subEntity.setHighlighted(subDto.getHighlighted());
                 subEntity.setBusy(subDto.getBusy());
                 subEntity.setQrCodeUrl(subDto.getQrCodeUrl());
+                subEntity.setAllDay(subDto.getAllDay());
                 templateData.getSubItems().add(subEntity);
             }
         }
@@ -154,6 +155,7 @@ public class DisplayEventService {
                                 subDto.setHighlighted(sub.getHighlighted());
                                 subDto.setBusy(sub.getBusy());
                                 subDto.setQrCodeUrl(sub.getQrCodeUrl());
+                                subDto.setAllDay(sub.getAllDay());
                                 return subDto;
                             })
                             .collect(Collectors.toList())
@@ -173,7 +175,7 @@ public class DisplayEventService {
         dto.setHighlighted(sub.getHighlighted());
         dto.setBusy(sub.getBusy());
         dto.setQrCodeUrl(sub.getQrCodeUrl());
+        dto.setAllDay(sub.getAllDay());
         return dto;
     }
 }
-

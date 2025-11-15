@@ -73,6 +73,7 @@ public class TemplateDefaultContentProvider {
         sub.setEnd(end);
         sub.setHighlighted(highlighted);
         sub.setBusy(highlighted);
+        sub.setAllDay(false);
         subItems.add(sub);
     }
 
@@ -89,7 +90,7 @@ public class TemplateDefaultContentProvider {
         sub.setHighlighted(highlighted);
         sub.setBusy(highlighted);
         sub.setQrCodeUrl(qrLink);
+        sub.setAllDay(false);
         subItems.add(sub);
     }
 }
-
