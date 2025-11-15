@@ -32,6 +32,7 @@ type EventDraft = {
   id: number | null;
   title: string;
   date: string;
+  endDate: string;
   startTime: string;
   endTime: string;
   allDay: boolean;
@@ -108,6 +109,7 @@ const formatDateLabel = (value?: string) => {
     year: "numeric",
   });
 };
+
 
 export function EventBoardCalendarDialog({
   open,
@@ -193,7 +195,11 @@ export function EventBoardCalendarDialog({
     setSelectedEventId(null);
     setDraft((prev) => {
       if (prev && prev.id === null) {
-        return { ...prev, date: iso };
+        const nextDraft = { ...prev, date: iso };
+        if (!nextDraft.endDate || nextDraft.endDate < iso) {
+          nextDraft.endDate = iso;
+        }
+        return nextDraft;
       }
       return prev;
     });
@@ -204,7 +210,11 @@ export function EventBoardCalendarDialog({
     setSelectedEventId(null);
     setDraft((prev) => {
       if (prev && prev.id === null) {
-        return { ...prev, date: dayIso };
+        const nextDraft = { ...prev, date: dayIso };
+        if (!nextDraft.endDate || nextDraft.endDate < dayIso) {
+          nextDraft.endDate = dayIso;
+        }
+        return nextDraft;
       }
       return prev;
     });
@@ -213,6 +223,8 @@ export function EventBoardCalendarDialog({
   const handleSelectEvent = (event: EventBoardEvent) => {
     setSelectedEventId(event.id);
     const normalizedDate = normalizeDateString(event.date);
+    const normalizedEndDate =
+      normalizeDateString(event.endDate) || normalizedDate || "";
     if (normalizedDate) {
       setSelectedDate(normalizedDate);
       const parsed = parseDate(normalizedDate);
@@ -224,6 +236,7 @@ export function EventBoardCalendarDialog({
       id: event.id,
       title: event.title,
       date: normalizedDate || "",
+      endDate: normalizedEndDate,
       startTime: event.startTime,
       endTime: event.endTime,
       allDay: Boolean(event.allDay),
@@ -241,6 +254,7 @@ export function EventBoardCalendarDialog({
       id: null,
       title: "",
       date: selectedDate,
+      endDate: selectedDate,
       startTime: "",
       endTime: "",
       allDay: false,
@@ -253,7 +267,31 @@ export function EventBoardCalendarDialog({
     key: K,
     value: EventDraft[K]
   ) => {
-    setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
+    setDraft((prev) => {
+      if (!prev) {
+        return prev;
+      }
+      const next = { ...prev, [key]: value } as EventDraft;
+      if (key === "date") {
+        const normalizedStart =
+          typeof value === "string" ? normalizeDateString(value) : "";
+        next.date = normalizedStart;
+        if (!next.endDate || (normalizedStart && next.endDate < normalizedStart)) {
+          next.endDate = normalizedStart;
+        }
+      } else if (key === "endDate") {
+        const normalizedEnd =
+          typeof value === "string" ? normalizeDateString(value) : "";
+        if (!normalizedEnd) {
+          next.endDate = next.date;
+        } else if (next.date && normalizedEnd < next.date) {
+          next.endDate = next.date;
+        } else {
+          next.endDate = normalizedEnd;
+        }
+      }
+      return next;
+    });
   };
 
   const handleAllDayToggle = (checked: boolean) => {
@@ -273,10 +311,20 @@ export function EventBoardCalendarDialog({
     if (!draft || !draft.date) {
       return;
     }
+    const normalizedStartDate = normalizeDateString(draft.date) || "";
+    if (!normalizedStartDate) {
+      return;
+    }
+    const rawEndDate = draft.endDate ? normalizeDateString(draft.endDate) : "";
+    const normalizedEndDate =
+      rawEndDate && rawEndDate >= normalizedStartDate
+        ? rawEndDate
+        : normalizedStartDate;
     const payload: EventBoardEvent = {
       id: draft.id ?? nextEventId,
       title: draft.title.trim(),
-      date: draft.date,
+      date: normalizedStartDate,
+      endDate: normalizedEndDate,
       startTime: draft.startTime.trim(),
       endTime: draft.endTime.trim(),
       allDay: draft.allDay,
@@ -304,7 +352,7 @@ export function EventBoardCalendarDialog({
     year: "numeric",
   });
 
-  const saveDisabled = !draft || !draft.date;
+  const saveDisabled = !draft || !draft.date || !draft.endDate;
   const resolveTimeLabel = (
     event: Pick<EventBoardEvent, "startTime" | "endTime" | "allDay">
   ) => {
@@ -686,28 +734,13 @@ export function EventBoardCalendarDialog({
                                 "flex items-center justify-between gap-2"
                               }
                             >
-                              <div
+                              <p
                                 className={
-                                  "flex items-center justify-between gap-2"
+                                  "text-sm font-semibold text-blue-gray-900 break-words"
                                 }
                               >
-                                <p
-                                  className={
-                                    "text-sm font-semibold text-blue-gray-900 break-words"
-                                  }
-                                >
-                                  {event.title.trim() || "Ohne Titel"}
-                                </p>
-                                {event.important && (
-                                  <span
-                                    className={
-                                      "rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-600"
-                                    }
-                                  >
-                                    Wichtig
-                                  </span>
-                                )}
-                              </div>
+                                {event.title.trim() || "Ohne Titel"}
+                              </p>
                               {event.important && (
                                 <span
                                   className={
@@ -721,6 +754,13 @@ export function EventBoardCalendarDialog({
                             <p className={"text-xs text-blue-gray-500"}>
                               {resolveTimeLabel(event)}
                             </p>
+                            {event.endDate &&
+                              event.endDate.trim() &&
+                              event.endDate.trim() !== event.date.trim() && (
+                                <p className={"text-[11px] text-blue-gray-400"}>
+                                  Bis {formatDateLabel(event.endDate)}
+                                </p>
+                              )}
                             {event.qrLink.trim() && (
                               <p
                                 className={
@@ -806,16 +846,34 @@ export function EventBoardCalendarDialog({
                                   : "border-white bg-blue-gray-50/70"
                               }`}
                             >
-                              <p
-                                className={
-                                  "text-sm font-semibold text-blue-gray-900 break-words"
-                                }
-                              >
-                                {event.title.trim() || "Ohne Titel"}
-                              </p>
-                                <p className={"text-xs text-blue-gray-500"}>
-                                  {resolveTimeLabel(event)}
+                              <div className={"flex items-center justify-between gap-2"}>
+                                <p
+                                  className={
+                                    "text-sm font-semibold text-blue-gray-900 break-words"
+                                  }
+                                >
+                                  {event.title.trim() || "Ohne Titel"}
                                 </p>
+                                {event.important && (
+                                  <span
+                                    className={
+                                      "rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-600"
+                                    }
+                                  >
+                                    Wichtig
+                                  </span>
+                                )}
+                              </div>
+                              <p className={"text-xs text-blue-gray-500"}>
+                                {resolveTimeLabel(event)}
+                              </p>
+                              {event.endDate &&
+                                event.endDate.trim() &&
+                                event.endDate.trim() !== event.date.trim() && (
+                                  <p className={"text-[11px] text-blue-gray-400"}>
+                                    Bis {formatDateLabel(event.endDate)}
+                                  </p>
+                                )}
                               <div className={"mt-2 flex justify-end"}>
                                 <Button
                                   variant={"text"}
@@ -874,6 +932,20 @@ export function EventBoardCalendarDialog({
                     <p className={"font-semibold text-blue-gray-900"}>
                       {formatDateLabel(draft.date)}
                     </p>
+                    {draft.endDate && draft.endDate !== draft.date && (
+                      <div className={"mt-3"}>
+                        <p
+                          className={
+                            "text-xs uppercase tracking-wide text-blue-gray-500"
+                          }
+                        >
+                          Enddatum
+                        </p>
+                        <p className={"font-semibold text-blue-gray-900"}>
+                          {formatDateLabel(draft.endDate)}
+                        </p>
+                      </div>
+                    )}
                     {selectedDate && draft.date !== selectedDate && (
                       <Button
                         variant={"text"}
@@ -890,6 +962,18 @@ export function EventBoardCalendarDialog({
                     )}
                   </div>
                 </div>
+                <Input
+                  type={"date"}
+                  label={"Enddatum"}
+                  value={draft.endDate}
+                  onChange={(event) =>
+                    handleDraftChange("endDate", event.target.value)
+                  }
+                  min={draft.date || undefined}
+                  crossOrigin={""}
+                  onPointerEnterCapture={undefined}
+                  onPointerLeaveCapture={undefined}
+                />
                 <Input
                   label={"Titel"}
                   value={draft.title}

@@ -19,6 +19,18 @@ const formatDateLabel = (value: string) => {
     return `${day}.${month}.${year}`
 }
 
+const formatDateRange = (start: string, end: string) => {
+    const startLabel = formatDateLabel(start)
+    if (!startLabel) {
+        return 'Datum folgt'
+    }
+    const normalizedEnd = formatDateLabel(end)
+    if (!end || end === start || !normalizedEnd) {
+        return startLabel
+    }
+    return `${startLabel} – ${normalizedEnd}`
+}
+
 export function EventBoardPreview({ form }: EventBoardPreviewProps) {
     const events = Array.isArray(form.events)
         ? form.events
@@ -78,7 +90,7 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                     <div className={`flex flex-col h-full ${events.length < 4 ? 'justify-start' : 'justify-between'} ${isDenseLayout ? 'gap-1' : 'gap-1.5'}`}>
                         {events.map((event) => {
                             const title = event.title.trim() || 'Titel festlegen'
-                            const date = formatDateLabel(event.date.trim()) || 'Datum folgt'
+                            const date = formatDateRange(event.date.trim(), (event.endDate ?? '').trim())
                             const startTime = event.startTime.trim()
                             const endTime = event.endTime.trim()
                             const time = event.allDay

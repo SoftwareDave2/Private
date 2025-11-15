@@ -1,10 +1,38 @@
 import {Button, Input, Typography} from '@material-tailwind/react'
-import {EventBoardForm} from '../types'
+import {EventBoardEvent, EventBoardForm} from '../types'
 
 type EventBoardFormSectionProps = {
     form: EventBoardForm
     onFormChange: (next: EventBoardForm) => void
     onOpenCalendar: () => void
+}
+
+const formatDateValue = (value: string) => {
+    const trimmed = (value ?? '').trim()
+    if (!trimmed) {
+        return ''
+    }
+    const parsed = new Date(trimmed)
+    if (Number.isNaN(parsed.getTime())) {
+        return trimmed
+    }
+    return parsed.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    })
+}
+
+const formatEventDateRange = (event: EventBoardEvent) => {
+    const startLabel = formatDateValue(event.date)
+    if (!startLabel) {
+        return 'Datum offen'
+    }
+    const endLabel = formatDateValue(event.endDate)
+    if (!endLabel || event.endDate.trim() === event.date.trim()) {
+        return startLabel
+    }
+    return `${startLabel} – ${endLabel}`
 }
 
 export function EventBoardFormSection({
@@ -55,7 +83,7 @@ export function EventBoardFormSection({
                                             )}
                                         </div>
                                         <p className={'text-xs text-blue-gray-500'}>
-                                            {(event.date.trim() || 'Datum offen')} · {(() => {
+                                            {formatEventDateRange(event)} · {(() => {
                                                 if (event.allDay) {
                                                     return 'Ganztägig'
                                                 }

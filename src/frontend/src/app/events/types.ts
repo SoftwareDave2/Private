@@ -19,6 +19,7 @@ export type EventBoardEvent = {
     id: number
     title: string
     date: string
+    endDate: string
     startTime: string
     endTime: string
     allDay: boolean

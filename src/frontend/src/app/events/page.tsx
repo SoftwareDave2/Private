@@ -211,6 +211,13 @@ const cloneEventBoardForm = (form: EventBoardForm): EventBoardForm => ({
     events: Array.isArray(form.events)
         ? form.events.map((event) => ({
             ...event,
+            date: typeof event.date === 'string' ? event.date : '',
+            endDate:
+                typeof event.endDate === 'string'
+                    ? event.endDate
+                    : typeof event.date === 'string'
+                        ? event.date
+                        : '',
             allDay: Boolean(event.allDay),
             important: Boolean(event.important),
         }))
@@ -280,10 +287,12 @@ const hydrateEventBoardForm = (data: TemplateDisplayDataResponse): EventBoardFor
     const events = (data.subItems ?? []).map((item, index) => {
         const dateSource = item.start ?? item.end ?? data.eventStart
         const { date } = getIsoDateParts(dateSource)
+        const { date: endDate } = getIsoDateParts(item.end ?? data.eventEnd ?? dateSource)
         return {
             id: index + 1,
             title: (item.title ?? '').trim(),
             date,
+            endDate: endDate || date,
             startTime: formatTimeOnly(item.start),
             endTime: formatTimeOnly(item.end),
             allDay: Boolean(item.allDay),
@@ -373,13 +382,15 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
     eventsSource.forEach((event) => {
         const title = (event.title ?? '').trim()
         const date = (event.date ?? '').trim()
+        const endDateValue = (event.endDate ?? '').trim()
         const startTime = (event.startTime ?? '').trim()
         const endTime = (event.endTime ?? '').trim()
         const qrLink = (event.qrLink ?? '').trim()
+        const normalizedEndDate = endDateValue && date && endDateValue >= date ? endDateValue : date
         const start = formatDateAndTimeForBackend(date, startTime)
-        const end = formatDateAndTimeForBackend(date, endTime)
+        const end = formatDateAndTimeForBackend(normalizedEndDate, endTime)
 
-        if (!title && !date && !startTime && !endTime && !qrLink) {
+        if (!title && !date && !startTime && !endTime && !qrLink && !event.allDay) {
             return
         }
 
