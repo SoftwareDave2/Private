@@ -41,7 +41,10 @@ export type NoticeBoardForm = {
 export type BookingEntry = {
     id: number
     title: string
-    time: string
+    startTime: string
+    endTime: string
+    allDay: boolean
+    time?: string
 }
 
 export type RoomBookingForm = {

@@ -1,5 +1,3 @@
-import {Button} from '@material-tailwind/react'
-
 import {BookingEntry, RoomBookingForm} from '../../types'
 
 type RoomBookingPreviewProps = {
@@ -7,23 +5,41 @@ type RoomBookingPreviewProps = {
     onRemoveEntry: (entryId: number) => void
 }
 
-const normalizeEntries = (entries: BookingEntry[]) => entries
-    .filter((entry) => (entry.title ?? '').trim().length > 0 || (entry.time ?? '').trim().length > 0)
-    .map((entry) => {
-        const raw = typeof entry.time === 'string' ? entry.time : ''
-        const segments = raw.split('-').map((segment) => segment.trim()).filter((segment) => segment.length > 0)
-        const startTime = segments.length >= 1 ? segments[0] : ''
-        const endTime = segments.length >= 2 ? segments[1] : ''
-        const normalized = startTime && endTime ? `${startTime} - ${endTime}` : raw || startTime || endTime
-        return {
-            ...entry,
-            normalizedTime: normalized,
-            startTime,
-            endTime,
-        }
-    })
+const normalizeEntries = (entries: BookingEntry[]) =>
+    entries
+        .map((entry) => {
+            const isAllDay = Boolean(entry.allDay)
+            const baseStart = (entry.startTime ?? '').trim()
+            const baseEnd = (entry.endTime ?? '').trim()
+            let startTime = isAllDay ? '' : baseStart
+            let endTime = isAllDay ? '' : baseEnd
 
-export function RoomBookingPreview({ form, onRemoveEntry }: RoomBookingPreviewProps) {
+            if (!startTime && !endTime && typeof entry.time === 'string') {
+                const segments = entry.time
+                    .split('-')
+                    .map((segment) => segment.trim())
+                    .filter((segment) => segment.length > 0)
+                startTime = segments.length >= 1 ? segments[0] : ''
+                endTime = segments.length >= 2 ? segments[1] : ''
+            }
+
+            const normalized = isAllDay
+                ? 'Ganztägig'
+                : startTime && endTime
+                    ? `${startTime} - ${endTime}`
+                    : startTime || endTime || ''
+
+            return {
+                ...entry,
+                normalizedTime: normalized,
+                startTime,
+                endTime,
+                allDay: isAllDay,
+            }
+        })
+        .filter((entry) => (entry.title ?? '').trim().length > 0 || entry.normalizedTime.length > 0 || entry.allDay)
+
+export function RoomBookingPreview({ form }: RoomBookingPreviewProps) {
     const entriesSource = Array.isArray(form.entries) ? form.entries : []
     const parsedEntries = normalizeEntries(entriesSource)
 
@@ -68,7 +84,11 @@ export function RoomBookingPreview({ form, onRemoveEntry }: RoomBookingPreviewPr
                         </div>
                         <div className={'mt-1 rounded-lg border border-black bg-white px-3 py-2 text-left w-40 h-20 flex flex-col justify-center'}>
                             <span className={'text-sm font-semibold text-black truncate'}>
-                                {activeEntry?.normalizedTime ? `${activeEntry.normalizedTime} Uhr` : 'Keine Zeit'}
+                                {activeEntry?.normalizedTime
+                                    ? activeEntry.allDay
+                                        ? activeEntry.normalizedTime
+                                        : `${activeEntry.normalizedTime} Uhr`
+                                    : 'Keine Zeit'}
                             </span>
                             <span className={'mt-1 text-xs text-black line-clamp-2'}>
                                 {activeEntry?.title?.trim() || 'Kein Meeting ausgewählt'}
@@ -82,7 +102,9 @@ export function RoomBookingPreview({ form, onRemoveEntry }: RoomBookingPreviewPr
                 {secondaryEntries.length > 0 && (
                     <div className={'flex flex-1 flex-col bg-white px-3 pt-2 pb-3 space-y-1.5'}>
                         {secondaryEntries.map((entry, index) => {
-                            const labelText = `Ab ${entry.startTime ? `${entry.startTime} Uhr` : 'sofort'}: ${(entry.title ?? '').trim()}`
+                            const labelText = entry.allDay
+                                ? `Ganztägig: ${(entry.title ?? '').trim()}`
+                                : `Ab ${entry.startTime ? `${entry.startTime} Uhr` : 'sofort'}: ${(entry.title ?? '').trim()}`
                             const isLast = index === secondaryEntries.length - 1
                             return (
                                 <div key={entry.id} className={'text-xs text-black leading-tight w-full'}>

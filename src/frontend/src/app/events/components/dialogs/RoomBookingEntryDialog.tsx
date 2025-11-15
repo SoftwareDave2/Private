@@ -1,10 +1,11 @@
-import {Button, Dialog, DialogBody, DialogFooter, DialogHeader, Input} from '@material-tailwind/react'
+import {Button, Checkbox, Dialog, DialogBody, DialogFooter, DialogHeader, Input} from '@material-tailwind/react'
 
 type BookingDraft = {
     id: number
     title: string
     startTime: string
     endTime: string
+    allDay: boolean
 }
 
 type RoomBookingEntryDialogProps = {
@@ -16,13 +17,25 @@ type RoomBookingEntryDialogProps = {
 }
 
 export function RoomBookingEntryDialog({ open, draft, onClose, onChange, onSave }: RoomBookingEntryDialogProps) {
-    const handleFieldChange = (key: keyof BookingDraft, value: string) => {
+    const handleFieldChange = <K extends keyof BookingDraft>(key: K, value: BookingDraft[K]) => {
         if (!draft) {
             return
         }
         onChange({
             ...draft,
             [key]: value,
+        })
+    }
+
+    const handleAllDayToggle = (checked: boolean) => {
+        if (!draft) {
+            return
+        }
+        onChange({
+            ...draft,
+            allDay: checked,
+            startTime: checked ? '' : draft.startTime,
+            endTime: checked ? '' : draft.endTime,
         })
     }
 
@@ -35,11 +48,13 @@ export function RoomBookingEntryDialog({ open, draft, onClose, onChange, onSave 
                         <Input label={'Titel'} value={draft.title}
                                onChange={(inputEvent) => handleFieldChange('title', inputEvent.target.value)} />
                         <div className={'grid gap-3 sm:grid-cols-2'}>
-                            <Input type={'time'} label={'Beginn'} value={draft.startTime}
+                            <Input type={'time'} label={'Beginn'} value={draft.startTime} disabled={draft.allDay}
                                    onChange={(inputEvent) => handleFieldChange('startTime', inputEvent.target.value)} />
-                            <Input type={'time'} label={'Ende'} value={draft.endTime}
+                            <Input type={'time'} label={'Ende'} value={draft.endTime} disabled={draft.allDay}
                                    onChange={(inputEvent) => handleFieldChange('endTime', inputEvent.target.value)} />
                         </div>
+                        <Checkbox label={'Ganztägig'} checked={draft.allDay}
+                                  onChange={(event) => handleAllDayToggle(event.target.checked)} />
                     </div>
                 )}
             </DialogBody>

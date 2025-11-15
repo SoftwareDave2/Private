@@ -63,6 +63,7 @@ type BookingDraft = {
     title: string
     startTime: string
     endTime: string
+    allDay: boolean
 }
 
 type DisplayPayloadForms = {
@@ -300,16 +301,15 @@ const hydrateNoticeBoardForm = (data: TemplateDisplayDataResponse): NoticeBoardF
 
 const hydrateRoomBookingForm = (data: TemplateDisplayDataResponse): RoomBookingForm => {
     const entries = (data.subItems ?? []).map((item, index) => {
-        const startTime = formatTimeOnly(item.start)
-        const endTime = formatTimeOnly(item.end)
-        const label =
-            startTime && endTime
-                ? `${startTime} - ${endTime}`
-                : startTime || endTime || ''
+        const isAllDay = Boolean(item.allDay)
+        const startTime = isAllDay ? '' : formatTimeOnly(item.start)
+        const endTime = isAllDay ? '' : formatTimeOnly(item.end)
         return {
             id: index + 1,
             title: (item.title ?? '').trim(),
-            time: label,
+            startTime,
+            endTime,
+            allDay: isAllDay,
         }
     })
 
@@ -415,22 +415,30 @@ const buildRoomBookingPayload = (form: RoomBookingForm): DisplayContentPayload =
 
     entriesSource.forEach((entry) => {
         const title = (entry.title ?? '').trim()
-        const timeLabel = (entry.time ?? '').trim()
+        const allDay = Boolean(entry.allDay)
+        let startTime = (entry.startTime ?? '').trim()
+        let endTime = (entry.endTime ?? '').trim()
 
-        if (!title && !timeLabel) {
+        if (!startTime && !endTime && typeof entry.time === 'string') {
+            const { startTime: parsedStart, endTime: parsedEnd } = extractTimeRange(entry.time)
+            startTime = parsedStart
+            endTime = parsedEnd
+        }
+
+        if (!title && !startTime && !endTime && !allDay) {
             return
         }
 
-        const { startTime, endTime } = extractTimeRange(timeLabel)
-        const start = formatDateTimeForBackend(startTime)
-        const end = formatDateTimeForBackend(endTime)
+        const start = allDay ? null : formatDateTimeForBackend(startTime)
+        const end = allDay ? null : formatDateTimeForBackend(endTime)
         const shouldHighlight = subItems.length === 0
 
         subItems.push({
             title: title || null,
-            start,
-            end,
+            start: start ?? null,
+            end: end ?? null,
             highlighted: shouldHighlight,
+            allDay,
         })
     })
 
@@ -769,15 +777,27 @@ export default function EventsPage() {
     const closeEventCalendar = () => setIsEventCalendarOpen(false)
 
     const openBookingDialog = (entry: BookingEntry) => {
-        const raw = typeof entry.time === 'string' ? entry.time : ''
-        const parts = raw.split('-').map((part) => part.trim()).filter((part) => part.length > 0)
-        const startTime = parts.length >= 1 ? parts[0] : ''
-        const endTime = parts.length >= 2 ? parts[1] : ''
+        const isAllDay = Boolean(entry.allDay)
+        let startTime = (entry.startTime ?? '').trim()
+        let endTime = (entry.endTime ?? '').trim()
+        if (!startTime && !endTime && typeof entry.time === 'string') {
+            const parts = entry.time
+                .split('-')
+                .map((part) => part.trim())
+                .filter((part) => part.length > 0)
+            startTime = parts.length >= 1 ? parts[0] : ''
+            endTime = parts.length >= 2 ? parts[1] : ''
+        }
+        if (isAllDay) {
+            startTime = ''
+            endTime = ''
+        }
         setBookingDraft({
             id: entry.id,
             title: entry.title,
             startTime,
             endTime,
+            allDay: isAllDay,
         })
         setIsBookingDialogOpen(true)
     }
@@ -884,7 +904,7 @@ export default function EventsPage() {
                 return prev
             }
             const nextId = prev.entries.length === 0 ? 1 : Math.max(...prev.entries.map((entry) => entry.id)) + 1
-            createdEntry = { id: nextId, title: '', time: '' }
+            createdEntry = { id: nextId, title: '', startTime: '', endTime: '', allDay: false }
             return {
                 ...prev,
                 entries: [...prev.entries, createdEntry],
@@ -926,14 +946,25 @@ export default function EventsPage() {
         if (!bookingDraft) {
             return
         }
-        const start = bookingDraft.startTime.trim()
-        const end = bookingDraft.endTime.trim()
-        const timeLabel = start && end ? `${start} - ${end}` : start || end
+        const start = bookingDraft.allDay ? '' : bookingDraft.startTime.trim()
+        const end = bookingDraft.allDay ? '' : bookingDraft.endTime.trim()
+        const timeLabel = bookingDraft.allDay
+            ? 'Ganztägig'
+            : start && end
+                ? `${start} - ${end}`
+                : start || end
         setRoomBookingForm((prev) => ({
             ...prev,
             entries: prev.entries.map((entry) =>
                 entry.id === bookingDraft.id
-                    ? { ...entry, title: bookingDraft.title, time: timeLabel }
+                    ? {
+                        ...entry,
+                        title: bookingDraft.title,
+                        startTime: start,
+                        endTime: end,
+                        allDay: bookingDraft.allDay,
+                        time: timeLabel ?? '',
+                    }
                     : entry,
             ),
         }))
