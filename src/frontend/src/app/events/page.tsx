@@ -208,7 +208,13 @@ const cloneDoorSignForm = (form: DoorSignForm): DoorSignForm => ({
 
 const cloneEventBoardForm = (form: EventBoardForm): EventBoardForm => ({
     ...form,
-    events: Array.isArray(form.events) ? form.events.map((event) => ({ ...event })) : [],
+    events: Array.isArray(form.events)
+        ? form.events.map((event) => ({
+            ...event,
+            allDay: Boolean(event.allDay),
+            important: Boolean(event.important),
+        }))
+        : [],
 })
 
 const cloneNoticeBoardForm = (form: NoticeBoardForm): NoticeBoardForm => ({
@@ -281,6 +287,7 @@ const hydrateEventBoardForm = (data: TemplateDisplayDataResponse): EventBoardFor
             startTime: formatTimeOnly(item.start),
             endTime: formatTimeOnly(item.end),
             allDay: Boolean(item.allDay),
+            important: Boolean(item.highlighted),
             qrLink: (item.qrCodeUrl ?? '').trim(),
         }
     })
@@ -382,6 +389,7 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
             end: end ?? null,
             qrCodeUrl: qrLink || undefined,
             allDay: event.allDay,
+            highlighted: event.important || undefined,
         })
     })
 

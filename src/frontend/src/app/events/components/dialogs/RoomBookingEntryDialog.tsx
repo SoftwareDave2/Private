@@ -1,4 +1,4 @@
-import {Button, Checkbox, Dialog, DialogBody, DialogFooter, DialogHeader, Input} from '@material-tailwind/react'
+import {Button, Dialog, DialogBody, DialogFooter, DialogHeader, Input, Switch, Typography} from '@material-tailwind/react'
 
 type BookingDraft = {
     id: number
@@ -53,8 +53,13 @@ export function RoomBookingEntryDialog({ open, draft, onClose, onChange, onSave 
                             <Input type={'time'} label={'Ende'} value={draft.endTime} disabled={draft.allDay}
                                    onChange={(inputEvent) => handleFieldChange('endTime', inputEvent.target.value)} />
                         </div>
-                        <Checkbox label={'Ganztägig'} checked={draft.allDay}
-                                  onChange={(event) => handleAllDayToggle(event.target.checked)} />
+                        <div className={'flex items-center justify-between'}>
+                            <Typography variant={'small'} className={'text-xs font-medium text-blue-gray-600'}>
+                                Ganztägig
+                            </Typography>
+                            <Switch label={''} ripple={false} crossOrigin={''} checked={draft.allDay}
+                                    onChange={(event) => handleAllDayToggle(event.target.checked)} />
+                        </div>
                     </div>
                 )}
             </DialogBody>

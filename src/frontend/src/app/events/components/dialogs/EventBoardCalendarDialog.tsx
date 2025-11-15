@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Button,
-  Checkbox,
   Dialog,
   DialogBody,
   DialogFooter,
@@ -36,6 +35,7 @@ type EventDraft = {
   startTime: string;
   endTime: string;
   allDay: boolean;
+  important: boolean;
   qrLink: string;
 };
 
@@ -227,6 +227,7 @@ export function EventBoardCalendarDialog({
       startTime: event.startTime,
       endTime: event.endTime,
       allDay: Boolean(event.allDay),
+      important: Boolean(event.important),
       qrLink: event.qrLink,
     });
  };
@@ -243,6 +244,7 @@ export function EventBoardCalendarDialog({
       startTime: "",
       endTime: "",
       allDay: false,
+      important: false,
       qrLink: "",
     });
   };
@@ -278,6 +280,7 @@ export function EventBoardCalendarDialog({
       startTime: draft.startTime.trim(),
       endTime: draft.endTime.trim(),
       allDay: draft.allDay,
+      important: draft.important,
       qrLink: draft.qrLink.trim(),
     };
     onSaveEvent(payload);
@@ -571,7 +574,20 @@ export function EventBoardCalendarDialog({
                                   }}
                                 >
                                   <span className={"block break-words"}>
-                                    {event.title.trim() || "Ohne Titel"}
+                                    <span className={"flex items-center justify-between gap-1"}>
+                                      <span>{event.title.trim() || "Ohne Titel"}</span>
+                                      {event.important && (
+                                        <span
+                                          className={`rounded-full border px-1 text-[9px] font-semibold uppercase ${
+                                            isActive
+                                              ? "border-white text-white"
+                                              : "border-red-500 text-red-500"
+                                          }`}
+                                        >
+                                          !
+                                        </span>
+                                      )}
+                                    </span>
                                   </span>
                                   <p className={"text-[10px] text-blue-gray-400"}>
                                     {(() => {
@@ -665,13 +681,43 @@ export function EventBoardCalendarDialog({
                                 : "border-white bg-white/80"
                             }`}
                           >
-                            <p
+                            <div
                               className={
-                                "text-sm font-semibold text-blue-gray-900 break-words"
+                                "flex items-center justify-between gap-2"
                               }
                             >
-                              {event.title.trim() || "Ohne Titel"}
-                            </p>
+                              <div
+                                className={
+                                  "flex items-center justify-between gap-2"
+                                }
+                              >
+                                <p
+                                  className={
+                                    "text-sm font-semibold text-blue-gray-900 break-words"
+                                  }
+                                >
+                                  {event.title.trim() || "Ohne Titel"}
+                                </p>
+                                {event.important && (
+                                  <span
+                                    className={
+                                      "rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-600"
+                                    }
+                                  >
+                                    Wichtig
+                                  </span>
+                                )}
+                              </div>
+                              {event.important && (
+                                <span
+                                  className={
+                                    "rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-600"
+                                  }
+                                >
+                                  Wichtig
+                                </span>
+                              )}
+                            </div>
                             <p className={"text-xs text-blue-gray-500"}>
                               {resolveTimeLabel(event)}
                             </p>
@@ -855,35 +901,78 @@ export function EventBoardCalendarDialog({
                   onPointerLeaveCapture={undefined}
                 />
                 <div className={"space-y-3"}>
-                  <Input
-                    type={"time"}
-                    label={"Startzeit"}
-                    value={draft.startTime}
-                    disabled={draft.allDay}
-                    onChange={(event) =>
-                      handleDraftChange("startTime", event.target.value)
-                    }
-                    crossOrigin={""}
-                    onPointerEnterCapture={undefined}
-                    onPointerLeaveCapture={undefined}
-                  />
-                  <Input
-                    type={"time"}
-                    label={"Endzeit"}
-                    value={draft.endTime}
-                    disabled={draft.allDay}
-                    onChange={(event) =>
-                      handleDraftChange("endTime", event.target.value)
-                    }
-                    crossOrigin={""}
-                    onPointerEnterCapture={undefined}
-                    onPointerLeaveCapture={undefined}
-                  />
-                  <Checkbox
-                    label={"Ganztägig"}
-                    checked={draft.allDay}
-                    onChange={(event) => handleAllDayToggle(event.target.checked)}
-                  />
+                  <div className={"space-y-3"}>
+                    <Input
+                      type={"time"}
+                      label={"Startzeit"}
+                      value={draft.startTime}
+                      disabled={draft.allDay}
+                      onChange={(event) =>
+                        handleDraftChange("startTime", event.target.value)
+                      }
+                      crossOrigin={""}
+                      onPointerEnterCapture={undefined}
+                      onPointerLeaveCapture={undefined}
+                    />
+                    <Input
+                      type={"time"}
+                      label={"Endzeit"}
+                      value={draft.endTime}
+                      disabled={draft.allDay}
+                      onChange={(event) =>
+                        handleDraftChange("endTime", event.target.value)
+                      }
+                      crossOrigin={""}
+                      onPointerEnterCapture={undefined}
+                      onPointerLeaveCapture={undefined}
+                    />
+                  </div>
+                  <div className={"space-y-3"}>
+                    <div className={"flex items-center justify-between rounded-xl bg-blue-gray-50/80 px-3 py-2"}>
+                      <div className={"flex flex-col"}>
+                        <Typography
+                          variant={"small"}
+                          className={"text-sm font-semibold text-blue-gray-700"}
+                        >
+                          Ganztägig
+                        </Typography>
+                        <span className={"text-[11px] text-blue-gray-500"}>
+                          Markiere, wenn kein Zeitfenster gelten soll
+                        </span>
+                      </div>
+                      <Switch
+                        crossOrigin={""}
+                        ripple={false}
+                        label={""}
+                        checked={draft.allDay}
+                        onChange={(event) =>
+                          handleAllDayToggle(event.target.checked)
+                        }
+                      />
+                    </div>
+                    <div className={"flex items-center justify-between rounded-xl bg-blue-gray-50/80 px-3 py-2"}>
+                      <div className={"flex flex-col"}>
+                        <Typography
+                          variant={"small"}
+                          className={"text-sm font-semibold text-blue-gray-700"}
+                        >
+                          Wichtig
+                        </Typography>
+                        <span className={"text-[11px] text-blue-gray-500"}>
+                          Hebe hervor, damit das Event auffälliger angezeigt wird
+                        </span>
+                      </div>
+                      <Switch
+                        crossOrigin={""}
+                        ripple={false}
+                        label={""}
+                        checked={draft.important}
+                        onChange={(event) =>
+                          handleDraftChange("important", event.target.checked)
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
                 <Input
                   type={"url"}

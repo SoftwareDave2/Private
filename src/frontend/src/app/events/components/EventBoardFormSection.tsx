@@ -44,9 +44,16 @@ export function EventBoardFormSection({
                                 .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
                                 .map((event) => (
                                     <div key={event.id} className={'rounded-lg bg-white/80 p-3'}>
-                                        <p className={'text-sm font-semibold text-blue-gray-900'}>
-                                            {event.title.trim() || 'Ohne Titel'}
-                                        </p>
+                                        <div className={'flex items-center justify-between gap-2'}>
+                                            <p className={'text-sm font-semibold text-blue-gray-900'}>
+                                                {event.title.trim() || 'Ohne Titel'}
+                                            </p>
+                                            {event.important && (
+                                                <span className={'rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-600'}>
+                                                    Wichtig
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className={'text-xs text-blue-gray-500'}>
                                             {(event.date.trim() || 'Datum offen')} · {(() => {
                                                 if (event.allDay) {

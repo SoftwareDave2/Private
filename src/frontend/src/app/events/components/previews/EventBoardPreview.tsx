@@ -88,13 +88,21 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                                         ? `${startTime} – ${endTime}`
                                         : startTime
                                     : 'Zeit folgt'
+                            const isImportant = Boolean(event.important)
                             const hasQrLink = event.qrLink.trim().length > 0
 
                             return (
                                 <div key={event.id}
-                                     className={`flex items-center justify-between rounded-lg border border-red-600/40 bg-white ${isDenseLayout ? 'px-2 py-1' : 'px-2.5 py-1.5'} ${isDenseLayout ? 'gap-1.5' : 'gap-2'}`}>
+                                     className={`flex items-center justify-between rounded-lg border ${isImportant ? 'border-red-600 bg-red-50/80' : 'border-red-600/40 bg-white'} ${isDenseLayout ? 'px-2 py-1' : 'px-2.5 py-1.5'} ${isDenseLayout ? 'gap-1.5' : 'gap-2'}`}>
                                     <div className={`flex-1 min-w-0 ${isDenseLayout ? 'space-y-0.5' : 'space-y-0.5'}`}>
-                                        <p className={`${isDenseLayout ? 'text-[0.78rem]' : 'text-[0.82rem]'} font-semibold text-black truncate`} title={title}>{title}</p>
+                                        <div className={'flex items-center justify-between gap-1'}>
+                                            <p className={`${isDenseLayout ? 'text-[0.78rem]' : 'text-[0.82rem]'} font-semibold text-black truncate`} title={title}>{title}</p>
+                                            {isImportant && (
+                                                <span className={`${isDenseLayout ? 'text-[0.55rem]' : 'text-[0.6rem]'} font-semibold uppercase text-red-700`}>
+                                                    Wichtig
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className={`${isDenseLayout ? 'text-[0.68rem]' : 'text-[0.72rem]'} text-black truncate`} title={`${date} · ${time}`}>
                                             {date} · {time}
                                         </p>
