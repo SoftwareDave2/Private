@@ -86,6 +86,22 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
     const setDisplaysHandler = (displays: EventDisplayDetails[]) =>
         setData(d => ({ ...d, displayImages: displays }));
 
+    const buildAllDayDateTime = (date: string, dayOffset = 0) => {
+        if (!date) {
+            return '';
+        }
+        const normalizedDate = date.split('T')[0];
+        if (!normalizedDate) {
+            return '';
+        }
+        const startOfDay = new Date(`${normalizedDate}T00:00:00`);
+        startOfDay.setDate(startOfDay.getDate() + dayOffset);
+        const year = startOfDay.getFullYear();
+        const month = String(startOfDay.getMonth() + 1).padStart(2, '0');
+        const day = String(startOfDay.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}T00:00:00`;
+    };
+
     const validateData = () => {
         let errors: string[] = [];
         if (data.title.length < 3 || data.title.length > 30) {
@@ -145,11 +161,14 @@ export function CalendarEntryDialog({ open, eventDetails, onClose, onDataUpdated
 
         if (data.recurrenceType === "keine") {
             // Normaler (nicht-wiederkehrender) Termin – bisherige Logik
+            const eventStart = data.allDay ? buildAllDayDateTime(data.start) : data.start;
+            const eventEnd = data.allDay ? buildAllDayDateTime(data.end, 1) : data.end;
+
             const event: EventDetails = {
                 id: data.id,
                 title: data.title,
-                start: data.allDay ? (data.start + 'T00:00:00') : data.start,
-                end: data.allDay ? (data.end + 'T00:00:00') : data.end,
+                start: eventStart,
+                end: eventEnd,
                 allDay: data.allDay,
                 displayImages: data.displayImages,
                 rrule: data.rrule,

@@ -145,6 +145,36 @@ const formatDateTimeForBackend = (value: string | null | undefined) => {
     return toLocalDateTimeString(parsed)
 }
 
+const shiftIsoDateByDays = (value: string, dayOffset: number) => {
+    const trimmed = (value ?? '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return null
+    }
+    const base = new Date(`${trimmed}T00:00:00`)
+    if (Number.isNaN(base.getTime())) {
+        return null
+    }
+    base.setDate(base.getDate() + dayOffset)
+    const pad = (segment: number) => segment.toString().padStart(2, '0')
+    return `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`
+}
+
+const isAllDayRange = (start?: string | null, end?: string | null) => {
+    if (!start || !end) {
+        return false
+    }
+    const [startDatePart, startTimePart] = start.split('T')
+    const [endDatePart, endTimePart] = end.split('T')
+    if (!startDatePart || !startTimePart || !endDatePart || !endTimePart) {
+        return false
+    }
+    if (!startTimePart.startsWith('00:00') || !endTimePart.startsWith('00:00')) {
+        return false
+    }
+    const nextDay = shiftIsoDateByDays(startDatePart, 1)
+    return nextDay !== null && nextDay === endDatePart
+}
+
 const formatDateAndTimeForBackend = (dateValue?: string, timeValue?: string) => {
     const date = (dateValue ?? '').trim()
     const time = (timeValue ?? '').trim()
@@ -288,6 +318,7 @@ const hydrateEventBoardForm = (data: TemplateDisplayDataResponse): EventBoardFor
         const dateSource = item.start ?? item.end ?? data.eventStart
         const { date } = getIsoDateParts(dateSource)
         const { date: endDate } = getIsoDateParts(item.end ?? data.eventEnd ?? dateSource)
+        const isAllDay = isAllDayRange(item.start, item.end)
         return {
             id: index + 1,
             title: (item.title ?? '').trim(),
@@ -295,7 +326,7 @@ const hydrateEventBoardForm = (data: TemplateDisplayDataResponse): EventBoardFor
             endDate: endDate || date,
             startTime: formatTimeOnly(item.start),
             endTime: formatTimeOnly(item.end),
-            allDay: Boolean(item.allDay),
+            allDay: isAllDay,
             important: Boolean(item.highlighted),
             qrLink: (item.qrCodeUrl ?? '').trim(),
         }
@@ -386,9 +417,17 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
         const startTime = (event.startTime ?? '').trim()
         const endTime = (event.endTime ?? '').trim()
         const qrLink = (event.qrLink ?? '').trim()
+        const isAllDay = Boolean(event.allDay)
         const normalizedEndDate = endDateValue && date && endDateValue >= date ? endDateValue : date
         const start = formatDateAndTimeForBackend(date, startTime)
-        const end = formatDateAndTimeForBackend(normalizedEndDate, endTime)
+        let end = formatDateAndTimeForBackend(normalizedEndDate, endTime)
+
+        if (isAllDay && normalizedEndDate) {
+            const nextDay = shiftIsoDateByDays(normalizedEndDate, 1)
+            if (nextDay) {
+                end = formatDateAndTimeForBackend(nextDay, undefined)
+            }
+        }
 
         if (!title && !date && !startTime && !endTime && !qrLink && !event.allDay) {
             return
@@ -399,7 +438,6 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
             start: start ?? null,
             end: end ?? null,
             qrCodeUrl: qrLink || undefined,
-            allDay: event.allDay,
             highlighted: event.important || undefined,
         })
     })
@@ -409,7 +447,6 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
             title: (form.title ?? '').trim(),
         },
         subItems: subItems.length > 0 ? subItems : undefined,
-        eventStart: pickBoundaryDateTime(subItems.map((item) => item.start), 'earliest'),
     }
 }
 
