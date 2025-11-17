@@ -3,6 +3,10 @@
 import {useEffect, useState} from 'react'
 import {Button, Card, CardBody, Option, Select} from '@material-tailwind/react'
 
+//import EventCalendar from './components/EventCalendar'
+
+
+
 import PageHeader from '@/components/layout/PageHeader'
 
 import {
@@ -286,14 +290,14 @@ export default function EventsPage() {
         }))
     }
 
-    const addEventBoardEvent = () => {
+    const addEventBoardEvent = (date?: string) => {
         let createdEvent: EventBoardEvent | null = null
         setEventBoardForm((prev) => {
             if (prev.events.length >= 4) {
                 return prev
             }
             const nextId = prev.events.length === 0 ? 1 : Math.max(...prev.events.map((event) => event.id)) + 1
-            createdEvent = { id: nextId, title: '', date: '', time: '', qrLink: '' }
+            createdEvent = { id: nextId, title: '', date: date || '', time: '', qrLink: '' }
             return {
                 ...prev,
                 events: [...prev.events, createdEvent],
@@ -452,8 +456,9 @@ export default function EventsPage() {
             )
         case 'event-board':
             return (
+
                 <EventBoardFormSection
-                    form={eventBoardForm}
+                  form={eventBoardForm}
                     onFormChange={setEventBoardForm}
                     onAddEvent={addEventBoardEvent}
                     onEditEvent={openEventDialog}
@@ -618,6 +623,8 @@ export default function EventsPage() {
                 onClose={closeEventDialog}
                 onChange={(nextEvent) => setEventDraft(nextEvent)}
                 onSave={saveEventDialog}
+
+
             />
 
             <RoomBookingEntryDialog

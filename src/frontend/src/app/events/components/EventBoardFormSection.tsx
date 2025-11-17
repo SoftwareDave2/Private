@@ -25,9 +25,7 @@ export function EventBoardFormSection({
             <Input label={'Titel'} value={form.title}
                    onChange={(event) => handleFieldChange('title', event.target.value)} />
             <div className={'space-y-3'}>
-                <Typography variant={'small'} color={'blue-gray'} className={'font-medium'}>
-                    Ereignisse (max. 4 Einträge)
-                </Typography>
+
                 <div className={'space-y-3'}>
                     {form.events.map((event) => (
                         <div key={event.id} className={'grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center rounded-lg border border-blue-gray-100 bg-white p-4'}>
@@ -43,10 +41,7 @@ export function EventBoardFormSection({
                                     <p className={'text-xs text-blue-gray-500 mt-1 break-words'}>{event.qrLink}</p>
                                 )}
                             </button>
-                            <Button variant={'text'} color={'gray'} size={'sm'} className={'normal-case justify-self-stretch sm:justify-self-end w-full sm:w-auto'}
-                                    onClick={() => onRemoveEvent(event.id)}>
-                                Entfernen
-                            </Button>
+
                         </div>
                     ))}
                 </div>
