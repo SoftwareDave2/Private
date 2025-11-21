@@ -58,7 +58,7 @@ public class TemplateMaintenanceService {
 
         Set<String> affectedDisplays = new HashSet<>();
         for (DisplayTemplateData data : expiredTemplates) {
-            affectedDisplays.add(data.getDisplayMac() + "|" + data.getTemplateType());
+            affectedDisplays.add(data.getDisplayMac() + "|" + resolveTypeKey(data));
             logger.info("Removing expired template data id={} mac={} templateType={} eventEnd={}",
                     data.getId(), data.getDisplayMac(), data.getTemplateType(), data.getEventEnd());
         }
@@ -79,7 +79,7 @@ public class TemplateMaintenanceService {
 
         for (DisplayTemplateData data : templatesWithExpiredSubItems) {
             boolean modified = false;
-            boolean isDoorSign = "door-sign".equalsIgnoreCase(data.getTemplateType());
+            boolean isDoorSign = "door-sign".equalsIgnoreCase(resolveTypeKey(data));
             Iterator<DisplayTemplateSubData> iterator = data.getSubItems().iterator();
             while (iterator.hasNext()) {
                 DisplayTemplateSubData subData = iterator.next();
@@ -97,7 +97,7 @@ public class TemplateMaintenanceService {
                         }
                     } else {
                         logger.info("Removing expired sub item id={} parentId={} mac={} templateType={} end={}",
-                                subData.getId(), data.getId(), data.getDisplayMac(), data.getTemplateType(), end);
+                                subData.getId(), data.getId(), data.getDisplayMac(), resolveTypeKey(data), end);
                         iterator.remove();
                         modified = true;
                     }
@@ -107,12 +107,12 @@ public class TemplateMaintenanceService {
             if (modified) {
                 if (data.getSubItems().isEmpty() && data.getEventEnd() == null) {
                     logger.info("Removing template data id={} mac={} templateType={} because all sub items expired",
-                            data.getId(), data.getDisplayMac(), data.getTemplateType());
+                            data.getId(), data.getDisplayMac(), resolveTypeKey(data));
                     templateDataRepository.delete(data);
                 } else {
                     templateDataRepository.save(data);
                 }
-                affectedDisplays.add(data.getDisplayMac() + "|" + data.getTemplateType());
+                affectedDisplays.add(data.getDisplayMac() + "|" + resolveTypeKey(data));
             }
         }
 
@@ -127,5 +127,12 @@ public class TemplateMaintenanceService {
             displayEventService.applyDefaultState(mac, templateType);
             displayUpdateService.requestUpdate(mac, templateType);
         }
+    }
+
+    private String resolveTypeKey(DisplayTemplateData data) {
+        if (data.getTemplateTypeEntity() != null) {
+            return data.getTemplateTypeEntity().getTypeKey();
+        }
+        return data.getTemplateType();
     }
 }

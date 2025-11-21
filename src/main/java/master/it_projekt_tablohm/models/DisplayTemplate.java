@@ -1,7 +1,6 @@
 package master.it_projekt_tablohm.models;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,11 @@ public class DisplayTemplate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "template_type_id")
+    private TemplateType templateTypeEntity;
+
+    @Column(name = "template_type", nullable = false)
     private String templateType;
 
     @Column(nullable = false)
@@ -58,6 +61,15 @@ public class DisplayTemplate {
 
     public Long getId() {
         return id;
+    }
+
+    public TemplateType getTemplateTypeEntity() {
+        return templateTypeEntity;
+    }
+
+    public void setTemplateTypeEntity(TemplateType templateTypeEntity) {
+        this.templateTypeEntity = templateTypeEntity;
+        this.templateType = templateTypeEntity != null ? templateTypeEntity.getTypeKey() : null;
     }
 
     public String getTemplateType() {

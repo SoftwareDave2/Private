@@ -8,8 +8,10 @@ import master.it_projekt_tablohm.dto.TemplateSubDataDTO;
 import master.it_projekt_tablohm.models.DisplayTemplate;
 import master.it_projekt_tablohm.models.DisplayTemplateData;
 import master.it_projekt_tablohm.models.DisplayTemplateSubData;
+import master.it_projekt_tablohm.models.TemplateType;
 import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
+import master.it_projekt_tablohm.repositories.TemplateTypeRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,15 +29,18 @@ public class DisplayEventService {
     private final DisplayTemplateDataRepository templateDataRepository;
     private final TemplateDisplayUpdateService displayUpdateService;
     private final TemplateDefaultContentProvider defaultContentProvider;
+    private final TemplateTypeRepository templateTypeRepository;
 
     public DisplayEventService(DisplayTemplateRepository templateRepository,
                                DisplayTemplateDataRepository templateDataRepository,
                                TemplateDisplayUpdateService displayUpdateService,
-                               TemplateDefaultContentProvider defaultContentProvider) {
+                               TemplateDefaultContentProvider defaultContentProvider,
+                               TemplateTypeRepository templateTypeRepository) {
         this.templateRepository = templateRepository;
         this.templateDataRepository = templateDataRepository;
         this.displayUpdateService = displayUpdateService;
         this.defaultContentProvider = defaultContentProvider;
+        this.templateTypeRepository = templateTypeRepository;
     }
 
     @Transactional
@@ -45,6 +50,10 @@ public class DisplayEventService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Template type " + displayDataDto.getTemplateType() + " not found"));
+        TemplateType templateTypeEntity = template.getTemplateTypeEntity();
+        if (templateTypeEntity == null || !templateTypeEntity.getTypeKey().equals(displayDataDto.getTemplateType())) {
+            templateTypeEntity = resolveTemplateType(displayDataDto.getTemplateType());
+        }
 
         var existingEntries = templateDataRepository.findByDisplayMac(displayDataDto.getDisplayMac());
 
@@ -60,7 +69,7 @@ public class DisplayEventService {
                 .forEach(templateDataRepository::delete);
 
         templateData.setTemplate(template);
-        templateData.setTemplateType(displayDataDto.getTemplateType());
+        templateData.setTemplateTypeEntity(templateTypeEntity);
         templateData.setDisplayMac(displayDataDto.getDisplayMac());
         templateData.setEventStart(displayDataDto.getEventStart());
         templateData.setEventEnd(displayDataDto.getEventEnd());
@@ -98,7 +107,11 @@ public class DisplayEventService {
     }
 
     public List<TemplateDisplayDataDTO> getDisplayDataByTemplateType(String templateType) {
-        return templateDataRepository.findByTemplateType(templateType)
+        List<DisplayTemplateData> results = templateDataRepository.findByTemplateTypeEntity_TypeKey(templateType);
+        if (results.isEmpty()) {
+            results = templateDataRepository.findByTemplateType(templateType);
+        }
+        return results
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -137,7 +150,7 @@ public class DisplayEventService {
 
     private TemplateDisplayDataDTO toDto(DisplayTemplateData entity) {
         TemplateDisplayDataDTO dto = new TemplateDisplayDataDTO();
-        dto.setTemplateType(entity.getTemplateType());
+        dto.setTemplateType(resolveTypeKey(entity));
         dto.setDisplayMac(entity.getDisplayMac());
         dto.setEventStart(entity.getEventStart());
         dto.setEventEnd(entity.getEventEnd());
@@ -167,7 +180,7 @@ public class DisplayEventService {
 
     private DisplaySubDataDTO toSubDataDto(DisplayTemplateData parent, DisplayTemplateSubData sub) {
         DisplaySubDataDTO dto = new DisplaySubDataDTO();
-        dto.setTemplateType(parent.getTemplateType());
+        dto.setTemplateType(resolveTypeKey(parent));
         dto.setDisplayMac(parent.getDisplayMac());
         dto.setTitle(sub.getTitle());
         dto.setStart(sub.getStart());
@@ -177,5 +190,19 @@ public class DisplayEventService {
         dto.setQrCodeUrl(sub.getQrCodeUrl());
         dto.setAllDay(sub.getAllDay());
         return dto;
+    }
+
+    private TemplateType resolveTemplateType(String templateTypeKey) {
+        return templateTypeRepository.findByTypeKey(templateTypeKey)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Template type " + templateTypeKey + " not registered"));
+    }
+
+    private String resolveTypeKey(DisplayTemplateData data) {
+        if (data.getTemplateTypeEntity() != null) {
+            return data.getTemplateTypeEntity().getTypeKey();
+        }
+        return data.getTemplateType();
     }
 }

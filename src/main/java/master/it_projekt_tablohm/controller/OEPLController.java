@@ -5,6 +5,7 @@ import master.it_projekt_tablohm.dto.DisplayEventSubmissionResponseDTO;
 import master.it_projekt_tablohm.dto.DisplaySubDataDTO;
 import master.it_projekt_tablohm.dto.TemplateDefinitionDTO;
 import master.it_projekt_tablohm.dto.TemplateDisplayDataDTO;
+import master.it_projekt_tablohm.dto.TemplateTypeDTO;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.services.DisplayEventService;
 import master.it_projekt_tablohm.services.OpenEPaperSyncService;
@@ -135,6 +136,11 @@ public class OEPLController {
     public @ResponseBody ResponseEntity<TemplateDefinitionDTO> getTemplate(
             @PathVariable String templateType) {
         return ResponseEntity.ok(templateManagementService.getTemplate(templateType));
+    }
+
+    @GetMapping(path = "/template-types")
+    public @ResponseBody ResponseEntity<List<TemplateTypeDTO>> listTemplateTypes() {
+        return ResponseEntity.ok(templateManagementService.listTemplateTypes());
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,8 +1,10 @@
 package master.it_projekt_tablohm.services;
 
 import master.it_projekt_tablohm.dto.TemplateDefinitionDTO;
+import master.it_projekt_tablohm.models.DisplayTemplateData;
 import master.it_projekt_tablohm.models.TemplateType;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
+import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
 import master.it_projekt_tablohm.repositories.TemplateTypeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,7 @@ public class TemplateBootstrapper implements CommandLineRunner {
     private final DisplayTemplateRepository templateRepository;
     private final TemplateManagementService templateManagementService;
     private final TemplateTypeRepository templateTypeRepository;
+    private final DisplayTemplateDataRepository templateDataRepository;
 
     private final boolean forceOverwrite =
             Boolean.parseBoolean(System.getenv().getOrDefault("TEMPLATE_BOOTSTRAP_OVERWRITE", "false"));
@@ -26,10 +29,12 @@ public class TemplateBootstrapper implements CommandLineRunner {
 
     public TemplateBootstrapper(DisplayTemplateRepository templateRepository,
                                 TemplateManagementService templateManagementService,
-                                TemplateTypeRepository templateTypeRepository) {
+                                TemplateTypeRepository templateTypeRepository,
+                                DisplayTemplateDataRepository templateDataRepository) {
         this.templateRepository = templateRepository;
         this.templateManagementService = templateManagementService;
         this.templateTypeRepository = templateTypeRepository;
+        this.templateDataRepository = templateDataRepository;
     }
 
     @Override
@@ -119,6 +124,7 @@ public class TemplateBootstrapper implements CommandLineRunner {
             upsertTemplateType(seed);
             upsertTemplate(seed);
         }
+        ensureTemplateDataLinked();
     }
 
     private void upsertTemplate(TemplateSeed seed) {
@@ -126,6 +132,8 @@ public class TemplateBootstrapper implements CommandLineRunner {
         final int w = seed.width();
         final int h = seed.height();
         final String svg = seed.svgContent().trim();
+        final TemplateType typeEntity = templateTypeRepository.findByTypeKey(type)
+                .orElseThrow(() -> new IllegalStateException("Template type seed missing for key " + type));
 
         templateRepository.findByTemplateTypeAndDisplayWidthAndDisplayHeight(type, w, h)
                 .ifPresentOrElse(existing -> {
@@ -143,8 +151,13 @@ public class TemplateBootstrapper implements CommandLineRunner {
                         existing.setOrientation(existing.getOrientation() == null ? "landscape" : existing.getOrientation());
                         existing.setDisplayWidth(w);
                         existing.setDisplayHeight(h);
+                        existing.setTemplateTypeEntity(typeEntity);
                         templateRepository.save(existing);
                         logger.info("Updated template '{}' ({}x{})", type, w, h);
+                    } else if (existing.getTemplateTypeEntity() == null) {
+                        existing.setTemplateTypeEntity(typeEntity);
+                        templateRepository.save(existing);
+                        logger.debug("Linked template '{}' to template type entity.", type);
                     } else {
                         logger.debug("Template '{}' ({}x{}) up-to-date. Skipping.", type, w, h);
                     }
@@ -179,6 +192,28 @@ public class TemplateBootstrapper implements CommandLineRunner {
         templateTypeRepository.save(type);
         if (isNew) {
             logger.info("Bootstrapped template type '{}'", seed.templateType());
+        }
+    }
+
+    private void ensureTemplateDataLinked() {
+        var allData = templateDataRepository.findAll();
+        int updated = 0;
+        for (DisplayTemplateData data : allData) {
+            if (data.getTemplateTypeEntity() == null) {
+                boolean linked = templateTypeRepository.findByTypeKey(data.getTemplateType())
+                        .map(type -> {
+                            data.setTemplateTypeEntity(type);
+                            templateDataRepository.save(data);
+                            return true;
+                        })
+                        .orElse(false);
+                if (linked) {
+                    updated++;
+                }
+            }
+        }
+        if (updated > 0) {
+            logger.info("Linked {} template data entries to template type entities.", updated);
         }
     }
 

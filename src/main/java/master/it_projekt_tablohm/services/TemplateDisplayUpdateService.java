@@ -53,7 +53,7 @@ public class TemplateDisplayUpdateService {
         if (templateData == null) {
             return;
         }
-        requestUpdate(templateData.getDisplayMac(), templateData.getTemplateType());
+        requestUpdate(templateData.getDisplayMac(), resolveTypeKey(templateData));
     }
 
     public void requestUpdate(String displayMac, String templateType) {
@@ -71,7 +71,10 @@ public class TemplateDisplayUpdateService {
         int dh = display.getHeight();
 
         // finding template based on type, width and height
-        var tplOpt = templateRepo.findByTemplateTypeAndDisplayWidthAndDisplayHeight(templateType, dw, dh);
+        var tplOpt = templateRepo.findByTemplateTypeEntity_TypeKeyAndDisplayWidthAndDisplayHeight(templateType, dw, dh);
+        if (tplOpt.isEmpty()) {
+            tplOpt = templateRepo.findByTemplateTypeAndDisplayWidthAndDisplayHeight(templateType, dw, dh);
+        }
         if (tplOpt.isEmpty()) {
             logger.error("No template for type={} size={}x{} found", templateType, dw, dh);
             return;
@@ -80,7 +83,10 @@ public class TemplateDisplayUpdateService {
         String rawSvg = tpl.getSvgContent();
 
         // Step 3: getting data
-        var dataOpt = templateDataRepo.findByDisplayMacAndTemplateType(displayMac, templateType);
+        var dataOpt = templateDataRepo.findByDisplayMacAndTemplateTypeEntity_TypeKey(displayMac, templateType);
+        if (dataOpt.isEmpty()) {
+            dataOpt = templateDataRepo.findByDisplayMacAndTemplateType(displayMac, templateType);
+        }
         if (dataOpt.isEmpty()) {
             logger.warn("No DisplayTemplateData for mac={} type={} — using empty fields", displayMac, templateType);
         }
@@ -117,6 +123,13 @@ public class TemplateDisplayUpdateService {
         String mac = displayMac == null ? "UNKNOWN"
                 : displayMac.replace(":", "").toUpperCase();
         return mac + "_" + templateType + ".jpg";
+    }
+
+    private String resolveTypeKey(DisplayTemplateData templateData) {
+        if (templateData.getTemplateTypeEntity() != null) {
+            return templateData.getTemplateTypeEntity().getTypeKey();
+        }
+        return templateData.getTemplateType();
     }
 
 
