@@ -1,7 +1,9 @@
 package master.it_projekt_tablohm.services;
 
 import master.it_projekt_tablohm.dto.TemplateDefinitionDTO;
+import master.it_projekt_tablohm.models.TemplateType;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
+import master.it_projekt_tablohm.repositories.TemplateTypeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -16,15 +18,18 @@ public class TemplateBootstrapper implements CommandLineRunner {
 
     private final DisplayTemplateRepository templateRepository;
     private final TemplateManagementService templateManagementService;
+    private final TemplateTypeRepository templateTypeRepository;
 
     private final boolean forceOverwrite =
             Boolean.parseBoolean(System.getenv().getOrDefault("TEMPLATE_BOOTSTRAP_OVERWRITE", "false"));
 
 
     public TemplateBootstrapper(DisplayTemplateRepository templateRepository,
-                                TemplateManagementService templateManagementService) {
+                                TemplateManagementService templateManagementService,
+                                TemplateTypeRepository templateTypeRepository) {
         this.templateRepository = templateRepository;
         this.templateManagementService = templateManagementService;
+        this.templateTypeRepository = templateTypeRepository;
     }
 
     @Override
@@ -111,6 +116,7 @@ public class TemplateBootstrapper implements CommandLineRunner {
         );
 
         for (TemplateSeed seed : seeds) {
+            upsertTemplateType(seed);
             upsertTemplate(seed);
         }
     }
@@ -160,6 +166,19 @@ public class TemplateBootstrapper implements CommandLineRunner {
             logger.info("Bootstrapped template '{}'", seed.templateType());
         } catch (Exception ex) {
             logger.error("Failed to bootstrap template '{}'", seed.templateType(), ex);
+        }
+    }
+
+    private void upsertTemplateType(TemplateSeed seed) {
+        TemplateType type = templateTypeRepository.findByTypeKey(seed.templateType()).orElseGet(TemplateType::new);
+        boolean isNew = type.getId() == null;
+        type.setTypeKey(seed.templateType());
+        type.setLabel(seed.name());
+        type.setDisplayWidth(seed.width());
+        type.setDisplayHeight(seed.height());
+        templateTypeRepository.save(type);
+        if (isNew) {
+            logger.info("Bootstrapped template type '{}'", seed.templateType());
         }
     }
 
