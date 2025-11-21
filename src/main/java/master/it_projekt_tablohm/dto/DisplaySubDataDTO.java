@@ -19,7 +19,6 @@ public class DisplaySubDataDTO {
     private Boolean highlighted;
     private Boolean busy;
     private String qrCodeUrl;
-    private Boolean allDay;
 
     public String getTemplateType() {
         return templateType;
@@ -85,11 +84,4 @@ public class DisplaySubDataDTO {
         this.qrCodeUrl = qrCodeUrl;
     }
 
-    public Boolean getAllDay() {
-        return allDay;
-    }
-
-    public void setAllDay(Boolean allDay) {
-        this.allDay = allDay;
-    }
 }
