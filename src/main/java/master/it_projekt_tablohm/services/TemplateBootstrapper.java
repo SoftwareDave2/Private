@@ -1,10 +1,8 @@
 package master.it_projekt_tablohm.services;
 
 import master.it_projekt_tablohm.dto.TemplateDefinitionDTO;
-import master.it_projekt_tablohm.models.DisplayTemplateData;
 import master.it_projekt_tablohm.models.TemplateType;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
-import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
 import master.it_projekt_tablohm.repositories.TemplateTypeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +19,6 @@ public class TemplateBootstrapper implements CommandLineRunner {
     private final DisplayTemplateRepository templateRepository;
     private final TemplateManagementService templateManagementService;
     private final TemplateTypeRepository templateTypeRepository;
-    private final DisplayTemplateDataRepository templateDataRepository;
 
     private final boolean forceOverwrite =
             Boolean.parseBoolean(System.getenv().getOrDefault("TEMPLATE_BOOTSTRAP_OVERWRITE", "false"));
@@ -29,12 +26,10 @@ public class TemplateBootstrapper implements CommandLineRunner {
 
     public TemplateBootstrapper(DisplayTemplateRepository templateRepository,
                                 TemplateManagementService templateManagementService,
-                                TemplateTypeRepository templateTypeRepository,
-                                DisplayTemplateDataRepository templateDataRepository) {
+                                TemplateTypeRepository templateTypeRepository) {
         this.templateRepository = templateRepository;
         this.templateManagementService = templateManagementService;
         this.templateTypeRepository = templateTypeRepository;
-        this.templateDataRepository = templateDataRepository;
     }
 
     @Override
@@ -117,6 +112,20 @@ public class TemplateBootstrapper implements CommandLineRunner {
                                     <text x="20" y="90" font-size="18" fill="#000000">{roomType}</text>
                                 </svg>
                                 """
+                ),
+                new TemplateSeed(
+                        "test-board",
+                        "TestSchild",
+                        "Ereignisschild für 400x300 Displays",
+                        400,
+                        300,
+                        """
+                                <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="400" height="300" fill="#ffffff"/>
+                                    <text x="20" y="40" font-size="28" fill="#000000">{title}</text>
+                                    <text x="20" y="70" font-size="16" fill="#000000">{description}</text>
+                                </svg>
+                                """
                 )
         );
 
@@ -124,7 +133,6 @@ public class TemplateBootstrapper implements CommandLineRunner {
             upsertTemplateType(seed);
             upsertTemplate(seed);
         }
-        ensureTemplateDataLinked();
     }
 
     private void upsertTemplate(TemplateSeed seed) {
@@ -135,7 +143,7 @@ public class TemplateBootstrapper implements CommandLineRunner {
         final TemplateType typeEntity = templateTypeRepository.findByTypeKey(type)
                 .orElseThrow(() -> new IllegalStateException("Template type seed missing for key " + type));
 
-        templateRepository.findByTemplateTypeAndDisplayWidthAndDisplayHeight(type, w, h)
+        templateRepository.findByTemplateTypeEntity_TypeKeyAndDisplayWidthAndDisplayHeight(type, w, h)
                 .ifPresentOrElse(existing -> {
                     // update if needed
                     boolean needsUpdate =
@@ -154,10 +162,6 @@ public class TemplateBootstrapper implements CommandLineRunner {
                         existing.setTemplateTypeEntity(typeEntity);
                         templateRepository.save(existing);
                         logger.info("Updated template '{}' ({}x{})", type, w, h);
-                    } else if (existing.getTemplateTypeEntity() == null) {
-                        existing.setTemplateTypeEntity(typeEntity);
-                        templateRepository.save(existing);
-                        logger.debug("Linked template '{}' to template type entity.", type);
                     } else {
                         logger.debug("Template '{}' ({}x{}) up-to-date. Skipping.", type, w, h);
                     }
@@ -192,28 +196,6 @@ public class TemplateBootstrapper implements CommandLineRunner {
         templateTypeRepository.save(type);
         if (isNew) {
             logger.info("Bootstrapped template type '{}'", seed.templateType());
-        }
-    }
-
-    private void ensureTemplateDataLinked() {
-        var allData = templateDataRepository.findAll();
-        int updated = 0;
-        for (DisplayTemplateData data : allData) {
-            if (data.getTemplateTypeEntity() == null) {
-                boolean linked = templateTypeRepository.findByTypeKey(data.getTemplateType())
-                        .map(type -> {
-                            data.setTemplateTypeEntity(type);
-                            templateDataRepository.save(data);
-                            return true;
-                        })
-                        .orElse(false);
-                if (linked) {
-                    updated++;
-                }
-            }
-        }
-        if (updated > 0) {
-            logger.info("Linked {} template data entries to template type entities.", updated);
         }
     }
 

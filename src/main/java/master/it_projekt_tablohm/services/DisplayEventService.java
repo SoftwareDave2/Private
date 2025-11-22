@@ -46,14 +46,11 @@ public class DisplayEventService {
     @Transactional
     public DisplayEventSubmissionResponseDTO saveDisplayData(TemplateDisplayDataDTO displayDataDto) {
         DisplayTemplate template = templateRepository
-                .findByTemplateType(displayDataDto.getTemplateType())
+                .findByTemplateTypeEntity_TypeKey(displayDataDto.getTemplateType())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Template type " + displayDataDto.getTemplateType() + " not found"));
-        TemplateType templateTypeEntity = template.getTemplateTypeEntity();
-        if (templateTypeEntity == null || !templateTypeEntity.getTypeKey().equals(displayDataDto.getTemplateType())) {
-            templateTypeEntity = resolveTemplateType(displayDataDto.getTemplateType());
-        }
+        TemplateType templateTypeEntity = resolveTemplateType(displayDataDto.getTemplateType());
 
         var existingEntries = templateDataRepository.findByDisplayMac(displayDataDto.getDisplayMac());
 
@@ -69,11 +66,11 @@ public class DisplayEventService {
                 .forEach(templateDataRepository::delete);
 
         templateData.setTemplate(template);
-        templateData.setTemplateTypeEntity(templateTypeEntity);
         templateData.setDisplayMac(displayDataDto.getDisplayMac());
         templateData.setEventStart(displayDataDto.getEventStart());
         templateData.setEventEnd(displayDataDto.getEventEnd());
         templateData.setFields(displayDataDto.getFields());
+        templateData.setTemplateTypeEntity(templateTypeEntity);
 
         templateData.getSubItems().clear();
 
@@ -107,9 +104,6 @@ public class DisplayEventService {
 
     public List<TemplateDisplayDataDTO> getDisplayDataByTemplateType(String templateType) {
         List<DisplayTemplateData> results = templateDataRepository.findByTemplateTypeEntity_TypeKey(templateType);
-        if (results.isEmpty()) {
-            results = templateDataRepository.findByTemplateType(templateType);
-        }
         return results
                 .stream()
                 .map(this::toDto)
@@ -149,7 +143,7 @@ public class DisplayEventService {
 
     private TemplateDisplayDataDTO toDto(DisplayTemplateData entity) {
         TemplateDisplayDataDTO dto = new TemplateDisplayDataDTO();
-        dto.setTemplateType(resolveTypeKey(entity));
+        dto.setTemplateType(entity.getTemplateTypeEntity() != null ? entity.getTemplateTypeEntity().getTypeKey() : null);
         dto.setDisplayMac(entity.getDisplayMac());
         dto.setEventStart(entity.getEventStart());
         dto.setEventEnd(entity.getEventEnd());
@@ -178,7 +172,7 @@ public class DisplayEventService {
 
     private DisplaySubDataDTO toSubDataDto(DisplayTemplateData parent, DisplayTemplateSubData sub) {
         DisplaySubDataDTO dto = new DisplaySubDataDTO();
-        dto.setTemplateType(resolveTypeKey(parent));
+        dto.setTemplateType(parent.getTemplateTypeEntity() != null ? parent.getTemplateTypeEntity().getTypeKey() : null);
         dto.setDisplayMac(parent.getDisplayMac());
         dto.setTitle(sub.getTitle());
         dto.setStart(sub.getStart());
@@ -194,12 +188,5 @@ public class DisplayEventService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Template type " + templateTypeKey + " not registered"));
-    }
-
-    private String resolveTypeKey(DisplayTemplateData data) {
-        if (data.getTemplateTypeEntity() != null) {
-            return data.getTemplateTypeEntity().getTypeKey();
-        }
-        return data.getTemplateType();
     }
 }

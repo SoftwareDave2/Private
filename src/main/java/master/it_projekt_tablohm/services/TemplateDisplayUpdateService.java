@@ -1,7 +1,6 @@
 package master.it_projekt_tablohm.services;
 
 import master.it_projekt_tablohm.helper.SVGToJPEGConverter;
-import master.it_projekt_tablohm.models.DisplayTemplate;
 import master.it_projekt_tablohm.models.DisplayTemplateData;
 import master.it_projekt_tablohm.models.DisplayTemplateSubData;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
@@ -11,15 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.nio.file.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class TemplateDisplayUpdateService {
@@ -53,7 +47,11 @@ public class TemplateDisplayUpdateService {
         if (templateData == null) {
             return;
         }
-        requestUpdate(templateData.getDisplayMac(), resolveTypeKey(templateData));
+        if (templateData.getTemplateTypeEntity() == null) {
+            logger.warn("Cannot update display {} because template type entity is missing", templateData.getDisplayMac());
+            return;
+        }
+        requestUpdate(templateData.getDisplayMac(), templateData.getTemplateTypeEntity().getTypeKey());
     }
 
     public void requestUpdate(String displayMac, String templateType) {
@@ -73,9 +71,6 @@ public class TemplateDisplayUpdateService {
         // finding template based on type, width and height
         var tplOpt = templateRepo.findByTemplateTypeEntity_TypeKeyAndDisplayWidthAndDisplayHeight(templateType, dw, dh);
         if (tplOpt.isEmpty()) {
-            tplOpt = templateRepo.findByTemplateTypeAndDisplayWidthAndDisplayHeight(templateType, dw, dh);
-        }
-        if (tplOpt.isEmpty()) {
             logger.error("No template for type={} size={}x{} found", templateType, dw, dh);
             return;
         }
@@ -85,10 +80,7 @@ public class TemplateDisplayUpdateService {
         // Step 3: getting data
         var dataOpt = templateDataRepo.findByDisplayMacAndTemplateTypeEntity_TypeKey(displayMac, templateType);
         if (dataOpt.isEmpty()) {
-            dataOpt = templateDataRepo.findByDisplayMacAndTemplateType(displayMac, templateType);
-        }
-        if (dataOpt.isEmpty()) {
-            logger.warn("No DisplayTemplateData for mac={} type={} — using empty fields", displayMac, templateType);
+            logger.warn("No DisplayTemplateData for mac={} type={} - using empty fields", displayMac, templateType);
         }
         var data = dataOpt.orElse(null);
 
@@ -114,24 +106,11 @@ public class TemplateDisplayUpdateService {
         }
     }
 
-    private String buildFilename(String displayMac, String templateType) {
-        String macCompact = displayMac.replace(":", "").toUpperCase();
-        return "uploads/" + macCompact + "_" + templateType + ".jpg";
-    }
-
     private String buildBasename(String displayMac, String templateType) {
         String mac = displayMac == null ? "UNKNOWN"
                 : displayMac.replace(":", "").toUpperCase();
         return mac + "_" + templateType + ".jpg";
     }
-
-    private String resolveTypeKey(DisplayTemplateData templateData) {
-        if (templateData.getTemplateTypeEntity() != null) {
-            return templateData.getTemplateTypeEntity().getTypeKey();
-        }
-        return templateData.getTemplateType();
-    }
-
 
     //Funktion zum Updaten von Displays mit keinen anstehenden Events => Template mit DefaultData an Display senden
     public void requestDefault(String displayMac, String templateType, master.it_projekt_tablohm.dto.TemplateDisplayDataDTO defaultData) {
@@ -139,4 +118,3 @@ public class TemplateDisplayUpdateService {
                 displayMac, templateType, defaultData.getFields());
     }
 }
-

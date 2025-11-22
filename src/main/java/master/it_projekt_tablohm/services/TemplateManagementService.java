@@ -28,7 +28,7 @@ public class TemplateManagementService {
 
     @Transactional
     public TemplateDefinitionDTO createTemplate(TemplateDefinitionDTO dto) {
-        templateRepository.findByTemplateType(dto.getTemplateType()).ifPresent(existing -> {
+        templateRepository.findByTemplateTypeEntity_TypeKey(dto.getTemplateType()).ifPresent(existing -> {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Template type " + dto.getTemplateType() + " already exists");
         });
@@ -50,7 +50,7 @@ public class TemplateManagementService {
                     "Template type mismatch between path and payload");
         }
 
-        DisplayTemplate template = templateRepository.findByTemplateType(templateType)
+        DisplayTemplate template = templateRepository.findByTemplateTypeEntity_TypeKey(templateType)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Template type " + templateType + " not found"));
 
@@ -63,7 +63,7 @@ public class TemplateManagementService {
     }
 
     public TemplateDefinitionDTO getTemplate(String templateType) {
-        DisplayTemplate template = templateRepository.findByTemplateType(templateType)
+        DisplayTemplate template = templateRepository.findByTemplateTypeEntity_TypeKey(templateType)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Template type " + templateType + " not found"));
         return toDto(template);
@@ -103,7 +103,7 @@ public class TemplateManagementService {
         TemplateDefinitionDTO dto = new TemplateDefinitionDTO();
         dto.setTemplateType(template.getTemplateTypeEntity() != null
                 ? template.getTemplateTypeEntity().getTypeKey()
-                : template.getTemplateType());
+                : null);
         dto.setName(template.getName());
         dto.setDescription(template.getDescription());
         dto.setDisplayWidth(template.getDisplayWidth());

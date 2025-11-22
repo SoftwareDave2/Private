@@ -1,9 +1,7 @@
 package master.it_projekt_tablohm.models;
 
 import jakarta.persistence.*;
-import jakarta.persistence.*;
 import master.it_projekt_tablohm.helper.MapToJsonConverter;
-import master.it_projekt_tablohm.models.TemplateType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +10,7 @@ import java.util.Map;
 @Entity
 @Table(
         name = "display_template_data",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"display_mac", "template_type"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"display_mac", "template_type_id"})
 )
 public class DisplayTemplateData {
 
@@ -24,12 +22,9 @@ public class DisplayTemplateData {
     @JoinColumn(name = "template_id")
     private DisplayTemplate template;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "template_type_id")
     private TemplateType templateTypeEntity;
-
-    @Column(name = "template_type", nullable = false)
-    private String templateType;
 
     @Column(name = "display_mac", nullable = false)
     private String displayMac;
@@ -77,23 +72,12 @@ public class DisplayTemplateData {
         this.template = template;
     }
 
-    public String getTemplateType() {
-        return templateType;
-    }
-
-    public void setTemplateType(String templateType) {
-        this.templateType = templateType;
-    }
-
     public TemplateType getTemplateTypeEntity() {
         return templateTypeEntity;
     }
 
     public void setTemplateTypeEntity(TemplateType templateTypeEntity) {
         this.templateTypeEntity = templateTypeEntity;
-        if (templateTypeEntity != null) {
-            this.templateType = templateTypeEntity.getTypeKey();
-        }
     }
 
     public String getDisplayMac() {

@@ -17,9 +17,6 @@ public class DisplayTemplate {
     @JoinColumn(name = "template_type_id")
     private TemplateType templateTypeEntity;
 
-    @Column(name = "template_type", nullable = false)
-    private String templateType;
-
     @Column(nullable = false)
     private String name;
 
@@ -69,15 +66,6 @@ public class DisplayTemplate {
 
     public void setTemplateTypeEntity(TemplateType templateTypeEntity) {
         this.templateTypeEntity = templateTypeEntity;
-        this.templateType = templateTypeEntity != null ? templateTypeEntity.getTypeKey() : null;
-    }
-
-    public String getTemplateType() {
-        return templateType;
-    }
-
-    public void setTemplateType(String templateType) {
-        this.templateType = templateType;
     }
 
     public String getName() {
