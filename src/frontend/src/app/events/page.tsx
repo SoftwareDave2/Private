@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {Button, Card, CardBody, Option, Select} from '@material-tailwind/react'
 
 import PageHeader from '@/components/layout/PageHeader'
@@ -14,15 +14,16 @@ import {
     NoticeBoardForm,
     BookingEntry,
     RoomBookingForm,
+    TemplateTypeDefinition,
 } from './types'
 import {
     defaultDoorSignForm,
     defaultEventBoardForm,
     defaultNoticeBoardForm,
     defaultRoomBookingForm,
-    displayTypeOptions,
     doorSignPersonStatuses,
-    previewDimensions,
+    fallbackPreviewDimensions,
+    fallbackTemplateTypes,
     templateSamples,
 } from './constants'
 import {DoorSignFormSection} from './components/DoorSignFormSection'
@@ -38,6 +39,7 @@ import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import {authFetch} from '@/utils/authFetch'
 import {useDisplaySelection} from './hooks/useDisplaySelection'
 import {usePreviewScale} from './hooks/usePreviewScale'
+import {useTemplateTypes} from './hooks/useTemplateTypes'
 
 type TemplateDisplayDataRequest = {
     templateType: DisplayTypeKey
@@ -562,8 +564,19 @@ const buildDisplayRequest = (
     return request
 }
 
-const resolveDisplayLabel = (type: DisplayTypeKey) =>
-    displayTypeOptions.find((option) => option.value === type)?.label ?? type
+const resolveTemplateLabel = (type: DisplayTypeKey, templateTypes: TemplateTypeDefinition[]) =>
+    templateTypes.find((option) => option.key === type)?.label
+    ?? fallbackTemplateTypes.find((option) => option.key === type)?.label
+    ?? type
+
+const resolvePreviewSize = (type: DisplayTypeKey, templateTypes: TemplateTypeDefinition[]) => {
+    const fallbackSize = fallbackPreviewDimensions[type] ?? fallbackPreviewDimensions['door-sign']
+    const selectedType = templateTypes.find((option) => option.key === type)
+    return {
+        width: selectedType?.displayWidth ?? fallbackSize.width,
+        height: selectedType?.displayHeight ?? fallbackSize.height,
+    }
+}
 
 const toLocalDateTimeString = (date: Date) => {
     const pad = (value: number) => value.toString().padStart(2, '0')
@@ -704,16 +717,19 @@ export default function EventsPage() {
     const [sendFeedback, setSendFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
     const [isDisplayDataLoading, setIsDisplayDataLoading] = useState<boolean>(false)
     const [displayDataLoadError, setDisplayDataLoadError] = useState<string | null>(null)
+    const { templateTypes, isLoadingTemplateTypes, templateTypeError } = useTemplateTypes()
 
+    const previewSize = useMemo(
+        () => resolvePreviewSize(displayType, templateTypes),
+        [displayType, templateTypes],
+    )
     const {
         filteredDisplays,
         selectedDisplay,
         setSelectedDisplay,
         isLoadingDisplays,
         displayError,
-    } = useDisplaySelection(displayType)
-
-    const previewSize = previewDimensions[displayType] ?? previewDimensions['door-sign']
+    } = useDisplaySelection(displayType, previewSize)
     const { containerRef: previewContainerRef, previewScale } = usePreviewScale(previewSize, displayType)
 
     const resetFormsForDisplayType = (type: DisplayTypeKey) => {
@@ -722,6 +738,18 @@ export default function EventsPage() {
         setNoticeBoardForm(cloneNoticeBoardForm(defaultNoticeBoardForm))
         setRoomBookingForm(cloneRoomBookingForm(defaultRoomBookingForm))
     }
+
+    useEffect(() => {
+        if (templateTypes.length === 0) {
+            return
+        }
+        const isKnownType = templateTypes.some((type) => type.key === displayType)
+        if (!isKnownType) {
+            const fallbackType = templateTypes[0].key as DisplayTypeKey
+            setDisplayType(fallbackType)
+            resetFormsForDisplayType(fallbackType)
+        }
+    }, [templateTypes, displayType])
 
     const applyTemplateDataFromBackend = (data: TemplateDisplayDataResponse) => {
         const nextType = data.templateType ?? 'door-sign'
@@ -873,7 +901,7 @@ export default function EventsPage() {
     }
 
     const openTemplateCreateDialog = () => {
-        const label = resolveDisplayLabel(displayType)
+        const label = resolveTemplateLabel(displayType, templateTypes)
         const baseTemplate = templateSamples[displayType] ?? '<!-- Neues Template -->'
         setTemplateCreatorContent(`// Neues Template für ${label}\n\n${baseTemplate}`)
         setIsTemplateCreateDialogOpen(true)
@@ -1168,7 +1196,11 @@ export default function EventsPage() {
                 />
             )
         default:
-            return null
+            return (
+                <div className={'rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800'}>
+                    Für diesen Template Typen ist noch kein Formular verfügbar.
+                </div>
+            )
         }
     }
 
@@ -1203,15 +1235,22 @@ export default function EventsPage() {
                             </div>
                             <div>
                                 <Select label={'Displayart'} value={displayType}
-                                        onChange={handleDisplayTypeChange}>
-                                    {displayTypeOptions.map((option) => (
-                                        <Option key={option.value} value={option.value}>
+                                        onChange={handleDisplayTypeChange}
+                                        disabled={templateTypes.length === 0}>
+                                    {templateTypes.map((option) => (
+                                        <Option key={option.key} value={option.key}>
                                             {option.label}
                                         </Option>
                                     ))}
                                 </Select>
                             </div>
                         </div>
+
+                        {templateTypeError && (
+                            <div className={'rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800'}>
+                                {templateTypeError}
+                            </div>
+                        )}
 
                         {displayError && (
                             <div className={'rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600'}>
@@ -1239,7 +1278,7 @@ export default function EventsPage() {
                     <CardBody className={'space-y-6 p-4 sm:p-6'}>
                         <div className={'flex flex-col gap-1 text-left text-xs uppercase tracking-wide text-red-700 sm:flex-row sm:items-center sm:justify-between'}>
                             <span>Live-Vorschau</span>
-                            <span className={'font-semibold sm:text-right'}>{displayTypeOptions.find((option) => option.value === displayType)?.label}</span>
+                            <span className={'font-semibold sm:text-right'}>{resolveTemplateLabel(displayType, templateTypes)}</span>
                         </div>
                         {previewContent && (
                             <div ref={previewContainerRef} className={'w-full overflow-x-hidden'}>
@@ -1306,7 +1345,7 @@ export default function EventsPage() {
             <TemplateCodeDialog
                 open={isTemplateEditDialogOpen}
                 title={'Template bearbeiten'}
-                description={`Bearbeiten Sie den Beispielcode für ${resolveDisplayLabel(displayType)}.`}
+                description={`Bearbeiten Sie den Beispielcode für ${resolveTemplateLabel(displayType, templateTypes)}.`}
                 value={templateEditorContent}
                 onChange={setTemplateEditorContent}
                 onClose={closeTemplateEditDialog}
@@ -1316,7 +1355,7 @@ export default function EventsPage() {
             <TemplateCodeDialog
                 open={isTemplateCreateDialogOpen}
                 title={'Template erstellen'}
-                description={`Erstellen Sie ein neues Template für ${resolveDisplayLabel(displayType)}.`}
+                description={`Erstellen Sie ein neues Template für ${resolveTemplateLabel(displayType, templateTypes)}.`}
                 value={templateCreatorContent}
                 onChange={setTemplateCreatorContent}
                 onClose={closeTemplateCreateDialog}

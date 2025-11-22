@@ -42,8 +42,8 @@ public class TemplateBootstrapper implements CommandLineRunner {
         List<TemplateSeed> seeds = List.of(
                 new TemplateSeed(
                         "door-sign",
-                        "Türschild Standard",
-                        "Standard-Türschild für 400x300 Displays",
+                        "Türschild",
+                        "Türschild für 400x300 Displays",
                         400,
                         300,
                         """
@@ -56,8 +56,8 @@ public class TemplateBootstrapper implements CommandLineRunner {
                 ),
                 new TemplateSeed(
                         "event-board",
-                        "Ereignistafel Standard",
-                        "Übersicht für Ereignisse (400x300)",
+                        "Ereignisschild",
+                        "Ereignisschild für 400x300 Displays",
                         400,
                         300,
                         """
@@ -70,7 +70,7 @@ public class TemplateBootstrapper implements CommandLineRunner {
                 ),
                 new TemplateSeed(
                         "notice-board",
-                        "Hinweisschild Standard",
+                        "Hinweisschild",
                         "Hinweisschild für 296x128 Displays",
                         296,
                         128,
@@ -106,8 +106,8 @@ public class TemplateBootstrapper implements CommandLineRunner {
                 ),
                 new TemplateSeed(
                         "room-booking",
-                        "Raumbuchung Standard",
-                        "Raumbuchung für 400x300 Displays",
+                        "Raumbuchungsschild",
+                        "Raumbuchungsschild für 400x300 Displays",
                         400,
                         300,
                         """

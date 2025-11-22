@@ -1,4 +1,16 @@
-export type DisplayTypeKey = 'door-sign' | 'event-board' | 'notice-board' | 'room-booking'
+export type DisplayTypeKey =
+    | 'door-sign'
+    | 'event-board'
+    | 'notice-board'
+    | 'room-booking'
+    | (string & {})
+
+export type TemplateTypeDefinition = {
+    key: DisplayTypeKey
+    label: string
+    displayWidth?: number | null
+    displayHeight?: number | null
+}
 
 export type DoorSignPersonStatus = 'available' | 'busy'
 
