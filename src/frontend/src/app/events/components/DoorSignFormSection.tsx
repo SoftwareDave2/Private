@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {Button, Input, Typography} from '@material-tailwind/react'
 import {DoorSignForm, DoorSignPerson, DoorSignPersonStatus} from '../types'
 
@@ -20,17 +21,57 @@ export function DoorSignFormSection({
     onRemovePerson,
     formatDate,
 }: DoorSignFormSectionProps) {
-    const handleRoomNumberChange = (value: string) => {
+
+     const ROOM_MAX = 10
+     const FOOTER_MAX = 50
+
+        const [errors, setErrors] = useState({
+            roomNumber: '',
+            footerNote: '',
+        })
+
+const handleRoomNumberChange = (value: string) => {
+        let message = ''
+        if (value.length > ROOM_MAX) {
+            message = `Maximal ${ROOM_MAX} Zeichen erlaubt.`
+        }
+        setErrors(prev => ({ ...prev, roomNumber: message }))
         onFormChange({ ...form, roomNumber: value })
+    }
+
+
+    const handleFooterNoteChange = (value: string) => {
+        let message = ''
+        if (value.length > FOOTER_MAX) {
+            message = `Maximal ${FOOTER_MAX} Zeichen erlaubt.`
+        }
+        setErrors(prev => ({ ...prev, footerNote: message }))
+        onFormChange({ ...form, footerNote: value })
     }
 
     return (
         <div className={'space-y-4'}>
             <div className={'grid gap-3 sm:grid-cols-2'}>
-                <Input label={'Raumnummer'} value={form.roomNumber}
+            <div>
+                <Input label={'Raumnummer'} value={form.roomNumber} maxLength={ROOM_MAX}
+                       error={!!errors.roomNumber}
                        onChange={(event) => handleRoomNumberChange(event.target.value)} />
-                <Input label={'Zusätzlicher Hinweis'} value={form.footerNote}
+                    {errors.roomNumber && (
+                        <Typography color="red" className="text-xs mt-1">
+                            {errors.roomNumber}
+                        </Typography>
+                    )}
+            </div>
+            <div>
+                <Input label={'Zusätzlicher Hinweis'} value={form.footerNote} maxLength={FOOTER_MAX}
+                       error={!!errors.footerNote}
                        onChange={(event) => onFormChange({ ...form, footerNote: event.target.value })} />
+                {errors.footerNote && (
+                        <Typography color="red" className="text-xs mt-1">
+                            {errors.footerNote}
+                        </Typography>
+                )}
+            </div>
             </div>
             <div>
                 <Typography variant={'small'} color={'blue-gray'} className={'mb-2 font-medium'}>

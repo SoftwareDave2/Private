@@ -17,8 +17,15 @@ export function RoomBookingFormSection({
     onRemoveEntry,
 }: RoomBookingFormSectionProps) {
     const handleFieldChange = (key: keyof RoomBookingForm, value: string) => {
+
+        if (key === 'roomNumber') {
+            value = value.slice(0, 10)
+        }
+        if (key === 'roomType') {
+            value = value.slice(0, 50)
+        }
         onFormChange({ ...form, [key]: value })
-    }
+        }
 
     const formatEntryTimeLabel = (entry: BookingEntry) => {
         if (entry.allDay) {
@@ -42,9 +49,9 @@ export function RoomBookingFormSection({
     return (
         <div className={'space-y-4'}>
             <div className={'grid gap-3 sm:grid-cols-2'}>
-                <Input label={'Raumnummer'} value={form.roomNumber}
+                <Input label={'Raumnummer'} value={form.roomNumber} maxLength={10}
                        onChange={(event) => handleFieldChange('roomNumber', event.target.value)} />
-                <Input label={'Raumtyp'} value={form.roomType}
+                <Input label={'Raumtyp'} value={form.roomType} maxLength={50}
                        onChange={(event) => handleFieldChange('roomType', event.target.value)} />
             </div>
             <div className={'space-y-3'}>

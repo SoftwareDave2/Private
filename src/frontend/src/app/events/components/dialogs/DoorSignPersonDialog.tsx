@@ -1,4 +1,5 @@
-import {Button, Dialog, DialogBody, DialogFooter, DialogHeader, Input, Option, Select} from '@material-tailwind/react'
+import React, { useEffect, useState } from 'react'
+import {Button, Dialog, DialogBody, DialogFooter, DialogHeader, Input, Option, Select, Typography} from '@material-tailwind/react'
 
 import {DoorSignPerson, DoorSignPersonStatus} from '../../types'
 
@@ -45,14 +46,71 @@ export function DoorSignPersonDialog({
         })
     }
 
+    // Validierung der Variablen
+    const [errors, setErrors] = useState({ name: '', busyUntil: '' })
+      const [isValid, setIsValid] = useState(false)
+
+      useEffect(() => {
+        if (!person) {
+          setErrors({ name: '', busyUntil: '' })
+          setIsValid(false)
+          return
+        }
+
+        const newErrors = { name: '', busyUntil: '' }
+        let valid = true
+
+
+        const name = (person.name ?? '').trim()
+        if (!name) {
+          newErrors.name = 'Name ist erforderlich.'
+          valid = false
+        } else if (name.length > 50) {
+          newErrors.name = 'Name darf höchstens 50 Zeichen haben.'
+          valid = false
+        }
+
+        // busyUntil prüfen, nur falls status busy und ein Wert vorhanden ist
+        if (person.status === 'busy' && person.busyUntil) {
+          const busyDate = new Date(person.busyUntil)
+          const now = new Date()
+          if (isNaN(busyDate.getTime())) {
+            newErrors.busyUntil = 'Ungültiges Datum/Zeitformat.'
+            valid = false
+          } else if (busyDate < now) {
+            newErrors.busyUntil = 'Datum/Zeit darf nicht in der Vergangenheit liegen.'
+            valid = false
+          }
+        }
+
+        setErrors(newErrors)
+        setIsValid(valid)
+      }, [person])
+
+
     return (
         <Dialog open={open} handler={onClose} size={'sm'}>
             <DialogHeader>Person bearbeiten</DialogHeader>
             <DialogBody>
                 {person && (
                     <div className={'space-y-4'}>
-                        <Input label={'Name'} value={person.name}
-                               onChange={(event) => handleFieldChange('name', event.target.value)} />
+                        <div>
+                        <Input label={'Name'} value={person.name} maxLength={50}
+                               onChange={(event) => handleFieldChange('name', event.target.value)}
+                               error={!!errors.name}/>
+                        <div className="flex items-center justify-between">
+                           {errors.name ? (
+                              <Typography color="red" className="text-sm mt-1">
+                                  {errors.name}
+                              </Typography>
+                           ) : (
+                              <Typography color="gray" className="text-xs mt-1">
+                               Max. 50 Zeichen
+                              </Typography>
+                           )}
+                        </div>
+                    </div>
+
                         <Select label={'Status'} value={person.status}
                                 onChange={(value) => {
                                     if (!value) {
@@ -65,19 +123,32 @@ export function DoorSignPersonDialog({
                             ))}
                         </Select>
                         {person.status === 'busy' && (
-                            <Input type={'datetime-local'} label={'Beschäftigt bis'}
+                            <div>
+                              <Input type={'datetime-local'} label={'Beschäftigt bis'}
                                    value={person.busyUntil}
-                                   onChange={(event) => handleFieldChange('busyUntil', event.target.value)} />
+                                   onChange={(event) => handleFieldChange('busyUntil', event.target.value)}
+                                    error={!!errors.busyUntil}/>
+                                 {errors.busyUntil ? (
+                                    <Typography color="red" className="text-sm mt-1">
+                                        {errors.busyUntil}
+                                    </Typography>
+                                 ) : (
+                                   <Typography color="gray" className="text-xs mt-1">
+                                    Zeitpunkt darf nicht in der Vergangenheit liegen
+                                   </Typography>
+                                 )}
+                            </div>
                         )}
                     </div>
                 )}
             </DialogBody>
+
             <DialogFooter className={'space-x-2'}>
                 <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={onClose}>
                     Abbrechen
                 </Button>
                 <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={onSave}
-                        disabled={!person}>
+                        disabled={!person || !isValid}>
                     Speichern
                 </Button>
             </DialogFooter>

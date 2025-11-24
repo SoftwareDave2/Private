@@ -1,3 +1,4 @@
+
 import {Button, Dialog, DialogBody, DialogFooter, DialogHeader, Input, Switch, Typography} from '@material-tailwind/react'
 
 type BookingDraft = {
@@ -39,20 +40,43 @@ export function RoomBookingEntryDialog({ open, draft, onClose, onChange, onSave 
         })
     }
 
+    const isValid = () => {
+      if (!draft) return false
+      if (!draft.title.trim()) return false
+      if (!draft.allDay && draft.startTime && draft.endTime) {
+      return draft.startTime <= draft.endTime
+    }
+    return true
+  }
+
     return (
         <Dialog open={open} handler={onClose} size={'sm'}>
             <DialogHeader>Termin bearbeiten</DialogHeader>
             <DialogBody>
                 {draft && (
                     <div className={'space-y-4'}>
-                        <Input label={'Titel'} value={draft.title}
+                        <Input label={'Titel'} value={draft.title} maxLength={50}
                                onChange={(inputEvent) => handleFieldChange('title', inputEvent.target.value)} />
+                        {!draft.title.trim() && (
+                          <Typography variant="small" color="red" className="mt-1">
+                            Titel ist Pflichtfeld
+                          </Typography>
+                        )}
                         <div className={'grid gap-3 sm:grid-cols-2'}>
+                        <div>
                             <Input type={'time'} label={'Beginn'} value={draft.startTime} disabled={draft.allDay}
                                    onChange={(inputEvent) => handleFieldChange('startTime', inputEvent.target.value)} />
+                        </div>
+                        <div>
                             <Input type={'time'} label={'Ende'} value={draft.endTime} disabled={draft.allDay}
                                    onChange={(inputEvent) => handleFieldChange('endTime', inputEvent.target.value)} />
                         </div>
+                        </div>
+                         {!draft.allDay && draft.startTime && draft.endTime && draft.startTime > draft.endTime && (
+                            <Typography variant="small" color="red">
+                             Endzeit muss nach Beginn liegen
+                            </Typography>
+                         )}
                         <div className={'flex items-center justify-between'}>
                             <Typography variant={'small'} className={'text-xs font-medium text-blue-gray-600'}>
                                 Ganztägig
@@ -68,7 +92,7 @@ export function RoomBookingEntryDialog({ open, draft, onClose, onChange, onSave 
                     Abbrechen
                 </Button>
                 <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={onSave}
-                        disabled={!draft}>
+                        disabled={!isValid}>
                     Speichern
                 </Button>
             </DialogFooter>
