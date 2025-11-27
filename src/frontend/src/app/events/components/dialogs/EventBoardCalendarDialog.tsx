@@ -372,22 +372,22 @@ export function EventBoardCalendarDialog({
       open={open}
       handler={onClose}
       size={"xl"}
-      placeholder={""}
-      onPointerEnterCapture={undefined}
-      onPointerLeaveCapture={undefined}
+
+
+
     >
       <DialogHeader
         className={"flex flex-col gap-1"}
-        placeholder={""}
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+
+
+
       >
         <Typography
           variant={"h5"}
           className={"text-red-700"}
-          placeholder={""}
-          onPointerEnterCapture={undefined}
-          onPointerLeaveCapture={undefined}
+
+
+
         >
           Kalenderübersicht
         </Typography>
@@ -395,9 +395,9 @@ export function EventBoardCalendarDialog({
           variant={"small"}
           color={"gray"}
           className={"font-normal"}
-          placeholder={""}
-          onPointerEnterCapture={undefined}
-          onPointerLeaveCapture={undefined}
+
+
+
         >
           Wählen Sie einen Tag aus, sehen Sie bestehende Einträge und erstellen
           Sie neue Ereignisse direkt aus diesem Kalender.
@@ -405,9 +405,9 @@ export function EventBoardCalendarDialog({
       </DialogHeader>
       <DialogBody
         className={"space-y-6 max-h-[75vh] overflow-y-auto pr-1"}
-        placeholder={""}
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+
+
+
       >
         <div className={"flex flex-col gap-6 lg:flex-row"}>
           <div className={"lg:flex-1 space-y-4"}>
@@ -427,18 +427,18 @@ export function EventBoardCalendarDialog({
                   size={"sm"}
                   className={"normal-case"}
                   onClick={() => changeMonth(-1)}
-                  placeholder={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
+
                 >
                   Zurück
                 </Button>
                 <Typography
                   variant={"h6"}
                   className={"capitalize"}
-                  placeholder={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
+
                 >
                   {monthLabel}
                 </Typography>
@@ -448,9 +448,9 @@ export function EventBoardCalendarDialog({
                   size={"sm"}
                   className={"normal-case"}
                   onClick={() => changeMonth(1)}
-                  placeholder={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
+
                 >
                   Weiter
                 </Button>
@@ -460,9 +460,9 @@ export function EventBoardCalendarDialog({
                   size={"sm"}
                   className={"normal-case"}
                   onClick={jumpToToday}
-                  placeholder={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
+
                 >
                   Heute
                 </Button>
@@ -471,9 +471,9 @@ export function EventBoardCalendarDialog({
                 <Typography
                   variant={"small"}
                   className={"text-xs font-medium text-blue-gray-600"}
-                  placeholder={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
+
                 >
                   Titel anzeigen
                 </Typography>
@@ -483,8 +483,8 @@ export function EventBoardCalendarDialog({
                   checked={showEventTitles}
                   onChange={(event) => setShowEventTitles(event.target.checked)}
                   ripple={false}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
                 />
               </div>
             </div>
@@ -559,12 +559,19 @@ export function EventBoardCalendarDialog({
                     baseClasses.push("opacity-60");
                   }
                   return (
-                    <button
+                    <div
                       key={day.iso}
-                      type={"button"}
+                      role="button"
+                      tabIndex={0}
                       className={baseClasses.join(" ")}
                       title={formatDateLabel(day.iso)}
                       onClick={() => handleDayClick(day.iso)}
+                      onKeyDown={(evt) => {
+                        if (evt.key === "Enter" || evt.key === " ") {
+                          evt.preventDefault();
+                          handleDayClick(day.iso);
+                        }
+                      }}
                     >
                       <div className={"flex items-center justify-between"}>
                         <span
@@ -680,7 +687,7 @@ export function EventBoardCalendarDialog({
                           </div>
                         )}
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -695,9 +702,9 @@ export function EventBoardCalendarDialog({
               <Typography
                 variant={"small"}
                 className={"font-semibold text-blue-gray-900"}
-                placeholder={""}
-                onPointerEnterCapture={undefined}
-                onPointerLeaveCapture={undefined}
+
+
+
               >
                 Ausgewählter Tag
               </Typography>
@@ -719,10 +726,17 @@ export function EventBoardCalendarDialog({
                       {selectedDateEvents.map((event) => {
                         const isActive = selectedEventId === event.id;
                         return (
-                          <button
+                          <div
                             key={event.id}
-                            type={"button"}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => handleSelectEvent(event)}
+                            onKeyDown={(evt) => {
+                              if (evt.key === "Enter" || evt.key === " ") {
+                                evt.preventDefault();
+                                handleSelectEvent(event);
+                              }
+                            }}
                             className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-md ${
                               isActive
                                 ? "border-red-300 bg-white shadow-sm"
@@ -770,24 +784,19 @@ export function EventBoardCalendarDialog({
                                 {event.qrLink}
                               </p>
                             )}
-                            <div className={"mt-2 flex justify-end"}>
-                              <Button
-                                variant={"text"}
-                                size={"sm"}
-                                color={"gray"}
-                                className={"normal-case text-xs"}
-                                onClick={(evt) => {
-                                  evt.stopPropagation();
-                                  handleDeleteEvent(event.id);
-                                }}
-                                placeholder={""}
-                                onPointerEnterCapture={undefined}
-                                onPointerLeaveCapture={undefined}
-                              >
-                                Entfernen
-                              </Button>
+                              <div className={"mt-2 flex justify-end"}>
+                                <button
+                                  type="button"
+                                  className="rounded-md px-2 py-1 text-xs font-semibold text-blue-gray-600 transition hover:bg-blue-gray-50 active:scale-95"
+                                  onClick={(evt) => {
+                                    evt.stopPropagation();
+                                    handleDeleteEvent(event.id);
+                                  }}
+                                >
+                                  Entfernen
+                                </button>
+                              </div>
                             </div>
-                          </button>
                         );
                       })}
                     </div>
@@ -803,9 +812,9 @@ export function EventBoardCalendarDialog({
                     className={"normal-case w-full"}
                     onClick={handleStartNewDraft}
                     disabled={!selectedDate}
-                    placeholder={""}
-                    onPointerEnterCapture={undefined}
-                    onPointerLeaveCapture={undefined}
+
+
+
                   >
                     Neues Ereignis
                   </Button>
@@ -818,9 +827,9 @@ export function EventBoardCalendarDialog({
                       <Typography
                         variant={"small"}
                         className={"font-semibold text-blue-gray-900"}
-                        placeholder={""}
-                        onPointerEnterCapture={undefined}
-                        onPointerLeaveCapture={undefined}
+
+
+
                       >
                         Einträge ohne Datum
                       </Typography>
@@ -884,9 +893,9 @@ export function EventBoardCalendarDialog({
                                     evt.stopPropagation();
                                     handleDeleteEvent(event.id);
                                   }}
-                                  placeholder={""}
-                                  onPointerEnterCapture={undefined}
-                                  onPointerLeaveCapture={undefined}
+
+
+
                                 >
                                   Entfernen
                                 </Button>
@@ -915,9 +924,9 @@ export function EventBoardCalendarDialog({
                   <Typography
                     variant={"small"}
                     className={"font-semibold text-blue-gray-900"}
-                    placeholder={""}
-                    onPointerEnterCapture={undefined}
-                    onPointerLeaveCapture={undefined}
+
+
+
                   >
                     {draft.id ? "Ereignis bearbeiten" : "Neues Ereignis"}
                   </Typography>
@@ -953,9 +962,9 @@ export function EventBoardCalendarDialog({
                         color={"red"}
                         className={"normal-case mt-2"}
                         onClick={() => handleDraftChange("date", selectedDate)}
-                        placeholder={""}
-                        onPointerEnterCapture={undefined}
-                        onPointerLeaveCapture={undefined}
+
+
+
                       >
                         Auswahl übernehmen
                       </Button>
@@ -971,8 +980,8 @@ export function EventBoardCalendarDialog({
                   }
                   min={draft.date || undefined}
                   crossOrigin={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
                 />
                 <Input
                   label={"Titel"}
@@ -981,8 +990,8 @@ export function EventBoardCalendarDialog({
                     handleDraftChange("title", event.target.value)
                   }
                   crossOrigin={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
                 />
                 <div className={"space-y-3"}>
                   <div className={"space-y-3"}>
@@ -995,8 +1004,8 @@ export function EventBoardCalendarDialog({
                         handleDraftChange("startTime", event.target.value)
                       }
                       crossOrigin={""}
-                      onPointerEnterCapture={undefined}
-                      onPointerLeaveCapture={undefined}
+
+
                     />
                     <Input
                       type={"time"}
@@ -1007,8 +1016,8 @@ export function EventBoardCalendarDialog({
                         handleDraftChange("endTime", event.target.value)
                       }
                       crossOrigin={""}
-                      onPointerEnterCapture={undefined}
-                      onPointerLeaveCapture={undefined}
+
+
                     />
                   </div>
                   <div className={"space-y-3"}>
@@ -1067,8 +1076,8 @@ export function EventBoardCalendarDialog({
                   }
                   placeholder={"https://..."}
                   crossOrigin={""}
-                  onPointerEnterCapture={undefined}
-                  onPointerLeaveCapture={undefined}
+
+
                 />
                 <div
                   className={
@@ -1081,9 +1090,9 @@ export function EventBoardCalendarDialog({
                       color={"gray"}
                       className={"normal-case w-full sm:w-auto"}
                       onClick={() => handleDeleteEvent(draft.id!)}
-                      placeholder={""}
-                      onPointerEnterCapture={undefined}
-                      onPointerLeaveCapture={undefined}
+
+
+
                     >
                       Löschen
                     </Button>
@@ -1094,9 +1103,9 @@ export function EventBoardCalendarDialog({
                     className={"normal-case w-full sm:w-auto"}
                     onClick={handleSaveDraft}
                     disabled={saveDisabled}
-                    placeholder={""}
-                    onPointerEnterCapture={undefined}
-                    onPointerLeaveCapture={undefined}
+
+
+
                   >
                     Speichern
                   </Button>
@@ -1107,18 +1116,18 @@ export function EventBoardCalendarDialog({
         </div>
       </DialogBody>
       <DialogFooter
-        placeholder={""}
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+
+
+
       >
         <Button
           variant={"text"}
           color={"gray"}
           className={"normal-case"}
           onClick={onClose}
-          placeholder={""}
-          onPointerEnterCapture={undefined}
-          onPointerLeaveCapture={undefined}
+
+
+
         >
           Schließen
         </Button>
