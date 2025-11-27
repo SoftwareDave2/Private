@@ -51,7 +51,7 @@ export function RoomBookingFormSection({
             <div className={'grid gap-3 sm:grid-cols-2'}>
                 <Input label={'Raumnummer'} value={form.roomNumber} maxLength={10}
                        onChange={(event) => handleFieldChange('roomNumber', event.target.value)} />
-                <Input label={'Raumtyp'} value={form.roomType} maxLength={50}
+                <Input label={'Raumtyp'} value={form.roomType} maxLength={25}
                        onChange={(event) => handleFieldChange('roomType', event.target.value)} />
             </div>
             <div className={'space-y-3'}>

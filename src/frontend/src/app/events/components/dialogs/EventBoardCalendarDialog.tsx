@@ -1040,6 +1040,7 @@ export function EventBoardCalendarDialog({
                   crossOrigin={""}
                   onPointerEnterCapture={undefined}
                   onPointerLeaveCapture={undefined}
+                  error={!!errors.endDate}
                 />
                 {errors.endDate && <Typography color="red" className="text-xs mt-1">{errors.endDate}</Typography>}
                 <Input
@@ -1048,6 +1049,7 @@ export function EventBoardCalendarDialog({
                   onChange={(event) =>
                     handleDraftChange("title", event.target.value)
                   }
+                  error={!!errors.title}
                   crossOrigin={""}
                   onPointerEnterCapture={undefined}
                   onPointerLeaveCapture={undefined}
@@ -1084,7 +1086,7 @@ export function EventBoardCalendarDialog({
                       crossOrigin={""}
                       onPointerEnterCapture={undefined}
                       onPointerLeaveCapture={undefined}
-                    />
+                      error={!!errors.time} />
                     {errors.time && <Typography color="red" className="text-xs mt-1">{errors.time}</Typography>}
                   </div>
                   <div className={"space-y-3"}>

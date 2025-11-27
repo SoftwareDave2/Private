@@ -20,8 +20,8 @@ export function NoticeBoardFormSection({ form, onFormChange }: NoticeBoardFormSe
 
   // Konstanten / Limits -> hier ggf. ändern
   const TITLE_MAX = 50
-  const BODY_MAX = 500
-  const BODY_MAX_LINEBREAKS = 2 // maximal 2 Zeilenumbrüche => max. 3 Absätze
+  const BODY_MAX = 120
+  const BODY_MAX_LINEBREAKS = 1
 
   useEffect(() => {
     const newErrors = { title: '', body: '', end: '' }
@@ -42,7 +42,7 @@ export function NoticeBoardFormSection({ form, onFormChange }: NoticeBoardFormSe
       // Count line breaks
       const lineBreakCount = (body.match(/\n/g) || []).length
       if (lineBreakCount > BODY_MAX_LINEBREAKS) {
-        newErrors.body = `Maximal ${BODY_MAX_LINEBREAKS} Zeilenumbrüche erlaubt (also ca. 3 Absätze).`
+        newErrors.body = `Maximal ${BODY_MAX_LINEBREAKS} Zeilenumbruch erlaubt (also 2 Absätze).`
       }
     }
 
@@ -77,8 +77,21 @@ export function NoticeBoardFormSection({ form, onFormChange }: NoticeBoardFormSe
     handleChange('title', value.slice(0, TITLE_MAX))
   }
   const onBodyChange = (value: string) => {
-    handleChange('body', value.slice(0, BODY_MAX))
+    let trimmed = value.slice(0, BODY_MAX)
+    const lineBreakCount = (trimmed.match(/\n/g) || []).length
+
+    if (lineBreakCount > BODY_MAX_LINEBREAKS) {
+      // Entferne den letzten Zeilenumbruch, indem wir alles nach dem erlaubten Stand zusammenfügen
+      const parts = trimmed.split('\n')
+      const allowed = parts.slice(0, BODY_MAX_LINEBREAKS + 1)
+      const remainder = parts.slice(BODY_MAX_LINEBREAKS + 1).join(' ')
+
+      trimmed = allowed.join('\n') + (remainder ? ' ' + remainder : '')
+    }
+
+    handleChange('body', trimmed)
   }
+
   const onEndChange = (value: string) => {
     handleChange('end', value)
   }
@@ -103,10 +116,11 @@ export function NoticeBoardFormSection({ form, onFormChange }: NoticeBoardFormSe
                 <label className={'block text-sm font-medium text-blue-gray-700 mb-2'}>
                     Freitext
                 </label>
-                <textarea className={'w-full rounded-md border border-blue-gray-100 bg-white p-3 text-sm focus:border-red-500 focus:outline-none focus:ring-0'}
+                <textarea className={'w-full rounded-md border border-blue-gray-100 bg-white p-3 text-sm focus:outline-none focus:ring-0'
+                    }
                           rows={4}
                           value={form.body}
-                          onChange={(event) => handleChange('body', event.target.value)}
+                          onChange={(event) => onBodyChange(event.target.value)}
                           placeholder={'Hinweise, Wegbeschreibungen oder Ansprechpartner:innen'}
                           maxLength={BODY_MAX}/>
                 <div className="flex justify-between items-center mt-1">

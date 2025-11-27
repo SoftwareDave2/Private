@@ -46,7 +46,7 @@ export function DoorSignPersonDialog({
         })
     }
 
-    // Validierung der Variablen
+    // Validierung der Variabeln
     const [errors, setErrors] = useState({ name: '', busyUntil: '' })
       const [isValid, setIsValid] = useState(false)
 
@@ -128,14 +128,10 @@ export function DoorSignPersonDialog({
                                    value={person.busyUntil}
                                    onChange={(event) => handleFieldChange('busyUntil', event.target.value)}
                                     error={!!errors.busyUntil}/>
-                                 {errors.busyUntil ? (
+                                 {errors.busyUntil && (
                                     <Typography color="red" className="text-sm mt-1">
                                         {errors.busyUntil}
                                     </Typography>
-                                 ) : (
-                                   <Typography color="gray" className="text-xs mt-1">
-                                    Zeitpunkt darf nicht in der Vergangenheit liegen
-                                   </Typography>
                                  )}
                             </div>
                         )}
