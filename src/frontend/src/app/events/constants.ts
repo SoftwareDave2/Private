@@ -53,7 +53,6 @@ export const defaultRoomBookingForm: RoomBookingForm = {
     roomType: 'Besprechungsraum',
     entries: [
         { id: 1, title: '', startTime: '', endTime: '', allDay: false },
-        { id: 2, title: '', startTime: '', endTime: '', allDay: false },
     ],
 }
 
