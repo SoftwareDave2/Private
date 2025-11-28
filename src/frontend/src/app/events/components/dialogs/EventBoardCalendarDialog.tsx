@@ -124,6 +124,13 @@ export function EventBoardCalendarDialog({
   const [draft, setDraft] = useState<EventDraft | null>(null);
   const [showEventTitles, setShowEventTitles] = useState(true);
 
+  const [errors, setErrors] = useState({
+    title: "",
+    endDate: "",
+    time: "",
+  });
+  const [isValid, setIsValid] = useState(false);
+
   useEffect(() => {
     if (!open) {
       setSelectedDate(null);
@@ -307,6 +314,60 @@ export function EventBoardCalendarDialog({
     );
   };
 
+
+  useEffect(() => {
+    if (!draft) {
+      setErrors({ title: "", endDate: "", time: "" });
+      setIsValid(false);
+      return;
+    }
+
+    const newErrors = { title: "", endDate: "", time: "" };
+    let valid = true;
+
+    // Title: required and max 50
+    const title = (draft.title ?? "").trim();
+    if (!title) {
+      newErrors.title = "Titel ist erforderlich.";
+      valid = false;
+    } else if (title.length > 50) {
+      newErrors.title = "Maximal 50 Zeichen.";
+      valid = false;
+    }
+
+    // Enddate: must not be in past (compare by day)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const parsedEnd = parseDate(draft.endDate);
+    if (!parsedEnd) {
+      newErrors.endDate = "Enddatum ist erforderlich.";
+      valid = false;
+    } else if (parsedEnd < today) {
+      newErrors.endDate = "Enddatum darf nicht in der Vergangenheit liegen.";
+      valid = false;
+    }
+
+    // If same day and both times set -> endTime must be after startTime
+    if (!draft.allDay && draft.date && draft.endDate && draft.date === draft.endDate) {
+      const s = draft.startTime ? new Date(`1970-01-01T${draft.startTime}`) : null;
+      const e = draft.endTime ? new Date(`1970-01-01T${draft.endTime}`) : null;
+      if (s && e) {
+        if (isNaN(s.getTime()) || isNaN(e.getTime())) {
+          newErrors.time = !s ? "Ungültige Startzeit." : "";
+          newErrors.time = !e ? "Ungültige Endzeit." : newErrors.time;
+          valid = false;
+        } else if (e <= s) {
+          newErrors.time = "Endzeit muss nach Startzeit liegen (gleicher Tag).";
+          valid = false;
+        }
+      }
+    }
+
+    setErrors(newErrors);
+    setIsValid(valid);
+  }, [draft]);
+
+
   const handleSaveDraft = () => {
     if (!draft || !draft.date) {
       return;
@@ -332,7 +393,13 @@ export function EventBoardCalendarDialog({
       qrLink: draft.qrLink.trim(),
     };
     onSaveEvent(payload);
-    setDraft(payload);
+    setDraft({
+          ...draft,
+          id: payload.id,
+          title: payload.title,
+          date: payload.date,
+          endDate: (payload as any).endDate ?? payload.date,
+        });
     setSelectedEventId(payload.id);
     setSelectedDate(payload.date);
   };
@@ -352,7 +419,7 @@ export function EventBoardCalendarDialog({
     year: "numeric",
   });
 
-  const saveDisabled = !draft || !draft.date || !draft.endDate;
+  const saveDisabled = !draft || !isValid;
   const resolveTimeLabel = (
     event: Pick<EventBoardEvent, "startTime" | "endTime" | "allDay">
   ) => {
@@ -980,19 +1047,27 @@ export function EventBoardCalendarDialog({
                   }
                   min={draft.date || undefined}
                   crossOrigin={""}
-
-
+                  error={!!errors.endDate}
                 />
+                {errors.endDate && <Typography color="red" className="text-xs mt-1">{errors.endDate}</Typography>}
                 <Input
                   label={"Titel"}
                   value={draft.title}
                   onChange={(event) =>
                     handleDraftChange("title", event.target.value)
                   }
+                  error={!!errors.title}
                   crossOrigin={""}
 
 
+                  maxLength={50}
                 />
+                {errors.title ? (
+                    <Typography color="red" className="text-xs mt-1">{errors.title}</Typography>
+                  ) : (
+                    <Typography color="gray" className="text-xs mt-1">Max. 50 Zeichen</Typography>
+                  )}
+
                 <div className={"space-y-3"}>
                   <div className={"space-y-3"}>
                     <Input
@@ -1016,9 +1091,8 @@ export function EventBoardCalendarDialog({
                         handleDraftChange("endTime", event.target.value)
                       }
                       crossOrigin={""}
-
-
-                    />
+                      error={!!errors.time} />
+                    {errors.time && <Typography color="red" className="text-xs mt-1">{errors.time}</Typography>}
                   </div>
                   <div className={"space-y-3"}>
                     <div className={"flex items-center justify-between rounded-xl bg-blue-gray-50/80 px-3 py-2"}>

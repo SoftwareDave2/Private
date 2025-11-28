@@ -11,6 +11,7 @@ import org.w3c.dom.svg.SVGDocument;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public class SVGFillService {
                        int targetWidth,
                        int targetHeight) {
 
-        // 1) SVG -> DOM
+        // Step 1: SVG -> DOM
         String parser = XMLResourceDescriptor.getXMLParserClassName();
         var factory = new SAXSVGDocumentFactory(parser);
         final SVGDocument doc;
@@ -75,16 +76,50 @@ public class SVGFillService {
             }
 
             case "door-sign" -> {
+
+                // set roomNumber and footherNote
                 setText(doc, "roomNumber", str(f, "roomNumber", "—"));
-                setText(doc, "name-1",     str(f, "name1",     "—"));
-                setText(doc, "name-2",     str(f, "name2",     "—"));
-                setText(doc, "name-3",     str(f, "name3",     "—"));
-                // Example: Color for busy / not busy
-                if ("busy".equalsIgnoreCase(str(f, "state", ""))) {
-                    setStyleProp(doc, "statusBar", "fill", "#ff0000");
-                } else {
-                    setStyleProp(doc, "statusBar", "fill", "#ffffff");
+                setText(doc, "footerNote", str(f, "footerNote", ""));
+
+                // sort people from subItems by positionIndex
+                List<DisplayTemplateSubData> people = (subItems == null)
+                        ? List.of()
+                        : subItems.stream()
+                        .sorted(Comparator.comparing(
+                                s -> s.getPositionIndex() == null ? Integer.MAX_VALUE : s.getPositionIndex()
+                        ))
+                        .toList();
+
+                // 3 slots max
+                for (int i = 0; i < 3; i++) {
+                    String nameId = switch (i) {
+                        case 0 -> "name-1";
+                        case 1 -> "name-2";
+                        default -> "name-3";
+                    };
+
+                    // get SubData (person data)
+                    if (i < people.size()) {
+                        DisplayTemplateSubData person = people.get(i);
+                        String name = person.getTitle() != null ? person.getTitle() : "";
+                        boolean busy = Boolean.TRUE.equals(person.getBusy());
+
+                        // set text
+                        setText(doc, nameId, name);
+                        // if person busy -> red text ; otherwise: black
+                        setStyleProp(doc, nameId, "fill", busy ? "#ff0000" : "#000000");
+                    } else {
+                        // no person for this slot  -> empty & white
+                        setText(doc, nameId, "");
+                        setStyleProp(doc, nameId, "fill", "#ffffff");
+                    }
                 }
+
+                // room status: if at least one person is busy -> show  "Nicht stören"-Badge
+                // otherwise:  "Verfügbar"-Badge
+                boolean anyBusy = people.stream().anyMatch(p -> Boolean.TRUE.equals(p.getBusy()));
+                toggleDisplay(doc, "state-busy", anyBusy);
+                toggleDisplay(doc, "state-free", !anyBusy);
             }
             // TODO
             default -> {
