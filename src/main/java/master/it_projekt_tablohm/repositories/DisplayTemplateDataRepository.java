@@ -1,6 +1,7 @@
 package master.it_projekt_tablohm.repositories;
 
 import master.it_projekt_tablohm.models.DisplayTemplateData;
+import master.it_projekt_tablohm.models.TemplateType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,12 +15,11 @@ public interface DisplayTemplateDataRepository extends JpaRepository<DisplayTemp
 
     List<DisplayTemplateData> findByDisplayMac(String displayMac);
 
-    List<DisplayTemplateData> findByTemplateType(String templateType);
+    List<DisplayTemplateData> findByTemplateTypeEntity(TemplateType templateType);
 
-    Optional<DisplayTemplateData> findByDisplayMacAndTemplateType(String displayMac, String templateType);
+    List<DisplayTemplateData> findByTemplateTypeEntity_TypeKey(String templateTypeKey);
 
-    Optional<DisplayTemplateData> findTopByDisplayMacAndTemplateTypeOrderByUpdatedAtDesc(
-            String displayMac, String templateType);
+    Optional<DisplayTemplateData> findByDisplayMacAndTemplateTypeEntity_TypeKey(String displayMac, String templateTypeKey);
 
     Optional<DisplayTemplateData> findFirstByDisplayMac(String displayMac);
 

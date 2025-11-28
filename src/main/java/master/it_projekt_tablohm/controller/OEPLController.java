@@ -3,10 +3,13 @@ package master.it_projekt_tablohm.controller;
 import jakarta.validation.Valid;
 import master.it_projekt_tablohm.dto.DisplayEventSubmissionResponseDTO;
 import master.it_projekt_tablohm.dto.DisplaySubDataDTO;
+import master.it_projekt_tablohm.dto.DisplaySubDataHistoryDTO;
 import master.it_projekt_tablohm.dto.TemplateDefinitionDTO;
 import master.it_projekt_tablohm.dto.TemplateDisplayDataDTO;
+import master.it_projekt_tablohm.dto.TemplateTypeDTO;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.services.DisplayEventService;
+import master.it_projekt_tablohm.services.DisplayHistoryService;
 import master.it_projekt_tablohm.services.OpenEPaperSyncService;
 import master.it_projekt_tablohm.services.TemplateManagementService;
 import master.it_projekt_tablohm.services.TemplateMaintenanceService;
@@ -31,17 +34,20 @@ public class OEPLController {
     private final DisplayEventService displayEventService;
     private final TemplateManagementService templateManagementService;
     private final TemplateMaintenanceService templateMaintenanceService;
+    private final DisplayHistoryService displayHistoryService;
 
     public OEPLController(OpenEPaperSyncService openEPaperSyncService,
                           DisplayRepository displayRepository,
                           DisplayEventService displayEventService,
                           TemplateManagementService templateManagementService,
-                          TemplateMaintenanceService templateMaintenanceService) {
+                          TemplateMaintenanceService templateMaintenanceService,
+                          DisplayHistoryService displayHistoryService) {
         this.openEPaperSyncService = openEPaperSyncService;
         this.displayRepository = displayRepository;
         this.displayEventService = displayEventService;
         this.templateManagementService = templateManagementService;
         this.templateMaintenanceService = templateMaintenanceService;
+        this.displayHistoryService = displayHistoryService;
     }
 
     @PostMapping(path = "/send-image")
@@ -135,6 +141,17 @@ public class OEPLController {
     public @ResponseBody ResponseEntity<TemplateDefinitionDTO> getTemplate(
             @PathVariable String templateType) {
         return ResponseEntity.ok(templateManagementService.getTemplate(templateType));
+    }
+
+    @GetMapping(path = "/template-types")
+    public @ResponseBody ResponseEntity<List<TemplateTypeDTO>> listTemplateTypes() {
+        return ResponseEntity.ok(templateManagementService.listTemplateTypes());
+    }
+
+    @GetMapping(path = "/display-data/history")
+    public @ResponseBody ResponseEntity<List<DisplaySubDataHistoryDTO>> listDisplayDataHistory(
+            @RequestParam(name = "limit", defaultValue = "50") int limit) {
+        return ResponseEntity.ok(displayHistoryService.listHistory(limit));
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////

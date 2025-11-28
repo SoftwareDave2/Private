@@ -8,8 +8,10 @@ import master.it_projekt_tablohm.dto.TemplateSubDataDTO;
 import master.it_projekt_tablohm.models.DisplayTemplate;
 import master.it_projekt_tablohm.models.DisplayTemplateData;
 import master.it_projekt_tablohm.models.DisplayTemplateSubData;
+import master.it_projekt_tablohm.models.TemplateType;
 import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
+import master.it_projekt_tablohm.repositories.TemplateTypeRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,24 +29,28 @@ public class DisplayEventService {
     private final DisplayTemplateDataRepository templateDataRepository;
     private final TemplateDisplayUpdateService displayUpdateService;
     private final TemplateDefaultContentProvider defaultContentProvider;
+    private final TemplateTypeRepository templateTypeRepository;
 
     public DisplayEventService(DisplayTemplateRepository templateRepository,
                                DisplayTemplateDataRepository templateDataRepository,
                                TemplateDisplayUpdateService displayUpdateService,
-                               TemplateDefaultContentProvider defaultContentProvider) {
+                               TemplateDefaultContentProvider defaultContentProvider,
+                               TemplateTypeRepository templateTypeRepository) {
         this.templateRepository = templateRepository;
         this.templateDataRepository = templateDataRepository;
         this.displayUpdateService = displayUpdateService;
         this.defaultContentProvider = defaultContentProvider;
+        this.templateTypeRepository = templateTypeRepository;
     }
 
     @Transactional
     public DisplayEventSubmissionResponseDTO saveDisplayData(TemplateDisplayDataDTO displayDataDto) {
         DisplayTemplate template = templateRepository
-                .findByTemplateType(displayDataDto.getTemplateType())
+                .findByTemplateTypeEntity_TypeKey(displayDataDto.getTemplateType())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Template type " + displayDataDto.getTemplateType() + " not found"));
+        TemplateType templateTypeEntity = resolveTemplateType(displayDataDto.getTemplateType());
 
         var existingEntries = templateDataRepository.findByDisplayMac(displayDataDto.getDisplayMac());
 
@@ -60,11 +66,11 @@ public class DisplayEventService {
                 .forEach(templateDataRepository::delete);
 
         templateData.setTemplate(template);
-        templateData.setTemplateType(displayDataDto.getTemplateType());
         templateData.setDisplayMac(displayDataDto.getDisplayMac());
         templateData.setEventStart(displayDataDto.getEventStart());
         templateData.setEventEnd(displayDataDto.getEventEnd());
         templateData.setFields(displayDataDto.getFields());
+        templateData.setTemplateTypeEntity(templateTypeEntity);
 
         templateData.getSubItems().clear();
 
@@ -81,7 +87,6 @@ public class DisplayEventService {
                 subEntity.setHighlighted(subDto.getHighlighted());
                 subEntity.setBusy(subDto.getBusy());
                 subEntity.setQrCodeUrl(subDto.getQrCodeUrl());
-                subEntity.setAllDay(subDto.getAllDay());
                 templateData.getSubItems().add(subEntity);
             }
         }
@@ -98,7 +103,8 @@ public class DisplayEventService {
     }
 
     public List<TemplateDisplayDataDTO> getDisplayDataByTemplateType(String templateType) {
-        return templateDataRepository.findByTemplateType(templateType)
+        List<DisplayTemplateData> results = templateDataRepository.findByTemplateTypeEntity_TypeKey(templateType);
+        return results
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -137,7 +143,7 @@ public class DisplayEventService {
 
     private TemplateDisplayDataDTO toDto(DisplayTemplateData entity) {
         TemplateDisplayDataDTO dto = new TemplateDisplayDataDTO();
-        dto.setTemplateType(entity.getTemplateType());
+        dto.setTemplateType(entity.getTemplateTypeEntity() != null ? entity.getTemplateTypeEntity().getTypeKey() : null);
         dto.setDisplayMac(entity.getDisplayMac());
         dto.setEventStart(entity.getEventStart());
         dto.setEventEnd(entity.getEventEnd());
@@ -155,7 +161,6 @@ public class DisplayEventService {
                                 subDto.setHighlighted(sub.getHighlighted());
                                 subDto.setBusy(sub.getBusy());
                                 subDto.setQrCodeUrl(sub.getQrCodeUrl());
-                                subDto.setAllDay(sub.getAllDay());
                                 return subDto;
                             })
                             .collect(Collectors.toList())
@@ -167,7 +172,7 @@ public class DisplayEventService {
 
     private DisplaySubDataDTO toSubDataDto(DisplayTemplateData parent, DisplayTemplateSubData sub) {
         DisplaySubDataDTO dto = new DisplaySubDataDTO();
-        dto.setTemplateType(parent.getTemplateType());
+        dto.setTemplateType(parent.getTemplateTypeEntity() != null ? parent.getTemplateTypeEntity().getTypeKey() : null);
         dto.setDisplayMac(parent.getDisplayMac());
         dto.setTitle(sub.getTitle());
         dto.setStart(sub.getStart());
@@ -175,7 +180,13 @@ public class DisplayEventService {
         dto.setHighlighted(sub.getHighlighted());
         dto.setBusy(sub.getBusy());
         dto.setQrCodeUrl(sub.getQrCodeUrl());
-        dto.setAllDay(sub.getAllDay());
         return dto;
+    }
+
+    private TemplateType resolveTemplateType(String templateTypeKey) {
+        return templateTypeRepository.findByTypeKey(templateTypeKey)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Template type " + templateTypeKey + " not registered"));
     }
 }

@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
 
-public class DisplaySubDataDTO {
-
+public class DisplaySubDataHistoryDTO {
+    private Long id;
     private String templateType;
     private String displayMac;
+    private Integer positionIndex;
     private String title;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -19,6 +20,17 @@ public class DisplaySubDataDTO {
     private Boolean highlighted;
     private Boolean busy;
     private String qrCodeUrl;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime createdAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getTemplateType() {
         return templateType;
@@ -34,6 +46,14 @@ public class DisplaySubDataDTO {
 
     public void setDisplayMac(String displayMac) {
         this.displayMac = displayMac;
+    }
+
+    public Integer getPositionIndex() {
+        return positionIndex;
+    }
+
+    public void setPositionIndex(Integer positionIndex) {
+        this.positionIndex = positionIndex;
     }
 
     public String getTitle() {
@@ -84,4 +104,11 @@ public class DisplaySubDataDTO {
         this.qrCodeUrl = qrCodeUrl;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

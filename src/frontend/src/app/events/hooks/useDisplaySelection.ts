@@ -3,7 +3,7 @@ import {DisplayData} from '@/types/displayData'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import {authFetch} from '@/utils/authFetch'
 import {DisplayTypeKey} from '../types'
-import {previewDimensions} from '@/app/events/constants'
+import {fallbackPreviewDimensions} from '@/app/events/constants'
 
 type UseDisplaySelectionResult = {
     displays: DisplayData[]
@@ -14,8 +14,23 @@ type UseDisplaySelectionResult = {
     displayError: string
 }
 
-const buildDummyDisplay = (type: DisplayTypeKey, index: number): DisplayData => {
-    const previewSize = previewDimensions[type] ?? previewDimensions['door-sign']
+const resolveTargetSize = (
+    type: DisplayTypeKey,
+    sizeOverride?: { width: number; height: number } | null,
+): { width: number; height: number } => {
+    const fallbackSize = fallbackPreviewDimensions[type] ?? fallbackPreviewDimensions['door-sign']
+    return {
+        width: sizeOverride?.width ?? fallbackSize.width,
+        height: sizeOverride?.height ?? fallbackSize.height,
+    }
+}
+
+const buildDummyDisplay = (
+    type: DisplayTypeKey,
+    sizeOverride: { width: number; height: number } | null | undefined,
+    index: number,
+): DisplayData => {
+    const previewSize = resolveTargetSize(type, sizeOverride)
     const mac = index === 0 ? '00:11:22:33:44:55' : '00:11:22:33:44:66'
     return {
         displayName: `Dummy Display ${index + 1}`,
@@ -37,7 +52,10 @@ const buildDummyDisplay = (type: DisplayTypeKey, index: number): DisplayData => 
     }
 }
 
-export const useDisplaySelection = (displayType: DisplayTypeKey): UseDisplaySelectionResult => {
+export const useDisplaySelection = (
+    displayType: DisplayTypeKey,
+    previewSize?: { width: number; height: number } | null,
+): UseDisplaySelectionResult => {
     const backendApiUrl = getBackendApiUrl()
     const [displays, setDisplays] = useState<DisplayData[]>([])
     const [selectedDisplay, setSelectedDisplay] = useState<string>('')
@@ -84,15 +102,15 @@ export const useDisplaySelection = (displayType: DisplayTypeKey): UseDisplaySele
 
     // Filter displays
     const filteredDisplays = useMemo(() => {
-        const previewSize = previewDimensions[displayType] ?? previewDimensions['door-sign']
+        const targetSize = resolveTargetSize(displayType, previewSize)
         const matching = displays.filter(
-            (d) => d.width === previewSize.width && d.height === previewSize.height,
+            (d) => d.width === targetSize.width && d.height === targetSize.height,
         )
         if (matching.length > 0) {
             return matching
         }
-        return [buildDummyDisplay(displayType, 0), buildDummyDisplay(displayType, 1)]
-    }, [displays, displayType])
+        return [buildDummyDisplay(displayType, previewSize, 0), buildDummyDisplay(displayType, previewSize, 1)]
+    }, [displays, displayType, previewSize?.height, previewSize?.width])
 
 
     useEffect(() => {
