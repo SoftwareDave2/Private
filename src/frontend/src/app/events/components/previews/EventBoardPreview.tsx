@@ -1,4 +1,5 @@
 import {EventBoardForm} from '../../types'
+import {EVENT_BOARD_PREVIEW_LIMIT} from '../../constants'
 
 type EventBoardPreviewProps = {
     form: EventBoardForm
@@ -18,14 +19,30 @@ const formatDateLabel = (value: string) => {
     return `${day}.${month}.${year}`
 }
 
+const formatDateRange = (start: string, end: string) => {
+    const startLabel = formatDateLabel(start)
+    if (!startLabel) {
+        return 'Datum folgt'
+    }
+    const normalizedEnd = formatDateLabel(end)
+    if (!end || end === start || !normalizedEnd) {
+        return startLabel
+    }
+    return `${startLabel} – ${normalizedEnd}`
+}
+
 export function EventBoardPreview({ form }: EventBoardPreviewProps) {
     const events = Array.isArray(form.events)
         ? form.events
-            .filter((event) =>
-                (event.title ?? '').trim().length > 0
-                || (event.date ?? '').trim().length > 0
-                || (event.time ?? '').trim().length > 0,
-            )
+                .filter((event) => {
+                    const data = [
+                        (event.title ?? '').trim(),
+                        (event.date ?? '').trim(),
+                        (event.startTime ?? '').trim(),
+                        (event.endTime ?? '').trim(),
+                    ]
+                    return data.some((value) => value.length > 0)
+                })
             .sort((a, b) => {
                 const dateA = a.date.trim()
                 const dateB = b.date.trim()
@@ -41,8 +58,14 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                 if (dateCompare !== 0) return dateCompare
 
                 // Bei gleichem Datum nach Uhrzeit sortieren
-                const timeA = a.time.trim()
-                const timeB = b.time.trim()
+                const isAllDayA = Boolean(a.allDay)
+                const isAllDayB = Boolean(b.allDay)
+
+                if (isAllDayA && !isAllDayB) return -1
+                if (!isAllDayA && isAllDayB) return 1
+
+                const timeA = a.startTime.trim()
+                const timeB = b.startTime.trim()
 
                 if (!timeA && !timeB) return 0
                 if (!timeA) return 1
@@ -50,7 +73,7 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
 
                 return timeA.localeCompare(timeB)
             })
-            .slice(0, 4)
+            .slice(0, EVENT_BOARD_PREVIEW_LIMIT)
         : []
     const isDenseLayout = events.length >= 4
 
@@ -67,15 +90,31 @@ export function EventBoardPreview({ form }: EventBoardPreviewProps) {
                     <div className={`flex flex-col h-full ${events.length < 4 ? 'justify-start' : 'justify-between'} ${isDenseLayout ? 'gap-1' : 'gap-1.5'}`}>
                         {events.map((event) => {
                             const title = event.title.trim() || 'Titel festlegen'
-                            const date = formatDateLabel(event.date.trim()) || 'Datum folgt'
-                            const time = event.time.trim() || 'Zeit folgt'
+                            const date = formatDateRange(event.date.trim(), (event.endDate ?? '').trim())
+                            const startTime = event.startTime.trim()
+                            const endTime = event.endTime.trim()
+                            const time = event.allDay
+                                ? 'Ganztägig'
+                                : startTime
+                                    ? endTime
+                                        ? `${startTime} – ${endTime}`
+                                        : startTime
+                                    : 'Zeit folgt'
+                            const isImportant = Boolean(event.important)
                             const hasQrLink = event.qrLink.trim().length > 0
 
                             return (
                                 <div key={event.id}
-                                     className={`flex items-center justify-between rounded-lg border border-red-600/40 bg-white ${isDenseLayout ? 'px-2 py-1' : 'px-2.5 py-1.5'} ${isDenseLayout ? 'gap-1.5' : 'gap-2'}`}>
+                                     className={`flex items-center justify-between rounded-lg border ${isImportant ? 'border-red-600 bg-red-50/80' : 'border-red-600/40 bg-white'} ${isDenseLayout ? 'px-2 py-1' : 'px-2.5 py-1.5'} ${isDenseLayout ? 'gap-1.5' : 'gap-2'}`}>
                                     <div className={`flex-1 min-w-0 ${isDenseLayout ? 'space-y-0.5' : 'space-y-0.5'}`}>
-                                        <p className={`${isDenseLayout ? 'text-[0.78rem]' : 'text-[0.82rem]'} font-semibold text-black truncate`} title={title}>{title}</p>
+                                        <div className={'flex items-center justify-between gap-1'}>
+                                            <p className={`${isDenseLayout ? 'text-[0.78rem]' : 'text-[0.82rem]'} font-semibold text-black truncate`} title={title}>{title}</p>
+                                            {isImportant && (
+                                                <span className={`${isDenseLayout ? 'text-[0.55rem]' : 'text-[0.6rem]'} font-semibold uppercase text-red-700`}>
+                                                    Wichtig
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className={`${isDenseLayout ? 'text-[0.68rem]' : 'text-[0.72rem]'} text-black truncate`} title={`${date} · ${time}`}>
                                             {date} · {time}
                                         </p>

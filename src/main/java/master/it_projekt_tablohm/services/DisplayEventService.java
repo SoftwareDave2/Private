@@ -10,10 +10,12 @@ import master.it_projekt_tablohm.models.DisplayTemplateData;
 import master.it_projekt_tablohm.models.DisplayTemplateSubData;
 import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -79,6 +81,7 @@ public class DisplayEventService {
                 subEntity.setHighlighted(subDto.getHighlighted());
                 subEntity.setBusy(subDto.getBusy());
                 subEntity.setQrCodeUrl(subDto.getQrCodeUrl());
+                subEntity.setAllDay(subDto.getAllDay());
                 templateData.getSubItems().add(subEntity);
             }
         }
@@ -117,6 +120,16 @@ public class DisplayEventService {
                 .collect(Collectors.toList());
     }
 
+    public TemplateDisplayDataDTO getActiveDisplayDataForDisplay(String displayMac) {
+        LocalDateTime now = LocalDateTime.now();
+        return templateDataRepository
+                .findActiveByDisplayMac(displayMac, now, PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .map(this::toDto)
+                .orElse(null);
+    }
+
     public void applyDefaultState(String displayMac, String templateType) {
         TemplateDisplayDataDTO defaultDto = defaultContentProvider.createDefaultDisplayData(templateType, displayMac);
         displayUpdateService.requestDefault(displayMac, templateType, defaultDto);
@@ -142,6 +155,7 @@ public class DisplayEventService {
                                 subDto.setHighlighted(sub.getHighlighted());
                                 subDto.setBusy(sub.getBusy());
                                 subDto.setQrCodeUrl(sub.getQrCodeUrl());
+                                subDto.setAllDay(sub.getAllDay());
                                 return subDto;
                             })
                             .collect(Collectors.toList())
@@ -161,7 +175,7 @@ public class DisplayEventService {
         dto.setHighlighted(sub.getHighlighted());
         dto.setBusy(sub.getBusy());
         dto.setQrCodeUrl(sub.getQrCodeUrl());
+        dto.setAllDay(sub.getAllDay());
         return dto;
     }
 }
-

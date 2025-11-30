@@ -20,6 +20,8 @@ public class TemplateSubDataDTO {
 
     private String qrCodeUrl;
 
+    private Boolean allDay;
+
     public String getTitle() {
         return title;
     }
@@ -67,5 +69,12 @@ public class TemplateSubDataDTO {
     public void setQrCodeUrl(String qrCodeUrl) {
         this.qrCodeUrl = qrCodeUrl;
     }
-}
 
+    public Boolean getAllDay() {
+        return allDay;
+    }
+
+    public void setAllDay(Boolean allDay) {
+        this.allDay = allDay;
+    }
+}

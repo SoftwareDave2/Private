@@ -30,6 +30,8 @@ public class DisplayTemplateSubData {
 
     private String qrCodeUrl;
 
+    private Boolean allDay;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -116,6 +118,14 @@ public class DisplayTemplateSubData {
         this.qrCodeUrl = qrCodeUrl;
     }
 
+    public Boolean getAllDay() {
+        return allDay;
+    }
+
+    public void setAllDay(Boolean allDay) {
+        this.allDay = allDay;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -124,4 +134,3 @@ public class DisplayTemplateSubData {
         return updatedAt;
     }
 }
-

@@ -29,11 +29,10 @@ export const defaultDoorSignForm: DoorSignForm = {
 
 export const defaultEventBoardForm: EventBoardForm = {
     title: 'Events',
-    events: [
-        { id: 1, title: '', date: '', time: '', qrLink: '' },
-        { id: 2, title: '', date: '', time: '', qrLink: '' },
-    ],
+    events: [],
 }
+
+export const EVENT_BOARD_PREVIEW_LIMIT = 4
 
 export const defaultNoticeBoardForm: NoticeBoardForm = {
     title: '',
@@ -46,8 +45,8 @@ export const defaultRoomBookingForm: RoomBookingForm = {
     roomNumber: '',
     roomType: 'Besprechungsraum',
     entries: [
-        { id: 1, title: '', time: '' },
-        { id: 2, title: '', time: '' },
+        { id: 1, title: '', startTime: '', endTime: '', allDay: false },
+        { id: 2, title: '', startTime: '', endTime: '', allDay: false },
     ],
 }
 

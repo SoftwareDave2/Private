@@ -19,7 +19,11 @@ export type EventBoardEvent = {
     id: number
     title: string
     date: string
-    time: string
+    endDate: string
+    startTime: string
+    endTime: string
+    allDay: boolean
+    important: boolean
     qrLink: string
 }
 
@@ -39,7 +43,10 @@ export type NoticeBoardForm = {
 export type BookingEntry = {
     id: number
     title: string
-    time: string
+    startTime: string
+    endTime: string
+    allDay: boolean
+    time?: string
 }
 
 export type RoomBookingForm = {

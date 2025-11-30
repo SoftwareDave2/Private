@@ -14,6 +14,7 @@ import React, {useEffect, useState} from "react";
 import {DeleteDisplayDialog} from "@/components/dashboard/DeleteDisplayDialog";
 import {getBackendApiUrl} from "@/utils/backendApiUrl";
 import {authFetch} from "@/utils/authFetch";
+import {Monitor, Save, Trash2, Tag, Image as ImageIcon, Settings} from "lucide-react";
 
 type EditDisplayDialogProps = {
     open: boolean,
@@ -159,32 +160,66 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
 
 
     return (
-        <Dialog open={open}>
-            <DialogHeader>{data.displayName} Anpassen</DialogHeader>
-            <form action={updateDisplay}>
-                <DialogBody>
-                    <div>
-                        <Input label={'MAC Adresse'} value={data.macAddress} readOnly={true}/>
+        <Dialog open={open} size="lg" className="bg-white shadow-2xl">
+            {/* Modern Header */}
+            <div className="relative overflow-hidden rounded-t-xl bg-gradient-to-br from-slate-50 via-white to-blue-50 px-6 py-6">
+                <div className="relative z-10">
+                    <div className="flex items-start gap-4">
+                        <div className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-3 shadow-lg">
+                            <Monitor className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                            <h2 className="text-2xl font-bold text-slate-900">Display bearbeiten</h2>
+                            <p className="mt-1 font-mono text-sm text-slate-600">{data.macAddress}</p>
+                        </div>
                     </div>
-                    <div className={'mt-5 flex gap-2'}>
-                        {/*<Select label={'Displaymarke'} value={data.brand} name={'brand'} onChange={brandChangeHandler}>
-                            <Option key={'Philips'} value={'Philips'}>Philips</Option>
-                        </Select> */}
-                        <Input
-                            label="Name"
+                </div>
+                <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-blue-400/20 to-blue-600/20 blur-3xl"></div>
+            </div>
+
+            <form action={updateDisplay}>
+                <DialogBody className="space-y-6 px-6 py-6">
+                    {/* Display Name - Prominent */}
+                    <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Tag className="h-5 w-5 text-blue-600" />
+                            <label htmlFor="displayNameInput" className="text-sm font-bold uppercase tracking-wider text-blue-700">
+                                Display-Name
+                            </label>
+                        </div>
+                        <input
+                            id="displayNameInput"
+                            type="text"
                             name="displayName"
                             value={data.displayName ?? ''}
                             onChange={displayNameChangeHandler}
+                            placeholder="z.B. Konferenzraum 1, Eingang, Büro 203..."
+                            className="w-full rounded-lg border-2 border-blue-300 bg-white px-4 py-3 text-lg font-semibold text-slate-900 shadow-sm transition-all placeholder:text-slate-400 placeholder:font-normal focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                         />
-
+                        <p className="mt-2 text-xs text-slate-600">
+                            Geben Sie einen aussagekräftigen Namen für dieses Display ein
+                        </p>
                     </div>
 
-                    <div className="mt-5 flex gap-2 items-center">
-                        {/* Hier wird das native Input-Feld verwendet */}
-                        <div className="w-full">
+                    {/* Technical Details */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Settings className="h-5 w-5 text-slate-600" />
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                                Technische Details
+                            </h3>
+                        </div>
+
+                        <div>
+                            <Input label={'MAC Adresse'} value={data.macAddress} readOnly={true} disabled />
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <div className="flex-1">
                             <label
                                 htmlFor="brandInput"
-                                className="block text-sm font-medium text-blue-gray-400 mb-1"
+                                className="block text-sm font-semibold text-slate-700 mb-2"
                             >
                                 Displaymarke
                             </label>
@@ -197,20 +232,19 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                                 onFocus={handleBrandFocus}
                                 onBlur={handleBrandBlur}
                                 list="brandSuggestions"
-                                className="mt-1 block w-full rounded-md border border-blue-gray-200 shadow-sm focus:border-black font-medium focus:ring-black sm:text-sm p-2 text-gray-700"
+                                className="block w-full rounded-lg border-2 border-slate-200 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-medium text-sm p-3 text-slate-900 transition-all"
                             />
+                            <datalist id="brandSuggestions">
+                                {brandSuggestions.map((brand) => (
+                                    <option key={brand} value={brand}/>
+                                ))}
+                            </datalist>
                         </div>
-                        <datalist id="brandSuggestions">
-                            {brandSuggestions.map((brand) => (
-                                <option key={brand} value={brand}/>
-                            ))}
-                        </datalist>
 
-
-                        <div className="w-full">
+                        <div className="flex-1">
                             <label
                                 htmlFor="modelInput"
-                                className="block text-sm font-medium text-blue-gray-400 mb-1"
+                                className="block text-sm font-semibold text-slate-700 mb-2"
                             >
                                 Displaymodell
                             </label>
@@ -223,50 +257,76 @@ export function EditDisplayDialog({open, displayData, onClose, onDataUpdated}: E
                                 onFocus={handleModelFocus}
                                 onBlur={handleModelBlur}
                                 list="modelSuggestions"
-                                className="mt-1 block w-full rounded-md border border-blue-gray-200 shadow-sm focus:border-black font-medium focus:ring-black sm:text-sm p-2 text-gray-700"
+                                className="block w-full rounded-lg border-2 border-slate-200 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 font-medium text-sm p-3 text-slate-900 transition-all"
                             />
+                            <datalist id="modelSuggestions">
+                                {modelSuggestions.map((model) => (
+                                    <option key={model} value={model}/>
+                                ))}
+                            </datalist>
                         </div>
-                        <datalist id="modelSuggestions">
-                            {modelSuggestions.map((model) => (
-                                <option key={model} value={model}/>
-                            ))}
-                        </datalist>
                     </div>
 
-
-                    <div className={'mt-5 flex gap-2'}>
+                    <div className="grid grid-cols-3 gap-3">
                         <Select label={'Orientierung'} value={data.orientation} name={'orientation'}
                                 onChange={orientationChangeHandler}>
-                            <Option value={'vertical'}>vertical</Option>
-                            <Option value={'horizontal'}>horizontal</Option>
+                            <Option value={'vertical'}>Vertikal</Option>
+                            <Option value={'horizontal'}>Horizontal</Option>
                         </Select>
-                        <Input label={'Breite'} type={'number'} className={'min-w-[100px]'}
+                        <Input label={'Breite (px)'} type={'number'}
                                defaultValue={data.width}
                                name={'width'}/>
-                        <Input label={'Höhe'} type={'number'} className={'min-w-[100px]'}
+                        <Input label={'Höhe (px)'} type={'number'}
                                defaultValue={data.height}
                                name={'height'}/>
                     </div>
-                    <div className={'mt-5'}>
-                        <SelectImage selectedFilename={data.defaultFilename}
-                                     screenWidth={data.width}
-                                     selectedDisplayMac={data.macAddress}
-                                     screenHeight={data.height}
-                                     screenOrientation={data.orientation}
-                                     onSelect={defaultFilenameChangeHandler}
-                                      />
+
+                    {/* Image Selection */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <ImageIcon className="h-5 w-5 text-slate-600" />
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                                Standard-Bild
+                            </h3>
+                        </div>
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                            <SelectImage selectedFilename={data.defaultFilename}
+                                         screenWidth={data.width}
+                                         selectedDisplayMac={data.macAddress}
+                                         screenHeight={data.height}
+                                         screenOrientation={data.orientation}
+                                         onSelect={defaultFilenameChangeHandler}
+                            />
+                        </div>
                     </div>
                 </DialogBody>
-                <DialogFooter className={'justify-between'}>
-                    <Button type={'button'} variant={'filled'} className={'bg-primary text-white'}
-                            onClick={toggleOpenDeleteDisplayHandler}>
-                        Display Löschen
+                <DialogFooter className="justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
+                    <Button
+                        type="button"
+                        variant="filled"
+                        onClick={toggleOpenDeleteDisplayHandler}
+                        className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 capitalize shadow-md shadow-red-500/30 transition-all hover:shadow-lg hover:shadow-red-500/40"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Display Löschen</span>
                     </Button>
-                    <div className={'flex space-x-2'}>
-                        <Button type={'button'} variant='outlined' className='text-primary border-primary'
-                                onClick={onClose}>Cancel</Button>
-                        <Button type={'submit'} variant={'filled'}
-                                className={'bg-primary text-white'}>Speichern</Button>
+                    <div className="flex gap-3">
+                        <Button
+                            type="button"
+                            variant="outlined"
+                            onClick={onClose}
+                            className="border-slate-300 capitalize text-slate-700 transition-all hover:bg-slate-100"
+                        >
+                            Abbrechen
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="filled"
+                            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 capitalize shadow-md shadow-blue-600/30 transition-all hover:shadow-lg hover:shadow-blue-600/40"
+                        >
+                            <Save className="h-4 w-4" />
+                            <span>Speichern</span>
+                        </Button>
                     </div>
                 </DialogFooter>
             </form>

@@ -31,7 +31,7 @@ import {NoticeBoardFormSection} from './components/NoticeBoardFormSection'
 import {RoomBookingFormSection} from './components/RoomBookingFormSection'
 import {DisplayPreview} from './components/previews/DisplayPreview'
 import {DoorSignPersonDialog} from './components/dialogs/DoorSignPersonDialog'
-import {EventBoardEventDialog} from './components/dialogs/EventBoardEventDialog'
+import {EventBoardCalendarDialog} from './components/dialogs/EventBoardCalendarDialog'
 import {RoomBookingEntryDialog} from './components/dialogs/RoomBookingEntryDialog'
 import {TemplateCodeDialog} from './components/dialogs/TemplateCodeDialog'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
@@ -52,6 +52,7 @@ type TemplateDisplayDataRequest = {
         highlighted?: boolean | null
         busy?: boolean | null
         qrCodeUrl?: string | null
+        allDay?: boolean | null
     }>
 }
 
@@ -62,6 +63,7 @@ type BookingDraft = {
     title: string
     startTime: string
     endTime: string
+    allDay: boolean
 }
 
 type DisplayPayloadForms = {
@@ -69,6 +71,25 @@ type DisplayPayloadForms = {
     eventBoardForm: EventBoardForm
     noticeBoardForm: NoticeBoardForm
     roomBookingForm: RoomBookingForm
+}
+
+type TemplateDisplaySubItem = {
+    title?: string | null
+    start?: string | null
+    end?: string | null
+    highlighted?: boolean | null
+    busy?: boolean | null
+    qrCodeUrl?: string | null
+    allDay?: boolean | null
+}
+
+type TemplateDisplayDataResponse = {
+    templateType: DisplayTypeKey
+    displayMac: string
+    eventStart?: string | null
+    eventEnd?: string | null
+    fields: Record<string, unknown>
+    subItems?: TemplateDisplaySubItem[]
 }
 
 type DisplayContentPayload = {
@@ -122,6 +143,36 @@ const formatDateTimeForBackend = (value: string | null | undefined) => {
         return null
     }
     return toLocalDateTimeString(parsed)
+}
+
+const shiftIsoDateByDays = (value: string, dayOffset: number) => {
+    const trimmed = (value ?? '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return null
+    }
+    const base = new Date(`${trimmed}T00:00:00`)
+    if (Number.isNaN(base.getTime())) {
+        return null
+    }
+    base.setDate(base.getDate() + dayOffset)
+    const pad = (segment: number) => segment.toString().padStart(2, '0')
+    return `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`
+}
+
+const isAllDayRange = (start?: string | null, end?: string | null) => {
+    if (!start || !end) {
+        return false
+    }
+    const [startDatePart, startTimePart] = start.split('T')
+    const [endDatePart, endTimePart] = end.split('T')
+    if (!startDatePart || !startTimePart || !endDatePart || !endTimePart) {
+        return false
+    }
+    if (!startTimePart.startsWith('00:00') || !endTimePart.startsWith('00:00')) {
+        return false
+    }
+    const nextDay = shiftIsoDateByDays(startDatePart, 1)
+    return nextDay !== null && nextDay === endDatePart
 }
 
 const formatDateAndTimeForBackend = (dateValue?: string, timeValue?: string) => {
@@ -180,6 +231,142 @@ const extractTimeRange = (value: string) => {
     }
 }
 
+const cloneDoorSignForm = (form: DoorSignForm): DoorSignForm => ({
+    ...form,
+    people: Array.isArray(form.people) ? form.people.map((person) => ({ ...person })) : [],
+})
+
+const cloneEventBoardForm = (form: EventBoardForm): EventBoardForm => ({
+    ...form,
+    events: Array.isArray(form.events)
+        ? form.events.map((event) => ({
+            ...event,
+            date: typeof event.date === 'string' ? event.date : '',
+            endDate:
+                typeof event.endDate === 'string'
+                    ? event.endDate
+                    : typeof event.date === 'string'
+                        ? event.date
+                        : '',
+            allDay: Boolean(event.allDay),
+            important: Boolean(event.important),
+        }))
+        : [],
+})
+
+const cloneNoticeBoardForm = (form: NoticeBoardForm): NoticeBoardForm => ({
+    ...form,
+})
+
+const cloneRoomBookingForm = (form: RoomBookingForm): RoomBookingForm => ({
+    ...form,
+    entries: Array.isArray(form.entries) ? form.entries.map((entry) => ({ ...entry })) : [],
+})
+
+const getIsoDateParts = (value?: string | null) => {
+    if (!value) {
+        return { date: '', time: '' }
+    }
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) {
+        return { date: '', time: '' }
+    }
+    const pad = (segment: number) => segment.toString().padStart(2, '0')
+    return {
+        date: `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`,
+        time: `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`,
+    }
+}
+
+const formatTimeOnly = (value?: string | null) => {
+    if (!value) {
+        return ''
+    }
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) {
+        return ''
+    }
+    const pad = (segment: number) => segment.toString().padStart(2, '0')
+    return `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`
+}
+
+const hydrateDoorSignForm = (data: TemplateDisplayDataResponse): DoorSignForm => {
+    const roomNumber = typeof data.fields.roomNumber === 'string' ? data.fields.roomNumber : ''
+    const footerNote = typeof data.fields.footerNote === 'string' ? data.fields.footerNote : ''
+    const normalizedPeople = (data.subItems ?? [])
+        .filter((item) => (item.title ?? '').trim().length > 0)
+        .slice(0, 3)
+        .map((item, index) => ({
+            id: index + 1,
+            name: (item.title ?? '').trim(),
+            status: item.busy ? 'busy' : 'available',
+            busyUntil: item.busy && item.end ? item.end : '',
+        }))
+
+    return {
+        roomNumber,
+        footerNote,
+        people:
+            normalizedPeople.length > 0
+                ? normalizedPeople
+                : cloneDoorSignForm(defaultDoorSignForm).people,
+    }
+}
+
+const hydrateEventBoardForm = (data: TemplateDisplayDataResponse): EventBoardForm => {
+    const events = (data.subItems ?? []).map((item, index) => {
+        const dateSource = item.start ?? item.end ?? data.eventStart
+        const { date } = getIsoDateParts(dateSource)
+        const { date: endDate } = getIsoDateParts(item.end ?? data.eventEnd ?? dateSource)
+        const isAllDay = isAllDayRange(item.start, item.end)
+        return {
+            id: index + 1,
+            title: (item.title ?? '').trim(),
+            date,
+            endDate: endDate || date,
+            startTime: formatTimeOnly(item.start),
+            endTime: formatTimeOnly(item.end),
+            allDay: isAllDay,
+            important: Boolean(item.highlighted),
+            qrLink: (item.qrCodeUrl ?? '').trim(),
+        }
+    })
+
+    return {
+        title: typeof data.fields.title === 'string' ? data.fields.title : defaultEventBoardForm.title,
+        events,
+    }
+}
+
+const hydrateNoticeBoardForm = (data: TemplateDisplayDataResponse): NoticeBoardForm => ({
+    title: typeof data.fields.title === 'string' ? data.fields.title : '',
+    body: typeof data.fields.body === 'string' ? data.fields.body : '',
+    start: data.eventStart ?? '',
+    end: data.eventEnd ?? '',
+    qrContent: typeof data.fields.qrContent === 'string' ? data.fields.qrContent : undefined,
+})
+
+const hydrateRoomBookingForm = (data: TemplateDisplayDataResponse): RoomBookingForm => {
+    const entries = (data.subItems ?? []).map((item, index) => {
+        const isAllDay = Boolean(item.allDay)
+        const startTime = isAllDay ? '' : formatTimeOnly(item.start)
+        const endTime = isAllDay ? '' : formatTimeOnly(item.end)
+        return {
+            id: index + 1,
+            title: (item.title ?? '').trim(),
+            startTime,
+            endTime,
+            allDay: isAllDay,
+        }
+    })
+
+    return {
+        roomNumber: typeof data.fields.roomNumber === 'string' ? data.fields.roomNumber : '',
+        roomType: typeof data.fields.roomType === 'string' ? data.fields.roomType : '',
+        entries: entries.length > 0 ? entries : cloneRoomBookingForm(defaultRoomBookingForm).entries,
+    }
+}
+
 const buildDoorSignPayload = (form: DoorSignForm): DisplayContentPayload => {
     const peopleSource = Array.isArray(form.people) ? form.people : []
     const subItems: NonNullable<TemplateDisplayDataRequest['subItems']>[number][] = []
@@ -226,19 +413,32 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
     eventsSource.forEach((event) => {
         const title = (event.title ?? '').trim()
         const date = (event.date ?? '').trim()
-        const time = (event.time ?? '').trim()
+        const endDateValue = (event.endDate ?? '').trim()
+        const startTime = (event.startTime ?? '').trim()
+        const endTime = (event.endTime ?? '').trim()
         const qrLink = (event.qrLink ?? '').trim()
-        const start = formatDateAndTimeForBackend(date, time)
+        const isAllDay = Boolean(event.allDay)
+        const normalizedEndDate = endDateValue && date && endDateValue >= date ? endDateValue : date
+        const start = formatDateAndTimeForBackend(date, startTime)
+        let end = formatDateAndTimeForBackend(normalizedEndDate, endTime)
 
-        if (!title && !date && !time && !qrLink) {
+        if (isAllDay && normalizedEndDate) {
+            const nextDay = shiftIsoDateByDays(normalizedEndDate, 1)
+            if (nextDay) {
+                end = formatDateAndTimeForBackend(nextDay, undefined)
+            }
+        }
+
+        if (!title && !date && !startTime && !endTime && !qrLink && !event.allDay) {
             return
         }
 
         subItems.push({
             title: title || null,
             start: start ?? null,
-            end: null,
+            end: end ?? null,
             qrCodeUrl: qrLink || undefined,
+            highlighted: event.important || undefined,
         })
     })
 
@@ -247,7 +447,6 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
             title: (form.title ?? '').trim(),
         },
         subItems: subItems.length > 0 ? subItems : undefined,
-        eventStart: pickBoundaryDateTime(subItems.map((item) => item.start), 'earliest'),
     }
 }
 
@@ -272,22 +471,30 @@ const buildRoomBookingPayload = (form: RoomBookingForm): DisplayContentPayload =
 
     entriesSource.forEach((entry) => {
         const title = (entry.title ?? '').trim()
-        const timeLabel = (entry.time ?? '').trim()
+        const allDay = Boolean(entry.allDay)
+        let startTime = (entry.startTime ?? '').trim()
+        let endTime = (entry.endTime ?? '').trim()
 
-        if (!title && !timeLabel) {
+        if (!startTime && !endTime && typeof entry.time === 'string') {
+            const { startTime: parsedStart, endTime: parsedEnd } = extractTimeRange(entry.time)
+            startTime = parsedStart
+            endTime = parsedEnd
+        }
+
+        if (!title && !startTime && !endTime && !allDay) {
             return
         }
 
-        const { startTime, endTime } = extractTimeRange(timeLabel)
-        const start = formatDateTimeForBackend(startTime)
-        const end = formatDateTimeForBackend(endTime)
+        const start = allDay ? null : formatDateTimeForBackend(startTime)
+        const end = allDay ? null : formatDateTimeForBackend(endTime)
         const shouldHighlight = subItems.length === 0
 
         subItems.push({
             title: title || null,
-            start,
-            end,
+            start: start ?? null,
+            end: end ?? null,
             highlighted: shouldHighlight,
+            allDay,
         })
     })
 
@@ -476,16 +683,16 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export default function EventsPage() {
+    const backendApiUrl = getBackendApiUrl()
     const [displayType, setDisplayType] = useState<DisplayTypeKey>('door-sign')
-    const [doorSignForm, setDoorSignForm] = useState<DoorSignForm>(defaultDoorSignForm)
-    const [eventBoardForm, setEventBoardForm] = useState<EventBoardForm>(defaultEventBoardForm)
-    const [noticeBoardForm, setNoticeBoardForm] = useState<NoticeBoardForm>(defaultNoticeBoardForm)
-    const [roomBookingForm, setRoomBookingForm] = useState<RoomBookingForm>(defaultRoomBookingForm)
+    const [doorSignForm, setDoorSignForm] = useState<DoorSignForm>(() => cloneDoorSignForm(defaultDoorSignForm))
+    const [eventBoardForm, setEventBoardForm] = useState<EventBoardForm>(() => cloneEventBoardForm(defaultEventBoardForm))
+    const [noticeBoardForm, setNoticeBoardForm] = useState<NoticeBoardForm>(() => cloneNoticeBoardForm(defaultNoticeBoardForm))
+    const [roomBookingForm, setRoomBookingForm] = useState<RoomBookingForm>(() => cloneRoomBookingForm(defaultRoomBookingForm))
 
     const [isPersonDialogOpen, setIsPersonDialogOpen] = useState<boolean>(false)
     const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
-    const [isEventDialogOpen, setIsEventDialogOpen] = useState<boolean>(false)
-    const [eventDraft, setEventDraft] = useState<EventBoardEvent | null>(null)
+    const [isEventCalendarOpen, setIsEventCalendarOpen] = useState<boolean>(false)
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState<boolean>(false)
     const [bookingDraft, setBookingDraft] = useState<BookingDraft | null>(null)
     const [isTemplateEditDialogOpen, setIsTemplateEditDialogOpen] = useState<boolean>(false)
@@ -495,6 +702,8 @@ export default function EventsPage() {
     const [isSendInProgress, setIsSendInProgress] = useState<boolean>(false)
     const [isTestSendInProgress, setIsTestSendInProgress] = useState<boolean>(false)
     const [sendFeedback, setSendFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+    const [isDisplayDataLoading, setIsDisplayDataLoading] = useState<boolean>(false)
+    const [displayDataLoadError, setDisplayDataLoadError] = useState<string | null>(null)
 
     const {
         filteredDisplays,
@@ -507,12 +716,108 @@ export default function EventsPage() {
     const previewSize = previewDimensions[displayType] ?? previewDimensions['door-sign']
     const { containerRef: previewContainerRef, previewScale } = usePreviewScale(previewSize, displayType)
 
+    const resetFormsForDisplayType = (type: DisplayTypeKey) => {
+        setDoorSignForm(cloneDoorSignForm(defaultDoorSignForm))
+        setEventBoardForm(cloneEventBoardForm(defaultEventBoardForm))
+        setNoticeBoardForm(cloneNoticeBoardForm(defaultNoticeBoardForm))
+        setRoomBookingForm(cloneRoomBookingForm(defaultRoomBookingForm))
+    }
+
+    const applyTemplateDataFromBackend = (data: TemplateDisplayDataResponse) => {
+        const nextType = data.templateType ?? 'door-sign'
+        switch (nextType) {
+        case 'door-sign':
+            setDoorSignForm(hydrateDoorSignForm(data))
+            setEventBoardForm(cloneEventBoardForm(defaultEventBoardForm))
+            setNoticeBoardForm(cloneNoticeBoardForm(defaultNoticeBoardForm))
+            setRoomBookingForm(cloneRoomBookingForm(defaultRoomBookingForm))
+            break
+        case 'event-board':
+            setDoorSignForm(cloneDoorSignForm(defaultDoorSignForm))
+            setEventBoardForm(hydrateEventBoardForm(data))
+            setNoticeBoardForm(cloneNoticeBoardForm(defaultNoticeBoardForm))
+            setRoomBookingForm(cloneRoomBookingForm(defaultRoomBookingForm))
+            break
+        case 'notice-board':
+            setDoorSignForm(cloneDoorSignForm(defaultDoorSignForm))
+            setEventBoardForm(cloneEventBoardForm(defaultEventBoardForm))
+            setNoticeBoardForm(hydrateNoticeBoardForm(data))
+            setRoomBookingForm(cloneRoomBookingForm(defaultRoomBookingForm))
+            break
+        case 'room-booking':
+            setDoorSignForm(cloneDoorSignForm(defaultDoorSignForm))
+            setEventBoardForm(cloneEventBoardForm(defaultEventBoardForm))
+            setNoticeBoardForm(cloneNoticeBoardForm(defaultNoticeBoardForm))
+            setRoomBookingForm(hydrateRoomBookingForm(data))
+            break
+        default:
+            setDoorSignForm(cloneDoorSignForm(defaultDoorSignForm))
+            setEventBoardForm(cloneEventBoardForm(defaultEventBoardForm))
+            setNoticeBoardForm(cloneNoticeBoardForm(defaultNoticeBoardForm))
+            setRoomBookingForm(cloneRoomBookingForm(defaultRoomBookingForm))
+            break
+        }
+        setDisplayType(nextType)
+    }
+
     useEffect(() => {
-        setDoorSignForm(defaultDoorSignForm)
-        setEventBoardForm(defaultEventBoardForm)
-        setNoticeBoardForm(defaultNoticeBoardForm)
-        setRoomBookingForm(defaultRoomBookingForm)
-    }, [displayType])
+        if (!selectedDisplay) {
+            return
+        }
+
+        setIsEventCalendarOpen(false)
+        let isCancelled = false
+        const controller = new AbortController()
+
+        const fetchActiveDisplayData = async () => {
+            setIsDisplayDataLoading(true)
+            setDisplayDataLoadError(null)
+            try {
+                const response = await authFetch(
+                    `${backendApiUrl}/oepl/display-data/display/${selectedDisplay}/active`,
+                    { signal: controller.signal },
+                )
+
+                if (isCancelled) {
+                    return
+                }
+
+                if (response.status === 204) {
+                    return
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text()
+                    throw new Error(errorText || `HTTP ${response.status}`)
+                }
+
+                const payload = (await response.json()) as TemplateDisplayDataResponse
+                if (!isCancelled) {
+                    applyTemplateDataFromBackend(payload)
+                }
+            } catch (error) {
+                if (isCancelled) {
+                    return
+                }
+                if (error instanceof DOMException && error.name === 'AbortError') {
+                    return
+                }
+                const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
+                setDisplayDataLoadError(`Aktive Displaydaten konnten nicht geladen werden: ${message}`)
+            } finally {
+                if (!isCancelled) {
+                    setIsDisplayDataLoading(false)
+                }
+            }
+        }
+
+        fetchActiveDisplayData().catch(console.error)
+
+        return () => {
+            isCancelled = true
+            controller.abort()
+        }
+    }, [selectedDisplay, backendApiUrl])
 
     const openPersonDialog = (person: DoorSignPerson) => {
         setPersonDraft({ ...person })
@@ -524,26 +829,31 @@ export default function EventsPage() {
         setPersonDraft(null)
     }
 
-    const openEventDialog = (event: EventBoardEvent) => {
-        setEventDraft({ ...event })
-        setIsEventDialogOpen(true)
-    }
-
-    const closeEventDialog = () => {
-        setIsEventDialogOpen(false)
-        setEventDraft(null)
-    }
+    const openEventCalendar = () => setIsEventCalendarOpen(true)
+    const closeEventCalendar = () => setIsEventCalendarOpen(false)
 
     const openBookingDialog = (entry: BookingEntry) => {
-        const raw = typeof entry.time === 'string' ? entry.time : ''
-        const parts = raw.split('-').map((part) => part.trim()).filter((part) => part.length > 0)
-        const startTime = parts.length >= 1 ? parts[0] : ''
-        const endTime = parts.length >= 2 ? parts[1] : ''
+        const isAllDay = Boolean(entry.allDay)
+        let startTime = (entry.startTime ?? '').trim()
+        let endTime = (entry.endTime ?? '').trim()
+        if (!startTime && !endTime && typeof entry.time === 'string') {
+            const parts = entry.time
+                .split('-')
+                .map((part) => part.trim())
+                .filter((part) => part.length > 0)
+            startTime = parts.length >= 1 ? parts[0] : ''
+            endTime = parts.length >= 2 ? parts[1] : ''
+        }
+        if (isAllDay) {
+            startTime = ''
+            endTime = ''
+        }
         setBookingDraft({
             id: entry.id,
             title: entry.title,
             startTime,
             endTime,
+            allDay: isAllDay,
         })
         setIsBookingDialogOpen(true)
     }
@@ -623,39 +933,23 @@ export default function EventsPage() {
         }))
     }
 
-    const addEventBoardEvent = () => {
-        let createdEvent: EventBoardEvent | null = null
+    const upsertEventBoardEvent = (nextEvent: EventBoardEvent) => {
         setEventBoardForm((prev) => {
-            if (prev.events.length >= 4) {
-                return prev
-            }
-            const nextId = prev.events.length === 0 ? 1 : Math.max(...prev.events.map((event) => event.id)) + 1
-            createdEvent = { id: nextId, title: '', date: '', time: '', qrLink: '' }
+            const exists = prev.events.some((event) => event.id === nextEvent.id)
+            const updatedEvents = exists
+                ? prev.events.map((event) => (event.id === nextEvent.id ? nextEvent : event))
+                : [...prev.events, nextEvent]
             return {
                 ...prev,
-                events: [...prev.events, createdEvent],
+                events: updatedEvents,
             }
         })
-        if (createdEvent) {
-            openEventDialog(createdEvent)
-        }
     }
 
     const removeEventBoardEvent = (eventId: number) => {
         setEventBoardForm((prev) => ({
             ...prev,
             events: prev.events.filter((event) => event.id !== eventId),
-        }))
-    }
-
-    const updateEventBoardEvent = (eventId: number, updates: Partial<EventBoardEvent>) => {
-        setEventBoardForm((prev) => ({
-            ...prev,
-            events: prev.events.map((event) =>
-                event.id === eventId
-                    ? { ...event, ...updates }
-                    : event,
-            ),
         }))
     }
 
@@ -666,7 +960,7 @@ export default function EventsPage() {
                 return prev
             }
             const nextId = prev.entries.length === 0 ? 1 : Math.max(...prev.entries.map((entry) => entry.id)) + 1
-            createdEntry = { id: nextId, title: '', time: '' }
+            createdEntry = { id: nextId, title: '', startTime: '', endTime: '', allDay: false }
             return {
                 ...prev,
                 entries: [...prev.entries, createdEntry],
@@ -704,31 +998,29 @@ export default function EventsPage() {
         closePersonDialog()
     }
 
-    const saveEventDialog = () => {
-        if (!eventDraft) {
-            return
-        }
-        updateEventBoardEvent(eventDraft.id, {
-            title: eventDraft.title,
-            date: eventDraft.date,
-            time: eventDraft.time,
-            qrLink: eventDraft.qrLink,
-        })
-        closeEventDialog()
-    }
-
     const saveBookingDialog = () => {
         if (!bookingDraft) {
             return
         }
-        const start = bookingDraft.startTime.trim()
-        const end = bookingDraft.endTime.trim()
-        const timeLabel = start && end ? `${start} - ${end}` : start || end
+        const start = bookingDraft.allDay ? '' : bookingDraft.startTime.trim()
+        const end = bookingDraft.allDay ? '' : bookingDraft.endTime.trim()
+        const timeLabel = bookingDraft.allDay
+            ? 'Ganztägig'
+            : start && end
+                ? `${start} - ${end}`
+                : start || end
         setRoomBookingForm((prev) => ({
             ...prev,
             entries: prev.entries.map((entry) =>
                 entry.id === bookingDraft.id
-                    ? { ...entry, title: bookingDraft.title, time: timeLabel }
+                    ? {
+                        ...entry,
+                        title: bookingDraft.title,
+                        startTime: start,
+                        endTime: end,
+                        allDay: bookingDraft.allDay,
+                        time: timeLabel ?? '',
+                    }
                     : entry,
             ),
         }))
@@ -749,7 +1041,7 @@ export default function EventsPage() {
         })
 
         try {
-            const response = await authFetch(`${getBackendApiUrl()}/oepl/display-data`, {
+            const response = await authFetch(`${backendApiUrl}/oepl/display-data`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -791,7 +1083,7 @@ export default function EventsPage() {
         setIsTestSendInProgress(true)
 
         try {
-            const response = await authFetch(`${getBackendApiUrl()}/oepl/display-data`, {
+            const response = await authFetch(`${backendApiUrl}/oepl/display-data`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -830,7 +1122,9 @@ export default function EventsPage() {
 
     const handleDisplayTypeChange = (value: string | undefined) => {
         if (typeof value === 'string') {
-            setDisplayType(value as DisplayTypeKey)
+            const nextType = value as DisplayTypeKey
+            setDisplayType(nextType)
+            resetFormsForDisplayType(nextType)
         }
     }
 
@@ -853,9 +1147,7 @@ export default function EventsPage() {
                 <EventBoardFormSection
                     form={eventBoardForm}
                     onFormChange={setEventBoardForm}
-                    onAddEvent={addEventBoardEvent}
-                    onEditEvent={openEventDialog}
-                    onRemoveEvent={removeEventBoardEvent}
+                    onOpenCalendar={openEventCalendar}
                 />
             )
         case 'notice-board':
@@ -924,6 +1216,18 @@ export default function EventsPage() {
                         {displayError && (
                             <div className={'rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600'}>
                                 {displayError}
+                            </div>
+                        )}
+
+                        {isDisplayDataLoading && (
+                            <div className={'rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700'}>
+                                Aktive Displaydaten werden geladen...
+                            </div>
+                        )}
+
+                        {displayDataLoadError && (
+                            <div className={'rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800'}>
+                                {displayDataLoadError}
                             </div>
                         )}
 
@@ -1019,12 +1323,12 @@ export default function EventsPage() {
                 onConfirm={closeTemplateCreateDialog}
             />
 
-            <EventBoardEventDialog
-                open={isEventDialogOpen}
-                event={eventDraft}
-                onClose={closeEventDialog}
-                onChange={(nextEvent) => setEventDraft(nextEvent)}
-                onSave={saveEventDialog}
+            <EventBoardCalendarDialog
+                open={isEventCalendarOpen}
+                events={eventBoardForm.events}
+                onClose={closeEventCalendar}
+                onSaveEvent={upsertEventBoardEvent}
+                onDeleteEvent={removeEventBoardEvent}
             />
 
             <RoomBookingEntryDialog
@@ -1046,5 +1350,3 @@ export default function EventsPage() {
         </div>
     )
 }
-
-
