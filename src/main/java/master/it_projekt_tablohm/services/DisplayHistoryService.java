@@ -21,7 +21,7 @@ public class DisplayHistoryService {
     public List<DisplaySubDataHistoryDTO> listHistory(int limit) {
         int pageSize = Math.max(1, Math.min(limit, 500));
         List<DisplayTemplateSubDataHistory> entries = historyRepository.findAll(
-                PageRequest.of(0, pageSize, Sort.by(Sort.Direction.DESC, "end", "createdAt"))
+                PageRequest.of(0, pageSize, Sort.by(Sort.Direction.DESC, "end", "expiredAt"))
         ).getContent();
 
         return entries.stream().map(this::toDto).toList();
@@ -39,7 +39,7 @@ public class DisplayHistoryService {
         dto.setHighlighted(entry.getHighlighted());
         dto.setBusy(entry.getBusy());
         dto.setQrCodeUrl(entry.getQrCodeUrl());
-        dto.setCreatedAt(entry.getCreatedAt());
+        dto.setExpiredAt(entry.getExpiredAt());
         return dto;
     }
 }

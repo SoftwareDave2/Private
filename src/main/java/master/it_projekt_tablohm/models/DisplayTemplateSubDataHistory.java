@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 @Table(name = "display_template_sub_data_history",
         indexes = {
                 @Index(name = "idx_history_template_type", columnList = "template_type_key"),
-                @Index(name = "idx_history_display_mac", columnList = "display_mac")
+                @Index(name = "idx_history_display_mac", columnList = "display_mac"),
+                @Index(name = "idx_history_expired_at", columnList = "expired_at")
         })
 public class DisplayTemplateSubDataHistory {
 
@@ -36,12 +37,12 @@ public class DisplayTemplateSubDataHistory {
 
     private String qrCodeUrl;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "expired_at", nullable = false)
+    private LocalDateTime expiredAt;
 
     @PrePersist
     void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.expiredAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -120,7 +121,7 @@ public class DisplayTemplateSubDataHistory {
         this.qrCodeUrl = qrCodeUrl;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getExpiredAt() {
+        return expiredAt;
     }
 }
