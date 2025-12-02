@@ -81,9 +81,7 @@ public class TemplateManagementService {
                 .stream()
                 .map(type -> new TemplateTypeDTO(
                         type.getTypeKey(),
-                        type.getLabel(),
-                        type.getDisplayWidth(),
-                        type.getDisplayHeight()
+                        type.getLabel()
                 ))
                 .collect(Collectors.toList());
     }

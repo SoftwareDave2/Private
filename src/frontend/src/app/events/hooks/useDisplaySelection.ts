@@ -14,9 +14,14 @@ type UseDisplaySelectionResult = {
     displayError: string
 }
 
+const noticeBoardSizes = [
+    { width: 296, height: 128 },
+    { width: 250, height: 122 },
+]
+
 const resolveTargetSize = (
     type: DisplayTypeKey,
-    sizeOverride?: { width: number; height: number } | null,
+    sizeOverride: { width: number; height: number } | null | undefined,
 ): { width: number; height: number } => {
     const fallbackSize = fallbackPreviewDimensions[type] ?? fallbackPreviewDimensions['door-sign']
     return {
@@ -192,11 +197,23 @@ export const useDisplaySelection = (
     // Filter displays
     const filteredDisplays = useMemo(() => {
         const targetSize = resolveTargetSize(displayType, previewSize)
-        const matching = displays
-            .filter((d) => !isOffline(d))
-            .filter(
-                (d) => d.width === targetSize.width && d.height === targetSize.height,
+        const source = displays.filter((d) => !isOffline(d))
+
+        if (displayType === 'notice-board') {
+            const matching = source.filter((d) =>
+                noticeBoardSizes.some((size) => d.width === size.width && d.height === size.height),
             )
+            if (matching.length > 0) {
+                return matching
+            }
+            return dummyPool.filter((d) =>
+                noticeBoardSizes.some((size) => d.width === size.width && d.height === size.height),
+            )
+        }
+
+        const matching = source.filter(
+            (d) => d.width === targetSize.width && d.height === targetSize.height,
+        )
         if (matching.length > 0) {
             return matching
         }
