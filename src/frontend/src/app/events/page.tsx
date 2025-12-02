@@ -751,8 +751,11 @@ export default function EventsPage() {
         }
     }, [templateTypes, displayType])
 
-    const applyTemplateDataFromBackend = (data: TemplateDisplayDataResponse) => {
-        const nextType = data.templateType ?? 'door-sign'
+    const applyTemplateDataFromBackend = (data: TemplateDisplayDataResponse, expectedType: DisplayTypeKey) => {
+        const nextType = (data.templateType as DisplayTypeKey | undefined) ?? 'door-sign'
+        if (nextType !== expectedType) {
+            return
+        }
         switch (nextType) {
         case 'door-sign':
             setDoorSignForm(hydrateDoorSignForm(data))
@@ -793,6 +796,7 @@ export default function EventsPage() {
             return
         }
 
+        const expectedType = displayType
         setIsEventCalendarOpen(false)
         let isCancelled = false
         const controller = new AbortController()
@@ -821,7 +825,7 @@ export default function EventsPage() {
 
                 const payload = (await response.json()) as TemplateDisplayDataResponse
                 if (!isCancelled) {
-                    applyTemplateDataFromBackend(payload)
+                    applyTemplateDataFromBackend(payload, expectedType)
                 }
             } catch (error) {
                 if (isCancelled) {
@@ -845,7 +849,7 @@ export default function EventsPage() {
             isCancelled = true
             controller.abort()
         }
-    }, [selectedDisplay, backendApiUrl])
+    }, [selectedDisplay, backendApiUrl, displayType])
 
     const openPersonDialog = (person: DoorSignPerson) => {
         setPersonDraft({ ...person })
