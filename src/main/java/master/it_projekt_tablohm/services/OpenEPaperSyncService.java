@@ -37,6 +37,8 @@ public class OpenEPaperSyncService {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenEPaperSyncService.class);
     private final DisplayRepository displayRepository;
+    private static final int OFFLINE_ERROR_CODE = 199;
+    private static final String OFFLINE_ERROR_MESSAGE = "Display offline / not reachable";
 
     // Internal web-socket session within this service
     private Session session;
@@ -90,23 +92,33 @@ public class OpenEPaperSyncService {
         }
         try {
             var tags = oeplGetDb();
-            Set<String> activeMacs = new HashSet<>(); 
+            Set<String> activeMacs = new HashSet<>();
             for (var tag : tags) {
                 syncOEPLTagToDB(tag);
                 activeMacs.add(tag.getMac());
             }
             var allDisplays = displayRepository.findAll();
-            int removed = 0;
+            int markedOffline = 0;
+            int markedOnline = 0;
             for (var display : allDisplays) {
                 boolean isEsl = display.getDisplayTechnology() == null
                         || "ESL".equalsIgnoreCase(display.getDisplayTechnology());
                 if (isEsl && !activeMacs.contains(display.getMacAddress())) {
-                    displayRepository.delete(display);
-                    removed++;
+                    display.addError(OFFLINE_ERROR_CODE, OFFLINE_ERROR_MESSAGE);
+                    displayRepository.save(display);
+                    markedOffline++;
+                } else if (activeMacs.contains(display.getMacAddress())) {
+                    boolean hadOffline = display.getErrors().stream()
+                            .anyMatch(err -> OFFLINE_ERROR_CODE == err.getErrorCode());
+                    if (hadOffline) {
+                        display.removeErrorByCode(OFFLINE_ERROR_CODE);
+                        displayRepository.save(display);
+                        markedOnline++;
+                    }
                 }
             }
-            if (removed > 0) {
-                logger.info("Pruned {} displays that are no longer reachable via OEPL", removed);
+            if (markedOffline > 0 || markedOnline > 0) {
+                logger.info("OEPL availability updated. Marked offline: {}, cleared offline: {}", markedOffline, markedOnline);
             }
         } catch (Exception e) {
             logger.warn("Failed to refresh/prune OEPL tags: {}", e.getMessage(), e);
