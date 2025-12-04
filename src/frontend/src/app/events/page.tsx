@@ -320,7 +320,7 @@ const hydrateEventBoardForm = (data: TemplateDisplayDataResponse): EventBoardFor
         const dateSource = item.start ?? item.end ?? data.eventStart
         const { date } = getIsoDateParts(dateSource)
         const { date: endDate } = getIsoDateParts(item.end ?? data.eventEnd ?? dateSource)
-        const isAllDay = isAllDayRange(item.start, item.end)
+        const isAllDay = item.allDay ?? isAllDayRange(item.start, item.end)
         return {
             id: index + 1,
             title: (item.title ?? '').trim(),
@@ -441,6 +441,7 @@ const buildEventBoardPayload = (form: EventBoardForm): DisplayContentPayload => 
             end: end ?? null,
             qrCodeUrl: qrLink || undefined,
             highlighted: event.important || undefined,
+            allDay: isAllDay || undefined,
         })
     })
 

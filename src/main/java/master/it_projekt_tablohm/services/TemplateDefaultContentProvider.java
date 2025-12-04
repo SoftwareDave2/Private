@@ -55,9 +55,9 @@ public class TemplateDefaultContentProvider {
         if ("door-sign".equals(templateType)) {
             addPerson(subItems, "Aktuell frei", null, null, false);
         } else if ("event-board".equals(templateType)) {
-            addSubItem(subItems, "Keine Ereignisse", null, null, false, null);
+            addSubItem(subItems, "Keine Ereignisse", null, null, false, null, false);
         } else if ("room-booking".equals(templateType)) {
-            addSubItem(subItems, "Keine Termine", null, null, false, null);
+            addSubItem(subItems, "Keine Termine", null, null, false, null, false);
         }
         return subItems;
     }
@@ -73,6 +73,7 @@ public class TemplateDefaultContentProvider {
         sub.setEnd(end);
         sub.setHighlighted(highlighted);
         sub.setBusy(highlighted);
+        sub.setAllDay(false);
         subItems.add(sub);
     }
 
@@ -81,7 +82,8 @@ public class TemplateDefaultContentProvider {
                             LocalDateTime start,
                             LocalDateTime end,
                             boolean highlighted,
-                            String qrLink) {
+                            String qrLink,
+                            boolean allDay) {
         TemplateSubDataDTO sub = new TemplateSubDataDTO();
         sub.setTitle(title);
         sub.setStart(start);
@@ -89,6 +91,7 @@ public class TemplateDefaultContentProvider {
         sub.setHighlighted(highlighted);
         sub.setBusy(highlighted);
         sub.setQrCodeUrl(qrLink);
+        sub.setAllDay(allDay);
         subItems.add(sub);
     }
 }
