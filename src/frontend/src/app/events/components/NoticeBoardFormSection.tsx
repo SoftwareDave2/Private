@@ -19,9 +19,42 @@ export function NoticeBoardFormSection({ form, onFormChange }: NoticeBoardFormSe
   })
 
   // Konstanten / Limits -> hier ggf. ändern
-  const TITLE_MAX = 50
-  const BODY_MAX = 120
-  const BODY_MAX_LINEBREAKS = 1
+  const TITLE_MAX = 35
+  const LINE_MAX = 25
+  const BODY_MAX = 50
+
+
+    const [line1, setLine1] = useState('')
+    const [line2, setLine2] = useState('')
+
+    useEffect(() => {
+        const parts = (form.body ?? '').split('\n')
+        setLine1(parts[0] ?? '')
+        setLine2(parts[1] ?? '')
+      }, [form.body])
+
+    const sanitizeLine = (s: string) =>
+    s.replace(/[\n\r\t]/g, '').slice(0, LINE_MAX)
+
+  // Kombiniert zwei Zeilen zu form.body
+    const updateCombinedBody = (newL1: string, newL2: string) => {
+    const safeL1 = sanitizeLine(newL1)
+    const safeL2 = sanitizeLine(newL2)
+
+    setLine1(safeL1)
+    setLine2(safeL2)
+
+    const combined = safeL2 ? `${safeL1}\n${safeL2}` : safeL1
+    handleChange('body', combined.slice(0, BODY_MAX))
+  }
+
+    const onLine1Change = (value: string) => {
+    updateCombinedBody(value, line2)
+  }
+
+    const onLine2Change = (value: string) => {
+    updateCombinedBody(line1, value)
+  }
 
   useEffect(() => {
     const newErrors = { title: '', body: '', end: '' }
@@ -32,18 +65,6 @@ export function NoticeBoardFormSection({ form, onFormChange }: NoticeBoardFormSe
       newErrors.title = 'Titel ist erforderlich.'
     } else if (title.length > TITLE_MAX) {
       newErrors.title = `Titel darf höchstens ${TITLE_MAX} Zeichen haben.`
-    }
-
-
-    const body = form.body ?? ''
-    if (body.length > BODY_MAX) {
-      newErrors.body = `Freitext darf höchstens ${BODY_MAX} Zeichen haben.`
-    } else {
-      // Count line breaks
-      const lineBreakCount = (body.match(/\n/g) || []).length
-      if (lineBreakCount > BODY_MAX_LINEBREAKS) {
-        newErrors.body = `Maximal ${BODY_MAX_LINEBREAKS} Zeilenumbruch erlaubt (also 2 Absätze).`
-      }
     }
 
     if (form.end && form.end.trim().length > 0) {
@@ -76,21 +97,6 @@ export function NoticeBoardFormSection({ form, onFormChange }: NoticeBoardFormSe
   const onTitleChange = (value: string) => {
     handleChange('title', value.slice(0, TITLE_MAX))
   }
-  const onBodyChange = (value: string) => {
-    let trimmed = value.slice(0, BODY_MAX)
-    const lineBreakCount = (trimmed.match(/\n/g) || []).length
-
-    if (lineBreakCount > BODY_MAX_LINEBREAKS) {
-      // Entferne den letzten Zeilenumbruch, indem wir alles nach dem erlaubten Stand zusammenfügen
-      const parts = trimmed.split('\n')
-      const allowed = parts.slice(0, BODY_MAX_LINEBREAKS + 1)
-      const remainder = parts.slice(BODY_MAX_LINEBREAKS + 1).join(' ')
-
-      trimmed = allowed.join('\n') + (remainder ? ' ' + remainder : '')
-    }
-
-    handleChange('body', trimmed)
-  }
 
   const onEndChange = (value: string) => {
     handleChange('end', value)
@@ -112,26 +118,42 @@ export function NoticeBoardFormSection({ form, onFormChange }: NoticeBoardFormSe
                       </Typography>
                     </div>
             </div>
-            <div>
-                <label className={'block text-sm font-medium text-blue-gray-700 mb-2'}>
-                    Freitext
-                </label>
-                <textarea className={'w-full rounded-md border border-blue-gray-100 bg-white p-3 text-sm focus:outline-none focus:ring-0'
-                    }
-                          rows={4}
-                          value={form.body}
-                          onChange={(event) => onBodyChange(event.target.value)}
-                          placeholder={'Hinweise, Wegbeschreibungen oder Ansprechpartner:innen'}
-                          maxLength={BODY_MAX}/>
-                <div className="flex justify-between items-center mt-1">
-                          <Typography variant="small" className={`text-xs ${errors.body ? 'text-red-600' : 'text-blue-gray-500'}`}>
-                            {errors.body ? errors.body : `Maximal ${BODY_MAX} Zeichen, max. ${BODY_MAX_LINEBREAKS} Zeilenumbrüche`}
-                          </Typography>
-                          <Typography variant="small" className="text-xs text-blue-gray-400">
-                            {(form.body ?? '').length}/{BODY_MAX}
-                          </Typography>
-                </div>
-            </div>
+        <div>
+        <label className="block text-sm font-medium text-blue-gray-700 mb-2">
+          Freitext (2 Zeilen)
+        </label>
+
+        <div className="space-y-2">
+          <Input
+            label="Zeile 1"
+            value={line1}
+            onChange={(e) => onLine1Change(e.target.value)}
+            maxLength={LINE_MAX}
+            error={!!errors.body}
+          />
+
+          <Input
+            label="Zeile 2"
+            value={line2}
+            onChange={(e) => onLine2Change(e.target.value)}
+            maxLength={LINE_MAX}
+            error={!!errors.body}
+          />
+        </div>
+
+        <div className="flex justify-between items-center mt-1">
+          <Typography
+            variant="small"
+            className={`text-xs ${errors.body ? 'text-red-600' : 'text-blue-gray-500'}`}
+          >
+            {errors.body ? errors.body : `Maximal 2 Zeilen, je ${LINE_MAX} Zeichen`}
+          </Typography>
+          <Typography variant="small" className="text-xs text-blue-gray-400">
+            {(form.body ?? '').length}/{BODY_MAX}
+          </Typography>
+        </div>
+      </div>
+
             <div className={'grid gap-4 sm:grid-cols-2'}>
                 <Input type={'datetime-local'} label={'Start'} value={form.start}
                        onChange={(event) => handleChange('start', event.target.value)} />

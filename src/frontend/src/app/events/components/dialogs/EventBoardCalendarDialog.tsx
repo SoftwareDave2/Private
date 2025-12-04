@@ -1060,12 +1060,12 @@ export function EventBoardCalendarDialog({
                   crossOrigin={""}
 
 
-                  maxLength={50}
+                  maxLength={25}
                 />
                 {errors.title ? (
                     <Typography color="red" className="text-xs mt-1">{errors.title}</Typography>
                   ) : (
-                    <Typography color="gray" className="text-xs mt-1">Max. 50 Zeichen</Typography>
+                    <Typography color="gray" className="text-xs mt-1">Max. 25 Zeichen</Typography>
                   )}
 
                 <div className={"space-y-3"}>
