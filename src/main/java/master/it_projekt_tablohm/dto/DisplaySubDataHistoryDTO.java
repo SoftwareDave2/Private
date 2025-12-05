@@ -22,7 +22,7 @@ public class DisplaySubDataHistoryDTO {
     private String qrCodeUrl;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime createdAt;
+    private LocalDateTime expiredAt;
 
     public Long getId() {
         return id;
@@ -104,11 +104,11 @@ public class DisplaySubDataHistoryDTO {
         this.qrCodeUrl = qrCodeUrl;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getExpiredAt() {
+        return expiredAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setExpiredAt(LocalDateTime expiredAt) {
+        this.expiredAt = expiredAt;
     }
 }

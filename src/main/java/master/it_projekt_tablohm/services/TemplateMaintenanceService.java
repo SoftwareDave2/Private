@@ -185,7 +185,7 @@ public class TemplateMaintenanceService {
         }
         int toDelete = (int) (count - eventBoardHistoryLimit);
         List<DisplayTemplateSubDataHistory> oldest = subDataHistoryRepository.findAll(
-                PageRequest.of(0, toDelete, Sort.by(Sort.Direction.ASC, "end", "createdAt"))
+                PageRequest.of(0, toDelete, Sort.by(Sort.Direction.ASC, "end", "expiredAt"))
         ).getContent();
         if (!oldest.isEmpty()) {
             subDataHistoryRepository.deleteAll(oldest);

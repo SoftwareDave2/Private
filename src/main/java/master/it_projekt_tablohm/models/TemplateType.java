@@ -16,12 +16,6 @@ public class TemplateType {
     @Column(nullable = false)
     private String label;
 
-    @Column(nullable = false)
-    private Integer displayWidth;
-
-    @Column(nullable = false)
-    private Integer displayHeight;
-
     public Long getId() {
         return id;
     }
@@ -42,19 +36,4 @@ public class TemplateType {
         this.label = label;
     }
 
-    public Integer getDisplayWidth() {
-        return displayWidth;
-    }
-
-    public void setDisplayWidth(Integer displayWidth) {
-        this.displayWidth = displayWidth;
-    }
-
-    public Integer getDisplayHeight() {
-        return displayHeight;
-    }
-
-    public void setDisplayHeight(Integer displayHeight) {
-        this.displayHeight = displayHeight;
-    }
 }

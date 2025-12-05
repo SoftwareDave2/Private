@@ -14,9 +14,14 @@ type UseDisplaySelectionResult = {
     displayError: string
 }
 
+const noticeBoardSizes = [
+    { width: 296, height: 128 },
+    { width: 250, height: 122 },
+]
+
 const resolveTargetSize = (
     type: DisplayTypeKey,
-    sizeOverride?: { width: number; height: number } | null,
+    sizeOverride: { width: number; height: number } | null | undefined,
 ): { width: number; height: number } => {
     const fallbackSize = fallbackPreviewDimensions[type] ?? fallbackPreviewDimensions['door-sign']
     return {
@@ -25,21 +30,15 @@ const resolveTargetSize = (
     }
 }
 
-const buildDummyDisplay = (
-    type: DisplayTypeKey,
-    sizeOverride: { width: number; height: number } | null | undefined,
-    index: number,
-): DisplayData => {
-    const previewSize = resolveTargetSize(type, sizeOverride)
-    const mac = index === 0 ? '00:11:22:33:44:55' : '00:11:22:33:44:66'
-    return {
-        displayName: `Dummy Display ${index + 1}`,
-        macAddress: mac,
-        id: -1 - index,
+const dummyPool: DisplayData[] = [
+    {
+        id: -1,
+        displayName: 'Dummy 400x300 #1',
+        macAddress: '00:11:22:33:44:55',
         brand: 'Mock',
         model: 'Preview',
-        width: previewSize.width,
-        height: previewSize.height,
+        width: 400,
+        height: 300,
         orientation: 'landscape',
         filename: '',
         defaultFilename: '',
@@ -49,8 +48,103 @@ const buildDummyDisplay = (
         battery_percentage: 100,
         timeOfBattery: '',
         errors: [],
-    }
-}
+    },
+    {
+        id: -2,
+        displayName: 'Dummy 400x300 #2',
+        macAddress: '00:11:22:33:44:66',
+        brand: 'Mock',
+        model: 'Preview',
+        width: 400,
+        height: 300,
+        orientation: 'landscape',
+        filename: '',
+        defaultFilename: '',
+        runningSince: '',
+        wakeTime: '',
+        nextEventTime: '',
+        battery_percentage: 100,
+        timeOfBattery: '',
+        errors: [],
+    },
+    {
+        id: -3,
+        displayName: 'Dummy 296x128 #1',
+        macAddress: '00:11:22:33:44:77',
+        brand: 'Mock',
+        model: 'Preview',
+        width: 296,
+        height: 128,
+        orientation: 'landscape',
+        filename: '',
+        defaultFilename: '',
+        runningSince: '',
+        wakeTime: '',
+        nextEventTime: '',
+        battery_percentage: 100,
+        timeOfBattery: '',
+        errors: [],
+    },
+    {
+        id: -4,
+        displayName: 'Dummy 296x128 #2',
+        macAddress: '00:11:22:33:44:88',
+        brand: 'Mock',
+        model: 'Preview',
+        width: 296,
+        height: 128,
+        orientation: 'landscape',
+        filename: '',
+        defaultFilename: '',
+        runningSince: '',
+        wakeTime: '',
+        nextEventTime: '',
+        battery_percentage: 100,
+        timeOfBattery: '',
+        errors: [],
+    },
+    {
+        id: -5,
+        displayName: 'Dummy 250x122 #1',
+        macAddress: '00:11:22:33:44:99',
+        brand: 'Mock',
+        model: 'Preview',
+        width: 250,
+        height: 122,
+        orientation: 'landscape',
+        filename: '',
+        defaultFilename: '',
+        runningSince: '',
+        wakeTime: '',
+        nextEventTime: '',
+        battery_percentage: 100,
+        timeOfBattery: '',
+        errors: [],
+    },
+    {
+        id: -6,
+        displayName: 'Dummy 250x122 #2',
+        macAddress: '00:11:22:33:44:AA',
+        brand: 'Mock',
+        model: 'Preview',
+        width: 250,
+        height: 122,
+        orientation: 'landscape',
+        filename: '',
+        defaultFilename: '',
+        runningSince: '',
+        wakeTime: '',
+        nextEventTime: '',
+        battery_percentage: 100,
+        timeOfBattery: '',
+        errors: [],
+    },
+]
+
+const OFFLINE_ERROR_CODE = 199
+
+const isOffline = (display: DisplayData) =>
+    Array.isArray(display.errors) && display.errors.some((err) => err.errorCode === OFFLINE_ERROR_CODE)
 
 export const useDisplaySelection = (
     displayType: DisplayTypeKey,
@@ -103,13 +197,27 @@ export const useDisplaySelection = (
     // Filter displays
     const filteredDisplays = useMemo(() => {
         const targetSize = resolveTargetSize(displayType, previewSize)
-        const matching = displays.filter(
+        const source = displays.filter((d) => !isOffline(d))
+
+        if (displayType === 'notice-board') {
+            const matching = source.filter((d) =>
+                noticeBoardSizes.some((size) => d.width === size.width && d.height === size.height),
+            )
+            if (matching.length > 0) {
+                return matching
+            }
+            return dummyPool.filter((d) =>
+                noticeBoardSizes.some((size) => d.width === size.width && d.height === size.height),
+            )
+        }
+
+        const matching = source.filter(
             (d) => d.width === targetSize.width && d.height === targetSize.height,
         )
         if (matching.length > 0) {
             return matching
         }
-        return [buildDummyDisplay(displayType, previewSize, 0), buildDummyDisplay(displayType, previewSize, 1)]
+        return dummyPool.filter((d) => d.width === targetSize.width && d.height === targetSize.height)
     }, [displays, displayType, previewSize?.height, previewSize?.width])
 
 

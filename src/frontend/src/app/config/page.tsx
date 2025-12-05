@@ -8,6 +8,17 @@ import SaveDialog from '@/components/config/SaveDialog'
 import {DayTimeConfig, Config} from '@/types/config'
 import {authFetch} from '@/utils/authFetch'
 
+type HistoryItem = {
+    id: number
+    templateType: string
+    displayMac: string
+    title: string
+    start?: string
+    end?: string
+    expiredAt?: string
+    highlighted?: boolean
+}
+
 export default function ConfigPage() {
     const backendApiUrl = getBackendApiUrl()
     const defaultWeekdayTimes: { [day: string]: DayTimeConfig } = {
@@ -23,6 +34,9 @@ export default function ConfigPage() {
     const [config, setConfig] = useState<Config | null>(null)
     const [showSaveDialog, setShowSaveDialog] = useState(false)
     const [saveMessage, setSaveMessage] = useState('')
+    const [history, setHistory] = useState<HistoryItem[]>([])
+    const [historyError, setHistoryError] = useState<string>('')
+    const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false)
 
     const days = [
         'Montag',
@@ -156,6 +170,25 @@ export default function ConfigPage() {
         setShowSaveDialog(true)
     }
 
+    const fetchHistory = async () => {
+        setIsHistoryLoading(true)
+        setHistoryError('')
+        try {
+            const response = await authFetch(`${backendApiUrl}/oepl/display-data/history?limit=50`)
+            if (!response.ok) {
+                const text = await response.text()
+                throw new Error(text || `HTTP ${response.status}`)
+            }
+            const data = (await response.json()) as HistoryItem[]
+            setHistory(Array.isArray(data) ? data : [])
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
+            setHistoryError(`Historie konnte nicht geladen werden: ${message}`)
+        } finally {
+            setIsHistoryLoading(false)
+        }
+    }
+
     if (config === null) {
         return (
             <main>
@@ -259,15 +292,61 @@ export default function ConfigPage() {
                                 name="deleteAfterDays"
                                 required
                                 value={config.deleteAfterDays}
-                                onChange={(e) =>
-                                    setConfig({...config, deleteAfterDays: e.target.value})
-                                }
-                            />
+                        onChange={(e) =>
+                            setConfig({...config, deleteAfterDays: e.target.value})
+                        }
+                    />
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-sm font-semibold text-slate-900">Ereignishistorie</p>
+                                <p className="text-xs text-slate-600">Vergangene Event-Board Einträge ansehen</p>
+                            </div>
+                            <Button
+                                size="sm"
+                                className="bg-red-500 text-white normal-case"
+                                onClick={fetchHistory}
+                                disabled={isHistoryLoading}
+                            >
+                                {isHistoryLoading ? 'Laden...' : 'Historie anzeigen'}
+                            </Button>
                         </div>
+                        {historyError && (
+                            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                                {historyError}
+                            </div>
+                        )}
+                        {history.length > 0 && (
+                            <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700 space-y-2">
+                                {history.map((item) => (
+                                    <div key={`${item.id}-${item.displayMac}-${item.expiredAt ?? ''}`} className="border-b border-slate-200 pb-2 last:border-b-0 last:pb-0">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="font-semibold">{item.title || 'Ohne Titel'}</span>
+                                            {item.highlighted && (
+                                                <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-600">
+                                                    Wichtig
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-[11px] text-slate-600 space-y-1 mt-1">
+                                            <div>MAC: {item.displayMac}</div>
+                                            {item.start && <div>Start: {item.start}</div>}
+                                            {item.end && <div>Ende: {item.end}</div>}
+                                            {item.expiredAt && <div>Abgelaufen: {item.expiredAt}</div>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {!historyError && !isHistoryLoading && history.length === 0 && (
+                            <p className="text-xs text-slate-500">Noch keine Historie geladen.</p>
+                        )}
                     </div>
-                    <div className="mt-4">
-                        <Button type="submit" className="bg-primary text-white" fullWidth>
-                            Speichern
+                </div>
+            </div>
+            <div className="mt-4">
+                <Button type="submit" className="bg-primary text-white" fullWidth>
+                    Speichern
                         </Button>
                     </div>
                 </form>
