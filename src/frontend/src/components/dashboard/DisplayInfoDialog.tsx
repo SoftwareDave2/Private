@@ -6,7 +6,7 @@ import DisplayStatusInfos from '@/components/dashboard/DisplayStatusInfos'
 import {EditDisplayDialog} from '@/components/dashboard/EditDisplayDialog'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import {authFetch} from '@/utils/authFetch'
-import {Edit, Calendar, RefreshCw, X, Monitor, Cpu, Settings, Info} from 'lucide-react'
+import {Edit, Calendar, X, Monitor, Cpu, Settings, Info} from 'lucide-react'
 
 type DisplayInfoDialogProps = {
     open: boolean
@@ -198,14 +198,6 @@ export default function DisplayInfoDialog({open, displayData, onClose, onDisplay
                                             >
                                                 <Edit className="h-4 w-4" />
                                                 <span>Display bearbeiten</span>
-                                            </Button>
-                                            <Button
-                                                variant="outlined"
-                                                onClick={() => {}}
-                                                className="flex items-center gap-2 border-slate-300 capitalize text-slate-700 transition-all hover:bg-slate-50"
-                                            >
-                                                <RefreshCw className="h-4 w-4" />
-                                                <span>Refresh auslösen</span>
                                             </Button>
                                             <Button
                                                 onClick={navigateToCalendar}

@@ -5,14 +5,23 @@ import {
     EventBoardForm,
     NoticeBoardForm,
     RoomBookingForm,
+    TemplateTypeDefinition,
 } from './types'
 
-export const displayTypeOptions: { value: DisplayTypeKey; label: string }[] = [
-    { value: 'door-sign', label: 'Türschild' },
-    { value: 'event-board', label: 'Ereignisse' },
-    { value: 'notice-board', label: 'Hinweisschild' },
-    { value: 'room-booking', label: 'Raumbuchung' },
+export const fallbackTemplateTypes: TemplateTypeDefinition[] = [
+    { key: 'door-sign', label: 'Tuerschild', displayWidth: 400, displayHeight: 300 },
+    { key: 'event-board', label: 'Ereignisse', displayWidth: 400, displayHeight: 300 },
+    { key: 'notice-board', label: 'Hinweisschild', displayWidth: 296, displayHeight: 128 },
+    { key: 'room-booking', label: 'Raumbuchung', displayWidth: 400, displayHeight: 300 },
 ]
+
+export const fallbackPreviewDimensions: Record<DisplayTypeKey, { width: number; height: number }> =
+    fallbackTemplateTypes.reduce((acc, type) => {
+        if (typeof type.displayWidth === 'number' && typeof type.displayHeight === 'number') {
+            acc[type.key] = { width: type.displayWidth, height: type.displayHeight }
+        }
+        return acc
+    }, {} as Record<DisplayTypeKey, { width: number; height: number }>)
 
 export const doorSignPersonStatuses: { value: DoorSignPersonStatus; label: string }[] = [
     { value: 'available', label: 'Verfügbar' },
@@ -21,9 +30,7 @@ export const doorSignPersonStatuses: { value: DoorSignPersonStatus; label: strin
 
 export const defaultDoorSignForm: DoorSignForm = {
     roomNumber: '',
-    people: [
-        { id: 1, name: '', status: 'available', busyUntil: '' },
-    ],
+    people: [{ id: 1, name: '', status: 'available', busyUntil: '' }],
     footerNote: 'Angestellte/r der Hochschuljobbörse.',
 }
 
@@ -46,12 +53,11 @@ export const defaultRoomBookingForm: RoomBookingForm = {
     roomType: 'Besprechungsraum',
     entries: [
         { id: 1, title: '', startTime: '', endTime: '', allDay: false },
-        { id: 2, title: '', startTime: '', endTime: '', allDay: false },
     ],
 }
 
 export const templateSamples: Record<DisplayTypeKey, string> = {
-    'door-sign': `<!-- Türschild Template -->
+    'door-sign': `<!-- Door Sign Template -->
 <section class="door-sign">
   <header>
     <h1>{{ roomNumber }}</h1>
@@ -63,23 +69,23 @@ export const templateSamples: Record<DisplayTypeKey, string> = {
     </ul>
   </main>
 </section>`,
-    'event-board': `<!-- Ereignistafel Template -->
+    'event-board': `<!-- Event Board Template -->
 <section class="event-board">
   <h1>{{ title }}</h1>
   <article v-for="event in events">
     <h2>{{ event.title }}</h2>
-    <p>{{ event.date }} · {{ event.time }}</p>
+    <p>{{ event.date }} - {{ event.time }}</p>
   </article>
 </section>`,
-    'notice-board': `<!-- Hinweis-Template -->
+    'notice-board': `<!-- Notice Template -->
 <section class="notice-board">
   <header>
     <h1>{{ title }}</h1>
-    <time>{{ start }} – {{ end }}</time>
+    <time>{{ start }} - {{ end }}</time>
   </header>
   <p>{{ body }}</p>
 </section>`,
-    'room-booking': `<!-- Raumbuchung Template -->
+    'room-booking': `<!-- Room Booking Template -->
 <section class="room-booking">
   <header>
     <h1>{{ roomNumber }}</h1>
@@ -87,15 +93,8 @@ export const templateSamples: Record<DisplayTypeKey, string> = {
   </header>
   <ul>
     <li v-for="entry in entries">
-      <strong>{{ entry.time }}</strong> – {{ entry.title }}
+      <strong>{{ entry.time }}</strong> - {{ entry.title }}
     </li>
   </ul>
 </section>`,
-}
-
-export const previewDimensions: Record<DisplayTypeKey, { width: number; height: number }> = {
-    'door-sign': { width: 400, height: 300 },
-    'event-board': { width: 400, height: 300 },
-    'notice-board': { width: 296, height: 128 },
-    'room-booking': { width: 400, height: 300 },
 }

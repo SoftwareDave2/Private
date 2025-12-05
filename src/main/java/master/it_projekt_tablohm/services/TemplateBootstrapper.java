@@ -1,7 +1,9 @@
 package master.it_projekt_tablohm.services;
 
 import master.it_projekt_tablohm.dto.TemplateDefinitionDTO;
+import master.it_projekt_tablohm.models.TemplateType;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
+import master.it_projekt_tablohm.repositories.TemplateTypeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -16,15 +18,18 @@ public class TemplateBootstrapper implements CommandLineRunner {
 
     private final DisplayTemplateRepository templateRepository;
     private final TemplateManagementService templateManagementService;
+    private final TemplateTypeRepository templateTypeRepository;
 
     private final boolean forceOverwrite =
             Boolean.parseBoolean(System.getenv().getOrDefault("TEMPLATE_BOOTSTRAP_OVERWRITE", "false"));
 
 
     public TemplateBootstrapper(DisplayTemplateRepository templateRepository,
-                                TemplateManagementService templateManagementService) {
+                                TemplateManagementService templateManagementService,
+                                TemplateTypeRepository templateTypeRepository) {
         this.templateRepository = templateRepository;
         this.templateManagementService = templateManagementService;
+        this.templateTypeRepository = templateTypeRepository;
     }
 
     @Override
@@ -32,8 +37,8 @@ public class TemplateBootstrapper implements CommandLineRunner {
         List<TemplateSeed> seeds = List.of(
                 new TemplateSeed(
                         "door-sign",
-                        "Türschild Standard",
-                        "Standard-Türschild für 400x300 Displays",
+                        "Türschild",
+                        "Türschild für 400x300 Displays",
                         400,
                         300,
                         """
@@ -87,8 +92,8 @@ public class TemplateBootstrapper implements CommandLineRunner {
                 ),
                 new TemplateSeed(
                         "event-board",
-                        "Ereignistafel Standard",
-                        "Übersicht für Ereignisse (400x300)",
+                        "Ereignisschild",
+                        "Ereignisschild für 400x300 Displays",
                         400,
                         300,
                         """
@@ -101,7 +106,7 @@ public class TemplateBootstrapper implements CommandLineRunner {
                 ),
                 new TemplateSeed(
                         "notice-board",
-                        "Hinweisschild Standard",
+                        "Hinweisschild",
                         "Hinweisschild für 296x128 Displays",
                         296,
                         128,
@@ -137,8 +142,8 @@ public class TemplateBootstrapper implements CommandLineRunner {
                 ),
                 new TemplateSeed(
                         "room-booking",
-                        "Raumbuchung Standard",
-                        "Raumbuchung für 400x300 Displays",
+                        "Raumbuchungsschild",
+                        "Raumbuchungsschild für 400x300 Displays",
                         400,
                         300,
                         """
@@ -148,10 +153,25 @@ public class TemplateBootstrapper implements CommandLineRunner {
                                     <text x="20" y="90" font-size="18" fill="#000000">{roomType}</text>
                                 </svg>
                                 """
+                ),
+                new TemplateSeed(
+                        "test-board",
+                        "TestSchild",
+                        "Ereignisschild für 400x300 Displays",
+                        400,
+                        300,
+                        """
+                                <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="400" height="300" fill="#ffffff"/>
+                                    <text x="20" y="40" font-size="28" fill="#000000">{title}</text>
+                                    <text x="20" y="70" font-size="16" fill="#000000">{description}</text>
+                                </svg>
+                                """
                 )
         );
 
         for (TemplateSeed seed : seeds) {
+            upsertTemplateType(seed);
             upsertTemplate(seed);
         }
     }
@@ -161,8 +181,10 @@ public class TemplateBootstrapper implements CommandLineRunner {
         final int w = seed.width();
         final int h = seed.height();
         final String svg = seed.svgContent().trim();
+        final TemplateType typeEntity = templateTypeRepository.findByTypeKey(type)
+                .orElseThrow(() -> new IllegalStateException("Template type seed missing for key " + type));
 
-        templateRepository.findByTemplateTypeAndDisplayWidthAndDisplayHeight(type, w, h)
+        templateRepository.findByTemplateTypeEntity_TypeKeyAndDisplayWidthAndDisplayHeight(type, w, h)
                 .ifPresentOrElse(existing -> {
                     // update if needed
                     boolean needsUpdate =
@@ -178,6 +200,7 @@ public class TemplateBootstrapper implements CommandLineRunner {
                         existing.setOrientation(existing.getOrientation() == null ? "landscape" : existing.getOrientation());
                         existing.setDisplayWidth(w);
                         existing.setDisplayHeight(h);
+                        existing.setTemplateTypeEntity(typeEntity);
                         templateRepository.save(existing);
                         logger.info("Updated template '{}' ({}x{})", type, w, h);
                     } else {
@@ -201,6 +224,19 @@ public class TemplateBootstrapper implements CommandLineRunner {
             logger.info("Bootstrapped template '{}'", seed.templateType());
         } catch (Exception ex) {
             logger.error("Failed to bootstrap template '{}'", seed.templateType(), ex);
+        }
+    }
+
+    private void upsertTemplateType(TemplateSeed seed) {
+        TemplateType type = templateTypeRepository.findByTypeKey(seed.templateType()).orElseGet(TemplateType::new);
+        boolean isNew = type.getId() == null;
+        type.setTypeKey(seed.templateType());
+        type.setLabel(seed.name());
+        type.setDisplayWidth(seed.width());
+        type.setDisplayHeight(seed.height());
+        templateTypeRepository.save(type);
+        if (isNew) {
+            logger.info("Bootstrapped template type '{}'", seed.templateType());
         }
     }
 

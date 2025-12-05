@@ -288,7 +288,7 @@ export default function Home() {
             {!loading && displays.length === 0 && (
                 <div className="flex min-h-[400px] items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white/50">
                     <div className="text-center">
-                        <div className="mx-auto rounded-full bg-slate-100 p-6">
+                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
                             <Monitor className="h-12 w-12 text-slate-400" />
                         </div>
                         <h3 className="mt-4 text-lg font-bold text-slate-900">Keine Displays gefunden</h3>

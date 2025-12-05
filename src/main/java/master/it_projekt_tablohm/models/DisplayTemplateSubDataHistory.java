@@ -1,31 +1,59 @@
-package master.it_projekt_tablohm.dto;
+package master.it_projekt_tablohm.models;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-public class DisplaySubDataDTO {
+@Entity
+@Table(name = "display_template_sub_data_history",
+        indexes = {
+                @Index(name = "idx_history_template_type", columnList = "template_type_key"),
+                @Index(name = "idx_history_display_mac", columnList = "display_mac")
+        })
+public class DisplayTemplateSubDataHistory {
 
-    private String templateType;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "template_type_key", nullable = false)
+    private String templateTypeKey;
+
+    @Column(name = "display_mac", nullable = false)
     private String displayMac;
+
+    private Integer positionIndex;
+
     private String title;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime start;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime end;
 
     private Boolean highlighted;
+
     private Boolean busy;
+
     private String qrCodeUrl;
 
-    public String getTemplateType() {
-        return templateType;
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    void onCreate() {
+        this.createdAt = LocalDateTime.now();
     }
 
-    public void setTemplateType(String templateType) {
-        this.templateType = templateType;
+    public Long getId() {
+        return id;
+    }
+
+    public String getTemplateTypeKey() {
+        return templateTypeKey;
+    }
+
+    public void setTemplateTypeKey(String templateTypeKey) {
+        this.templateTypeKey = templateTypeKey;
     }
 
     public String getDisplayMac() {
@@ -34,6 +62,14 @@ public class DisplaySubDataDTO {
 
     public void setDisplayMac(String displayMac) {
         this.displayMac = displayMac;
+    }
+
+    public Integer getPositionIndex() {
+        return positionIndex;
+    }
+
+    public void setPositionIndex(Integer positionIndex) {
+        this.positionIndex = positionIndex;
     }
 
     public String getTitle() {
@@ -84,4 +120,7 @@ public class DisplaySubDataDTO {
         this.qrCodeUrl = qrCodeUrl;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

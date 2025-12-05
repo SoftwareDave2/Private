@@ -27,7 +27,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 
 @Service
@@ -75,6 +77,39 @@ public class OpenEPaperSyncService {
                 return;
             }
             initialized = true;
+        }
+    }
+
+
+    //Scheduler checks every 5 minutes for non reachable Displays and removes those from Databank
+    @Transactional
+    @Scheduled(fixedRate = 300000)
+    public void refreshAndPruneTags() {
+        if (!initialized) {
+            return;
+        }
+        try {
+            var tags = oeplGetDb();
+            Set<String> activeMacs = new HashSet<>(); 
+            for (var tag : tags) {
+                syncOEPLTagToDB(tag);
+                activeMacs.add(tag.getMac());
+            }
+            var allDisplays = displayRepository.findAll();
+            int removed = 0;
+            for (var display : allDisplays) {
+                boolean isEsl = display.getDisplayTechnology() == null
+                        || "ESL".equalsIgnoreCase(display.getDisplayTechnology());
+                if (isEsl && !activeMacs.contains(display.getMacAddress())) {
+                    displayRepository.delete(display);
+                    removed++;
+                }
+            }
+            if (removed > 0) {
+                logger.info("Pruned {} displays that are no longer reachable via OEPL", removed);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to refresh/prune OEPL tags: {}", e.getMessage(), e);
         }
     }
 
