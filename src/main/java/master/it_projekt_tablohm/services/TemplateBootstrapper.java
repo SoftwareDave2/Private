@@ -106,6 +106,23 @@ public class TemplateBootstrapper implements CommandLineRunner {
                 ),
                 new TemplateSeed(
                         "notice-board",
+                        "Hinweisschild Klein",
+                        "Hinweisschild für 250x122 Displays",
+                        250,
+                        122,
+                        """
+                                <svg xmlns="http://www.w3.org/2000/svg" width="250" height="122" viewBox="0 0 250 122">
+                                  <rect width="250" height="122" fill="#ffffff"/>
+                                  <rect x="0" y="0" width="250" height="28" fill="#ff0000"/>
+                                  <text x="10" y="20" fill="#ffffff" font-size="16" font-family="Arial, sans-serif">{title}</text>
+                                  <text x="12" y="54" fill="#000000" font-size="13" font-family="Arial, sans-serif">{body}</text>
+                                  <text x="12" y="78" fill="#000000" font-size="11" font-family="Arial, sans-serif">{start}</text>
+                                  <text x="12" y="94" fill="#000000" font-size="11" font-family="Arial, sans-serif">{end}</text>
+                                </svg>
+                                """
+                ),
+                new TemplateSeed(
+                        "notice-board",
                         "Hinweisschild",
                         "Hinweisschild für 296x128 Displays",
                         296,
@@ -232,8 +249,6 @@ public class TemplateBootstrapper implements CommandLineRunner {
         boolean isNew = type.getId() == null;
         type.setTypeKey(seed.templateType());
         type.setLabel(seed.name());
-        type.setDisplayWidth(seed.width());
-        type.setDisplayHeight(seed.height());
         templateTypeRepository.save(type);
         if (isNew) {
             logger.info("Bootstrapped template type '{}'", seed.templateType());

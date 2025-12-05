@@ -40,15 +40,47 @@ export default function Home() {
         localStorage.setItem('sortingMode', sortingMode)
     }, [sortingMode])
 
+    const buildDummyDisplays = (): DisplayData[] => {
+        const makeDummy = (id: number, name: string, mac: string, width: number, height: number): DisplayData => ({
+            id,
+            displayName: name,
+            macAddress: mac,
+            brand: 'Mock',
+            model: 'Preview',
+            width,
+            height,
+            orientation: width >= height ? 'landscape' : 'portrait',
+            filename: '',
+            defaultFilename: '',
+            runningSince: '',
+            wakeTime: '',
+            nextEventTime: '',
+            battery_percentage: 100,
+            timeOfBattery: '',
+            errors: [],
+        })
+
+        return [
+            makeDummy(-1, 'Dummy 400x300 #1', '00:11:22:33:44:55', 400, 300),
+            makeDummy(-2, 'Dummy 400x300 #2', '00:11:22:33:44:66', 400, 300),
+            makeDummy(-3, 'Dummy 296x128 #1', '00:11:22:33:44:77', 296, 128),
+            makeDummy(-4, 'Dummy 296x128 #2', '00:11:22:33:44:88', 296, 128),
+            makeDummy(-5, 'Dummy 250x122 #1', '00:11:22:33:44:99', 250, 122),
+            makeDummy(-6, 'Dummy 250x122 #2', '00:11:22:33:44:AA', 250, 122),
+        ]
+    }
+
     // Daten vom Backend laden
     const fetchDisplays = async () => {
         setLoading(true)
         try {
             const data = await authFetch(backendApiUrl + '/display/all')
             const json = await data.json()
-            setDisplays(json)
+            const list = Array.isArray(json) ? json : []
+            setDisplays(list.length > 0 ? list : buildDummyDisplays())
         } catch (err) {
             console.error('No connection to backend!', err)
+            setDisplays(buildDummyDisplays())
         } finally {
             setLoading(false)
         }
