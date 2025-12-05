@@ -5,6 +5,7 @@ import master.it_projekt_tablohm.models.DisplayTemplateData;
 import master.it_projekt_tablohm.models.DisplayTemplateSubData;
 import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
+import master.it_projekt_tablohm.repositories.DisplayTemplateSubDataRepository;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ public class TemplateDisplayUpdateService {
     private final SVGFillService svgFillService;
     private final OpenEPaperSyncService oeplSync;
     private final DisplayTemplateDataRepository templateDataRepo;
+    private final DisplayTemplateSubDataRepository subDataRepo;
     private final DisplayTemplateRepository templateRepo;
     private final DisplayRepository displayRepo;
 
@@ -34,11 +36,13 @@ public class TemplateDisplayUpdateService {
             SVGFillService svgFillService,
             OpenEPaperSyncService oeplSync,
             DisplayTemplateDataRepository templateDataRepo,
+            DisplayTemplateSubDataRepository subDataRepo,
             DisplayTemplateRepository templateRepo,
             DisplayRepository displayRepo) {
         this.svgFillService = svgFillService;
         this.oeplSync = oeplSync;
         this.templateDataRepo = templateDataRepo;
+        this.subDataRepo = subDataRepo;
         this.templateRepo = templateRepo;
         this.displayRepo = displayRepo;
     }
@@ -84,8 +88,21 @@ public class TemplateDisplayUpdateService {
         }
         var data = dataOpt.orElse(null);
 
-        Map<String, Object> fields = (data != null && data.getFields() != null) ? data.getFields() : Map.of();
-        List<DisplayTemplateSubData> subItems = (data != null && data.getSubItems() != null) ? data.getSubItems() : List.of();
+        Map<String, Object> fields = (data != null && data.getFields() != null)
+                ? data.getFields()
+                : Map.of();
+
+        List<DisplayTemplateSubData> subItems = List.of();
+
+        if (data != null) {
+            // for event board:
+            if ("event-board".equalsIgnoreCase(templateType)) {
+                subItems = subDataRepo.findByTemplateDataIdOrderByStartAsc(data.getId());
+            } else {
+                // for others: no change
+                subItems = (data.getSubItems() != null) ? data.getSubItems() : List.of();
+            }
+        }
 
         try {
             // Step 4: fill SVG
