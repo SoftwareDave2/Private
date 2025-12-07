@@ -28,10 +28,12 @@ public class TemplateManagementService {
 
     @Transactional
     public TemplateDefinitionDTO createTemplate(TemplateDefinitionDTO dto) {
-        templateRepository.findByTemplateTypeEntity_TypeKey(dto.getTemplateType()).ifPresent(existing -> {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Template type " + dto.getTemplateType() + " already exists");
-        });
+        templateRepository.findByTemplateTypeEntity_TypeKeyAndDisplayWidthAndDisplayHeight(
+                        dto.getTemplateType(), dto.getDisplayWidth(), dto.getDisplayHeight())
+                .ifPresent(existing -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "Template " + dto.getTemplateType() + " (" + dto.getDisplayWidth() + "x" + dto.getDisplayHeight() + ") already exists");
+                });
 
         TemplateType type = resolveTemplateType(dto.getTemplateType());
 
