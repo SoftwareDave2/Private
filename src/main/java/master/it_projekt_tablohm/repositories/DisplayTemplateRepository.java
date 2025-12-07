@@ -17,4 +17,6 @@ public interface DisplayTemplateRepository extends JpaRepository<DisplayTemplate
             Integer displayWidth,
             Integer displayHeight
     );
+
+    java.util.List<DisplayTemplate> findAllByTemplateTypeEntity_TypeKey(String templateTypeKey);
 }

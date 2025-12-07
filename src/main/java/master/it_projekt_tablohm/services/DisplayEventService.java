@@ -12,6 +12,7 @@ import master.it_projekt_tablohm.models.TemplateType;
 import master.it_projekt_tablohm.repositories.DisplayTemplateDataRepository;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
 import master.it_projekt_tablohm.repositories.TemplateTypeRepository;
+import master.it_projekt_tablohm.repositories.DisplayRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,26 +31,35 @@ public class DisplayEventService {
     private final TemplateDisplayUpdateService displayUpdateService;
     private final TemplateDefaultContentProvider defaultContentProvider;
     private final TemplateTypeRepository templateTypeRepository;
+    private final DisplayRepository displayRepository;
 
     public DisplayEventService(DisplayTemplateRepository templateRepository,
                                DisplayTemplateDataRepository templateDataRepository,
                                TemplateDisplayUpdateService displayUpdateService,
                                TemplateDefaultContentProvider defaultContentProvider,
-                               TemplateTypeRepository templateTypeRepository) {
+                               TemplateTypeRepository templateTypeRepository,
+                               DisplayRepository displayRepository) {
         this.templateRepository = templateRepository;
         this.templateDataRepository = templateDataRepository;
         this.displayUpdateService = displayUpdateService;
         this.defaultContentProvider = defaultContentProvider;
         this.templateTypeRepository = templateTypeRepository;
+        this.displayRepository = displayRepository;
     }
 
     @Transactional
     public DisplayEventSubmissionResponseDTO saveDisplayData(TemplateDisplayDataDTO displayDataDto) {
-        DisplayTemplate template = templateRepository
-                .findByTemplateTypeEntity_TypeKey(displayDataDto.getTemplateType())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Template type " + displayDataDto.getTemplateType() + " not found"));
+        String templateTypeKey = displayDataDto.getTemplateType();
+
+        Integer targetWidth = null;
+        Integer targetHeight = null;
+        var display = displayRepository.findByMacAddress(displayDataDto.getDisplayMac());
+        if (display.isPresent()) {
+            targetWidth = display.get().getWidth();
+            targetHeight = display.get().getHeight();
+        }
+
+        DisplayTemplate template = resolveTemplateForTypeAndSize(templateTypeKey, targetWidth, targetHeight);
         TemplateType templateTypeEntity = resolveTemplateType(displayDataDto.getTemplateType());
 
         var existingEntries = templateDataRepository.findByDisplayMac(displayDataDto.getDisplayMac());
@@ -191,5 +201,30 @@ public class DisplayEventService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Template type " + templateTypeKey + " not registered"));
+    }
+
+    private DisplayTemplate resolveTemplateForTypeAndSize(String templateTypeKey, Integer width, Integer height) {
+        if (width != null && height != null) {
+            var match = templateRepository.findByTemplateTypeEntity_TypeKeyAndDisplayWidthAndDisplayHeight(
+                    templateTypeKey, width, height);
+            if (match.isPresent()) {
+                return match.get();
+            }
+        }
+
+        var templates = templateRepository.findAllByTemplateTypeEntity_TypeKey(templateTypeKey);
+        if (templates.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No template found for type " + templateTypeKey);
+        }
+        if (templates.size() > 1) {
+            // Without size, fall back deterministically to the largest area (keeps legacy behaviour for notice-board)
+            return templates.stream()
+                    .max(Comparator.comparing(t -> (t.getDisplayWidth() == null || t.getDisplayHeight() == null)
+                            ? 0
+                            : t.getDisplayWidth() * t.getDisplayHeight()))
+                    .orElse(templates.get(0));
+        }
+        return templates.get(0);
     }
 }
