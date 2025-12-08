@@ -905,13 +905,6 @@ export default function EventsPage() {
         setIsTemplateEditDialogOpen(false)
     }
 
-    const openTemplateCreateDialog = () => {
-        const label = resolveTemplateLabel(displayType, templateTypes)
-        const baseTemplate = templateSamples[displayType] ?? '<!-- Neues Template -->'
-        setTemplateCreatorContent(`// Neues Template für ${label}\n\n${baseTemplate}`)
-        setIsTemplateCreateDialogOpen(true)
-    }
-
     const closeTemplateCreateDialog = () => {
         setIsTemplateCreateDialogOpen(false)
     }
@@ -1314,9 +1307,6 @@ export default function EventsPage() {
                             <div className={'flex w-full flex-col gap-3 xl:w-auto xl:flex-row xl:flex-wrap'}>
                                 <Button variant={'outlined'} color={'gray'} className={'normal-case w-full xl:w-auto'} onClick={openTemplateEditDialog}>
                                     Template bearbeiten
-                                </Button>
-                                <Button variant={'filled'} color={'red'} className={'normal-case w-full xl:w-auto'} onClick={openTemplateCreateDialog}>
-                                    Template erstellen
                                 </Button>
                                 <Button
                                     variant={'outlined'}

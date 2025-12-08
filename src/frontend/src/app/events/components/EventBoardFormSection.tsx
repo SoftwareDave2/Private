@@ -45,7 +45,7 @@ export function EventBoardFormSection({
     }
 
     const handleTitleChange = (value: string) => {
-            const next = value.slice(0, 50)
+            const next = value.slice(0, 35)
             handleFieldChange('title', next)
     }
     const hasEvents = form.events.length > 0
@@ -56,10 +56,10 @@ export function EventBoardFormSection({
         <div className={'space-y-4'}>
             <Input label={'Titel'} value={form.title}
                    onChange={(event) => handleFieldChange('title', event.target.value)}
-                    maxLength={50}/>
+                    maxLength={35}/>
             <div className="flex items-center mt-1 text-xs gap-2">
               <p className="text-blue-gray-500 flex-1 text-left">
-                Maximal 50 Zeichen erlaubt
+                Maximal 35 Zeichen erlaubt
               </p>
             </div>
             <div className={'space-y-4 rounded-2xl border border-blue-gray-100 bg-white p-4 shadow-sm'}>

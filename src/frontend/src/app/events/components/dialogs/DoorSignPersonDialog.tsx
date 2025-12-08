@@ -65,8 +65,8 @@ export function DoorSignPersonDialog({
         if (!name) {
           newErrors.name = 'Name ist erforderlich.'
           valid = false
-        } else if (name.length > 50) {
-          newErrors.name = 'Name darf höchstens 50 Zeichen haben.'
+        } else if (name.length > 35) {
+          newErrors.name = 'Name darf höchstens 35 Zeichen haben.'
           valid = false
         }
 
@@ -95,7 +95,7 @@ export function DoorSignPersonDialog({
                 {person && (
                     <div className={'space-y-4'}>
                         <div>
-                        <Input label={'Name'} value={person.name} maxLength={50}
+                        <Input label={'Name'} value={person.name} maxLength={35}
                                onChange={(event) => handleFieldChange('name', event.target.value)}
                                error={!!errors.name}/>
                         <div className="flex items-center justify-between">
@@ -105,7 +105,7 @@ export function DoorSignPersonDialog({
                               </Typography>
                            ) : (
                               <Typography color="gray" className="text-xs mt-1">
-                               Max. 50 Zeichen
+                               Max. 35 Zeichen
                               </Typography>
                            )}
                         </div>
