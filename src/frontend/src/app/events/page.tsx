@@ -1,7 +1,8 @@
 'use client'
 
-import {useEffect, useMemo, useState} from 'react'
+import {useEffect, useState, Suspense, useMemo} from 'react'
 import {Button, Card, CardBody, Option, Select} from '@material-tailwind/react'
+import { useSearchParams } from 'next/navigation'
 
 import PageHeader from '@/components/layout/PageHeader'
 
@@ -696,9 +697,16 @@ const buildTestDisplayDataPayload = (displayType: DisplayTypeKey, mac: string): 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-export default function EventsPage() {
+function EventsPageContent() {
+    const searchParams = useSearchParams()
+    const preselectedMac = searchParams.get('display_mac')
+    const preselectedType = searchParams.get('display_type') as DisplayTypeKey
+
+    const isValidType = displayTypeOptions.some(opt => opt.value === preselectedType)
+    const initialDisplayType = isValidType ? preselectedType : 'door-sign'
     const backendApiUrl = getBackendApiUrl()
-    const [displayType, setDisplayType] = useState<DisplayTypeKey>('door-sign')
+    const [displayType, setDisplayType] = useState<DisplayTypeKey>(initialDisplayType)
+
     const [doorSignForm, setDoorSignForm] = useState<DoorSignForm>(() => cloneDoorSignForm(defaultDoorSignForm))
     const [eventBoardForm, setEventBoardForm] = useState<EventBoardForm>(() => cloneEventBoardForm(defaultEventBoardForm))
     const [noticeBoardForm, setNoticeBoardForm] = useState<NoticeBoardForm>(() => cloneNoticeBoardForm(defaultNoticeBoardForm))
@@ -731,6 +739,17 @@ export default function EventsPage() {
         isLoadingDisplays,
         displayError,
     } = useDisplaySelection(displayType, previewSize)
+
+    useEffect(() => {
+        if (preselectedMac && !selectedDisplay && !isLoadingDisplays) {
+            // Only select if the MAC exists in the loaded list
+                if (filteredDisplays.some(d => d.macAddress === preselectedMac)) {
+                    setSelectedDisplay(preselectedMac)
+                }
+            }
+    }, [preselectedMac, selectedDisplay, isLoadingDisplays, filteredDisplays, setSelectedDisplay])
+
+    const previewSize = previewDimensions[displayType] ?? previewDimensions['door-sign']
     const { containerRef: previewContainerRef, previewScale } = usePreviewScale(previewSize, displayType)
 
     const resetFormsForDisplayType = (type: DisplayTypeKey) => {

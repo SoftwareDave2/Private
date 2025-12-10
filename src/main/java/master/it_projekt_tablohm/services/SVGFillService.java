@@ -7,6 +7,11 @@ import org.apache.batik.util.XMLResourceDescriptor;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Element;
 import org.w3c.dom.svg.SVGDocument;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -21,12 +26,28 @@ import java.util.Locale;
 @Service
 public class SVGFillService {
 
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
+
     public String fill(String rawSvg,
                        String templateType,
                        Map<String, Object> fields,
                        List<DisplayTemplateSubData> subItems,
                        int targetWidth,
-                       int targetHeight) {
+                       int targetHeight,
+                       String displayMac) {
+
+        // Dynamic QR Code Replacement
+        if (rawSvg.contains("${QR_CODE_SVG}") && displayMac != null) {
+            String qrUrl = String.format("%s/events?display_mac=%s&display_type=%s",
+                    frontendUrl, displayMac, templateType);
+
+            String qrCodeSvg = generateQrCodeSvg(qrUrl);
+
+            if (!qrCodeSvg.isEmpty()) {
+                rawSvg = rawSvg.replace("${QR_CODE_SVG}", qrCodeSvg);
+            }
+        }
 
         // Step 1: SVG -> DOM
         String parser = XMLResourceDescriptor.getXMLParserClassName();
@@ -251,6 +272,37 @@ public class SVGFillService {
             return sw.toString();
         } catch (java.io.IOException e) {
             throw new UncheckedIOException("Failed to serialize SVG", e);
+        }
+    }
+
+    private String generateQrCodeSvg(String content) {
+        try {
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            // 0x0 allows the Writer to choose the minimal size
+            BitMatrix bitMatrix = qrCodeWriter.encode(content, BarcodeFormat.QR_CODE, 0, 0);
+
+            StringBuilder sb = new StringBuilder();
+            // Group the path to ensure it stays together
+            sb.append("<g transform=\"scale(1)\"><path fill=\"#000000\" d=\"");
+
+            int width = bitMatrix.getWidth();
+            int height = bitMatrix.getHeight();
+
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    if (bitMatrix.get(x, y)) {
+                        // Draw a 1x1 rectangle for each black module
+                        sb.append("M").append(x).append(",").append(y)
+                                .append("h1v1h-1z ");
+                    }
+                }
+            }
+            sb.append("\"/></g>");
+
+            return sb.toString();
+        } catch (WriterException e) {
+            e.printStackTrace();
+            return "";
         }
     }
 

@@ -106,7 +106,7 @@ public class TemplateDisplayUpdateService {
 
         try {
             // Step 4: fill SVG
-            String filledSvg = svgFillService.fill(rawSvg, templateType, fields, subItems, dw, dh);
+            String filledSvg = svgFillService.fill(rawSvg, templateType, fields, subItems, dw, dh, displayMac);
 
             // Step 5: render SVG to JPEG
             String basename = buildBasename(displayMac, templateType);

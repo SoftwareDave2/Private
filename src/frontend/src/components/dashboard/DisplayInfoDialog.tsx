@@ -6,7 +6,8 @@ import DisplayStatusInfos from '@/components/dashboard/DisplayStatusInfos'
 import {EditDisplayDialog} from '@/components/dashboard/EditDisplayDialog'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import {authFetch} from '@/utils/authFetch'
-import {Edit, Calendar, X, Monitor, Cpu, Settings, Info} from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
+import {Edit, Calendar, X, Monitor, Cpu, Settings, Info, QrCode, X} from 'lucide-react'
 
 type DisplayInfoDialogProps = {
     open: boolean
@@ -17,6 +18,8 @@ type DisplayInfoDialogProps = {
 
 export default function DisplayInfoDialog({open, displayData, onClose, onDisplayDataUpdated}: DisplayInfoDialogProps) {
     const backendApiUrl = getBackendApiUrl()
+
+    const [openQrDialog, setOpenQrDialog] = useState(false)
 
     const [openEditDisplay, setOpenEditDisplay] = useState<boolean>(false)
     const [displayDataForEdit, setDisplayDataForEdit] = useState<DisplayData | null>(null)
@@ -51,12 +54,17 @@ export default function DisplayInfoDialog({open, displayData, onClose, onDisplay
         onDisplayDataUpdated()
     }
 
-    const navigateToCalendar = () => {
-        const macAddress = displayData.macAddress
-        localStorage.removeItem('selectedMACs')
-        localStorage.setItem('selectedMACs', JSON.stringify([macAddress]))
-        window.location.href = '/calendar'
-    }
+    const qrUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/events?display_mac=${displayData.macAddress}&display_type=${displayData.displayType || 'door-sign'}`
+        : ''
+
+         const navigateToCalendar = () => {
+                const macAddress = displayData.macAddress
+                localStorage.removeItem('selectedMACs')
+                localStorage.setItem('selectedMACs', JSON.stringify([macAddress]))
+                window.location.href = '/calendar'
+            }
+
 
     return (
         <>
@@ -222,13 +230,46 @@ export default function DisplayInfoDialog({open, displayData, onClose, onDisplay
                         />
                     )}
                 </DialogBody>
-
-                <DialogFooter className="border-t border-slate-200 bg-slate-50">
+<DialogFooter className="border-t border-slate-200 bg-slate-50">
                     <Button variant="text" onClick={onClose} className="capitalize text-slate-700">
                         Schließen
                     </Button>
                 </DialogFooter>
             </Dialog>
+           <Dialog open={openQrDialog} handler={() => setOpenQrDialog(false)} size="sm" className="bg-white">
+               <DialogHeader className="justify-between">
+                   <span className="text-xl font-bold text-slate-900">QR Code für {displayData.displayName}</span>
+                   <button onClick={() => setOpenQrDialog(false)} className="text-slate-400 hover:text-slate-900">
+                       <X className="h-5 w-5" />
+                   </button>
+               </DialogHeader>
+               <DialogBody className="flex flex-col items-center gap-6 py-8">
+                   <p className="text-center text-slate-600">
+                       Scanne diesen Code, um die Konfiguration<br/> für dieses Display direkt zu öffnen.
+                   </p>
+                   <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                       <QRCodeSVG
+                           value={qrUrl}
+                           size={200}
+                           level="M"
+                           includeMargin={true}
+                       />
+                   </div>
+                   <div className="w-full px-4">
+                       <label className="mb-1 block text-xs font-semibold text-slate-500">Ziel-URL</label>
+                       <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
+                           <code className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-700 font-mono">
+                               {qrUrl}
+                           </code>
+                       </div>
+                   </div>
+               </DialogBody>
+               <DialogFooter>
+                   <Button variant="text" onClick={() => setOpenQrDialog(false)} className="capitalize text-slate-700">
+                       Schließen
+                   </Button>
+               </DialogFooter>
+           </Dialog>
         </>
     )
 }
