@@ -15,6 +15,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 @Service
 public class SVGFillService {
 
@@ -121,6 +124,117 @@ public class SVGFillService {
                 toggleDisplay(doc, "state-busy", anyBusy);
                 toggleDisplay(doc, "state-free", !anyBusy);
             }
+            case "event-board" -> {
+
+                //check if empty
+                boolean noEvents = (subItems == null || subItems.isEmpty());
+
+                if (noEvents) {
+
+                    // hide all event slots + lines
+                    for (String id : List.of(
+                            "event-1-text-1", "event-1-text-2",
+                            "event-2-text-1", "event-2-text-2",
+                            "event-3-text-1", "event-3-text-2",
+                            "event-4-text-1", "event-4-text-2",
+                            "events-line-1", "events-line-2", "events-line-3",
+                            "event-4-highlight-frame"
+                    )) {
+                        toggleDisplay(doc, id, false);
+                    }
+
+                    // show no events messages
+                    toggleDisplay(doc, "no-events-message", true);
+                    toggleDisplay(doc, "no-events-message-2", true);
+                    toggleDisplay(doc, "idle-text-qr-1", true);
+                    toggleDisplay(doc, "idle-text-qr-2", true);
+
+                    // (optional) update title
+                    setText(doc, "events-title", "Ereignisse");
+
+                    // skip normal rendering
+                    break;
+                }
+
+                // === 1) Title ===========================================
+                String mainTitle = str(f, "title", "");
+                boolean hasMainTitle = notBlank(mainTitle);
+
+                if (hasMainTitle) {
+                    // if the title isn't empty
+                    setText(doc, "events-title", mainTitle);
+                    toggleDisplay(doc, "events-title", true);
+
+                    // red header
+                    toggleDisplay(doc, "events-header-bg", true);
+                } else {
+                    // if there is no title
+                    setText(doc, "events-title", "");
+                    toggleDisplay(doc, "events-title", false);
+
+                    // no red header
+                    toggleDisplay(doc, "events-header-bg", false);
+
+                    // the first event will be moved upwards
+                    setTransform(doc, "event-1-text-1", "translate(0,-30)");
+                    setTransform(doc, "event-1-text-2", "translate(0,-30)");
+
+                    // the font will be increased
+                    setStyleProp(doc, "event-1-text-1", "font-size", "22px");
+                    setStyleProp(doc, "event-1-text-2", "font-size", "20px");
+                }
+
+                // === 2) get events from subItems ========================
+                List<DisplayTemplateSubData> events = (subItems == null) ? List.of() : subItems;
+
+
+                // === 3) Highlighted Event (sticky) =================
+                DisplayTemplateSubData highlight = events.stream()
+                        .filter(e -> Boolean.TRUE.equals(e.getHighlighted()))
+                        .findFirst()
+                        .orElse(null);
+
+                // regular Events: max 4, if there is a highlighted ->  max 3
+                List<DisplayTemplateSubData> normalEvents = events.stream()
+                        .filter(e -> !Boolean.TRUE.equals(e.getHighlighted()))
+                        .limit(highlight != null ? 3 : 4)
+                        .toList();
+
+                // === 4) fill slots 1–4 ===============================
+                // Slots: event-1, event-2, event-3, event-4 (using setEventLines)
+                for (int i = 0; i < normalEvents.size(); i++) {
+                    DisplayTemplateSubData ev = normalEvents.get(i);
+                    String baseId = "event-" + (i + 1);  // event-1..event-4
+
+                    setEventLines(doc, baseId, ev);
+                }
+
+                // empty not used slots
+                // alternative: SVG is empty there
+                for (int i = normalEvents.size(); i < 4; i++) {
+                    String baseId = "event-" + (i + 1);
+                    setEventLines(doc, baseId, null);  // empty title + time
+                }
+
+                // === 5) Highlighted: sticky in event-4 =============
+                // Standard: no red rectangle, line 3 visible
+                setStyleProp(doc, "event-4-highlight-frame", "stroke", "none");
+                toggleDisplay(doc, "events-line-3", true);
+
+                // highlighted
+                if (highlight != null) {
+                    String baseId = "event-4";
+
+                    setEventLines(doc, baseId, highlight);
+
+                    // red rectangle
+                    setStyleProp(doc, "event-4-highlight-frame", "stroke", "#ff0000");
+
+                    // remove line
+                    toggleDisplay(doc, "events-line-3", false);
+                }
+            }
+
             // TODO
             default -> {
                 // Fallback
@@ -140,11 +254,81 @@ public class SVGFillService {
         }
     }
 
-    // ===== helpers =====
+    // ============================= <3 helpers <3 =========================================
+
+    private static void setTransform(SVGDocument doc, String id, String transform) {
+        Element el = doc.getElementById(id);
+        if (el != null) {
+            el.setAttribute("transform", transform);
+        }
+    }
+
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy").withLocale(Locale.GERMAN);
+    private static final DateTimeFormatter TIME_FMT =
+            DateTimeFormatter.ofPattern("HH:mm").withLocale(Locale.GERMAN);
+
     private static void setText(SVGDocument doc, String id, String value) {
         Element el = doc.getElementById(id);
         if (el != null) el.setTextContent(value != null ? value : "");
     }
+
+    private static void setEventLines(SVGDocument doc, String baseId, DisplayTemplateSubData ev) {
+        String idLine1 = baseId + "-text-1";
+        String idLine2 = baseId + "-text-2";
+
+        if (ev == null) {
+            // Slot leeren
+            setText(doc, idLine1, "");
+            setText(doc, idLine2, "");
+            return;
+        }
+
+        String title = ev.getTitle() != null ? ev.getTitle() : "";
+        String line2 = formatEventTimeLine(ev);  // Zeit / Ganztags
+
+        setText(doc, idLine1, title);
+        setText(doc, idLine2, line2);
+    }
+
+    private static String formatEventTimeLine(DisplayTemplateSubData ev) {
+
+        if (ev == null) return "";
+
+        LocalDateTime start = ev.getStart();
+        LocalDateTime end = ev.getEnd();
+        boolean allDay = Boolean.TRUE.equals(ev.getAllDay());
+
+        if (start == null) {
+            return "";
+        }
+
+        String dateStr = start.toLocalDate().format(DATE_FMT);
+
+        // === allDay ================================================
+         if (allDay) {
+            return dateStr + ", Ganztags";
+         }
+
+        // === START + END same day ===============================
+        if (end != null && end.toLocalDate().isEqual(start.toLocalDate())) {
+            String startTime = start.toLocalTime().format(TIME_FMT);
+            String endTime   = end.toLocalTime().format(TIME_FMT);
+            return dateStr + ", " + startTime + "–" + endTime + " Uhr";
+        }
+
+        // === START + END different days ==================
+        if (end != null) {
+            String startPart = dateStr + " " + start.toLocalTime().format(TIME_FMT);
+            String endPart   = end.toLocalDate().format(DATE_FMT) + " " + end.toLocalTime().format(TIME_FMT);
+            return startPart + " – " + endPart;
+        }
+
+        // === only start time ===============================================
+        String startTime = start.toLocalTime().format(TIME_FMT);
+        return dateStr + ", " + startTime + " Uhr";
+    }
+
 
     private static String coalesce(Map<String, Object> m, String... keys) {
         if (m == null) return null;

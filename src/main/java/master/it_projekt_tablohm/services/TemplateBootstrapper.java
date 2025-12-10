@@ -44,57 +44,50 @@ public class TemplateBootstrapper implements CommandLineRunner {
                         """
                                 <?xml version="1.0" encoding="utf-8"?>
                                 <svg id="root" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-                                  <!-- Weißer Hintergrund für saubere Palettierung -->
-                                  <rect x="0" y="0" width="400" height="300" fill="#ffffff"/>
-                                
-                                  <!-- Obere rechte Raumnummer -->
-                                  <text id="roomNumber" x="250" y="47.887"
-                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:35px; font-weight:700; white-space:pre;">
-                                    KS 503
-                                  </text>
-                                
-                                  <!-- Namen (links) -->
-                                  <text id="name-1" x="25" y="106"
-                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Uwe Wienkop</text>
-                                  <text id="name-2" x="25" y="151"
-                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Louis Burk</text>
-                                  <text id="name-3" x="25" y="196"
-                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Vorname Nachname</text>
-                                
-                                  <!-- Trennlinie -->
-                                  <path d="M -2.012 230 L 404.969 230" style="stroke:#ff0000; stroke-width:2; fill:none"/>
-                                
-                                  <!-- Footer -->
-                                  <text id="footerNote" x="25" y="270"
-                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:16px; white-space:pre;">
-                                    Angestellte der Hochschuljobbörse
-                                  </text>
-                                
-                                  <!-- STATUS: BUSY (Nicht stören) -->
-                                  <g id="state-busy">
-                                    <rect x="25.232" y="18.884" width="103.118" height="31.715" rx="10" ry="10"
-                                          style="fill:#ff0000; stroke:#ff0000; stroke-width:2"/>
-                                    <text id="statusText-busy"
-                                          x="45" y="39.871"
-                                          transform="matrix(0.658162,0,0,0.694913,7.827,11.939)"
-                                          style="fill:#ffffff; font-family: Arial, sans-serif; font-size:20px; font-weight:700; white-space:pre;">
-                                      nicht stören
-                                    </text>
-                                  </g>
-                                
-                                  <!-- STATUS: FREE (empty) -->
-                                  <g id="state-free" style="display:none">
-                                    <rect x="25.232" y="18.884" width="103.118" height="31.715" rx="10" ry="10"
-                                          style="fill:#ffffff; fill-opacity:0; stroke:#000000; stroke-width:1; paint-order:stroke"/>
-                                    <text id="statusText-free"
-                                          x="48" y="39.871"
-                                          transform="matrix(0.658162,0,0,0.694913,14.134,12.290)"
-                                          style="fill:#000000; font-family: Arial, sans-serif; font-size:20px; font-weight:700; white-space:pre;">
-                                      verfügbar
-                                    </text>
-                                  </g>
-                                </svg>
-                                
+                                                                  <!-- Weißer Hintergrund für saubere Palettierung -->
+                                                                  <rect x="0" y="0" width="400" height="300" fill="#ffffff"/>
+                                                                  <!-- Obere rechte Raumnummer -->
+                                                                  <text id="roomNumber" x="185" y="60"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:60px; font-weight:700; white-space:pre;">
+                                                                    KS 503
+                                                                  </text>
+                                                                  <!-- Namen (links) -->
+                                                                  <text id="name-1" x="25" y="108"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Uwe Wienkop</text>
+                                                                  <text id="name-2" x="25" y="153"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Louis Burk</text>
+                                                                  <text id="name-3" x="25" y="198"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Vorname Nachname</text>
+                                                                  <!-- Trennlinie -->
+                                                                  <path d="M -2.012 230 L 404.969 230" style="stroke:#ff0000; stroke-width:2; fill:none"/>
+                                                                  <!-- Footer -->
+                                                                  <text id="footerNote" x="25" y="270"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:16px; white-space:pre;">
+                                                                    Angestellte der Hochschuljobbörse
+                                                                  </text>
+                                                                  <!-- STATUS: BUSY (Nicht stören) -->
+                                                                  <g id="state-busy">
+                                                                    <rect x="25.232" y="22.884" width="103.118" height="31.715" rx="10" ry="10"
+                                                                          style="fill:#ff0000; stroke:#ff0000; stroke-width:2"/>
+                                                                    <text id="statusText-busy"
+                                                                          x="45" y="43.871"
+                                                                          transform="matrix(0.658162,0,0,0.694913,7.827,11.939)"
+                                                                          style="fill:#ffffff; font-family: Arial, sans-serif; font-size:20px; font-weight:700; white-space:pre;">
+                                                                      nicht stören
+                                                                    </text>
+                                                                  </g>
+                                                                  <!-- STATUS: FREE (empty) -->
+                                                                  <g id="state-free" style="display:none">
+                                                                    <rect x="25.232" y="22.884" width="103.118" height="31.715" rx="10" ry="10"
+                                                                          style="fill:#ffffff; fill-opacity:0; stroke:#000000; stroke-width:1; paint-order:stroke"/>
+                                                                    <text id="statusText-free"
+                                                                          x="48" y="43.871"
+                                                                          transform="matrix(0.658162,0,0,0.694913,14.134,12.290)"
+                                                                          style="fill:#000000; font-family: Arial, sans-serif; font-size:20px; font-weight:700; white-space:pre;">
+                                                                      verfügbar
+                                                                    </text>
+                                                                  </g>
+                                                                </svg>
                                 """
                 ),
                 new TemplateSeed(
@@ -104,11 +97,109 @@ public class TemplateBootstrapper implements CommandLineRunner {
                         400,
                         300,
                         """
-                                <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-                                    <rect width="400" height="300" fill="#ffffff"/>
-                                    <text x="20" y="40" font-size="28" fill="#000000">{title}</text>
-                                    <text x="20" y="70" font-size="16" fill="#000000">{description}</text>
-                                </svg>
+                                <?xml version="1.0" encoding="utf-8"?>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400px" height="300px">
+                            
+                                  <!-- horizontale Linien -->
+                                  <path id="events-line-1" style="fill: rgb(248, 6, 6); stroke: rgb(0, 0, 0);" d="M 15.964 134.303 L 376.409 134.411"/>
+                                  <path id="events-line-2" style="fill: rgb(248, 6, 6); stroke: rgb(0, 0, 0); stroke-width: 1;" d="M 15.758 188.86 L 376.203 188.968"/>
+                                  <path id="events-line-3" style="fill: rgb(248, 6, 6); stroke: rgb(0, 0, 0); stroke-width: 1;" d="M 15.758 244.143 L 376.203 244.251"/>
+                                
+                                  <g id="preview"/>
+                                
+                                  <!-- Header-Balken + Titel -->
+                                  <rect id="events-header-bg" x="-1.17" y="0.002" width="400.752" height="46.775" style="fill: rgb(206, 24, 24);"/>
+                                  <text id="events-title"
+                                        style="fill: rgb(255, 255, 255); font-family: Arial, sans-serif; font-size: 31px; font-weight:700; white-space: pre;"
+                                        x="20" y="34.553">
+                                    Ereignisse
+                                  </text>
+                                
+                                  <!-- Body (alle Events) – kann per transform verschoben werden -->
+                                  <g id="events-body">
+                                
+                                  <!-- === Empty State Message (hidden by default) === -->
+                                  <text id="no-events-message"
+                                        style="fill: rgb(120, 120, 120); font-family: Arial, sans-serif; font-size: 26px; font-weight:700; text-anchor: middle; display:none;"
+                                        x="200" y="80">
+                                      Derzeit gibt es keine
+                                  </text>
+                                
+                                  <text id="no-events-message-2"
+                                        style="fill: rgb(120, 120, 120); font-family: Arial, sans-serif; font-size: 26px; font-weight:700; text-anchor: middle; display:none;"
+                                        x="200" y="110">
+                                      anstehenden Ereignisse
+                                  </text>
+                               
+                                  <text id="idle-text-qr-1"
+                                          x="200" y="250"
+                                          text-anchor="middle"
+                                          style="font-family:Arial,sans-serif; font-size:22px; font-weight:700; fill:#333; display:none;">
+                                      QR-Code scannen und neue
+                                    </text>
+                                
+                                    <text id="idle-text-qr-2"
+                                          x="200" y="280"
+                                          text-anchor="middle"
+                                          style="font-family:Arial,sans-serif; font-size:22px; font-weight:700; fill:#333; display:none;">
+                                      Ereignisse hinzufügen
+                                    </text>
+                                  
+                                    <!-- Event 1 (immer rot) -->
+                                    <text id="event-1-text-1"
+                                          style="fill: rgb(255, 0, 0); font-family: Arial, sans-serif; font-size: 21px; font-weight:700; white-space: pre;"
+                                          x="17.256" y="86.323">
+                                      Event 1 Text 1
+                                    </text>
+                                    <text id="event-1-text-2"
+                                          style="fill: rgb(255, 0, 0); font-family: Arial, sans-serif; font-size: 19px; font-weight:700; white-space: pre;"
+                                          x="17.636" y="112.811">
+                                      Event 1 Text 2
+                                    </text>
+                                
+                                    <!-- Event 2 -->
+                                    <text id="event-2-text-1"
+                                          style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 19px; font-weight:700; white-space: pre; stroke-width: 1;"
+                                          x="17.992" y="154.955">
+                                      Event 2 Text 1
+                                    </text>
+                                    <text id="event-2-text-2"
+                                          style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 17px; font-weight:700; white-space: pre; stroke-width: 1;"
+                                          x="17.991" y="177.642">
+                                      Event 2 Text 2
+                                    </text>
+                                
+                                    <!-- Event 3 -->
+                                    <text id="event-3-text-1"
+                                          style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 19px; font-weight:700; white-space: pre; stroke-width: 1;"
+                                          x="18.539" y="211.402">
+                                      Event 3 Text 1
+                                    </text>
+                                    <text id="event-3-text-2"
+                                          style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 17px; font-weight:700; white-space: pre; stroke-width: 1;"
+                                          x="18.635" y="232.83">
+                                      Event 3 Text 2
+                                    </text>
+                                
+                                    <!-- Event 4 (unterster Slot / sticky) -->
+                                    <text id="event-4-text-1"
+                                          style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 19px; font-weight:700; white-space: pre; stroke-width: 1;"
+                                          x="18.042" y="265.646">
+                                      Event 4 Text 1
+                                    </text>
+                                    <text id="event-4-text-2"
+                                          style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 17px; font-weight:700; white-space: pre; stroke-width: 1;"
+                                          x="18.138" y="287.074">
+                                      Event 4 Text 2
+                                    </text>
+                                    <rect id="event-4-highlight-frame"
+                                          x="10"
+                                          y="246"
+                                          width="380"
+                                          height="50"
+                                          style="fill: none; stroke: none; stroke-width: 3;" />
+                                  </g>
+                                </svg>           
                                 """
                 ),
                 new TemplateSeed(

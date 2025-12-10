@@ -8,5 +8,10 @@ import java.util.List;
 public interface DisplayTemplateSubDataRepository extends JpaRepository<DisplayTemplateSubData, Long> {
 
     List<DisplayTemplateSubData> findByTemplateDataId(Long templateDataId);
+
+    List<DisplayTemplateSubData> findByTemplateDataIdOrderByStartAsc(Long templateDataId);
+
+    List<DisplayTemplateSubData> findByTemplateDataIdAndHighlightedTrueOrderByStartAsc(Long templateDataId);
+
 }
 
