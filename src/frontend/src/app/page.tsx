@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, {useState, useEffect, useMemo} from 'react'
 import PageHeader from '@/components/layout/PageHeader'
@@ -22,7 +22,8 @@ export default function Home() {
 
     // Auswahl zwischen 'name' (alphabetisch) und 'custom' (freie Sortierung)
     const [sortingMode, setSortingMode] = useState<'name' | 'custom'>('name')
-    // Enthält die Reihenfolge (Liste der Display-IDs) bei freier Sortierung
+    const [batteryMode, setBatteryMode] = useState<'avg' | 'min'>('avg')
+    // Enth├ñlt die Reihenfolge (Liste der Display-IDs) bei freier Sortierung
     const [customOrder, setCustomOrder] = useState<number[]>([])
     // Speichert den Index, an dem aktuell der Platzhalter (Drop Target) angezeigt wird
     const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null)
@@ -35,13 +36,13 @@ export default function Home() {
         }
     }, [])
 
-    // Immer wenn sich der Sortiermodus ändert, im Local Storage speichern
+    // Immer wenn sich der Sortiermodus ├ñndert, im Local Storage speichern
     useEffect(() => {
         localStorage.setItem('sortingMode', sortingMode)
     }, [sortingMode])
 
     const buildDummyDisplays = (): DisplayData[] => {
-        const makeDummy = (id: number, name: string, mac: string, width: number, height: number): DisplayData => ({
+        const makeDummy = (id: number, name: string, mac: string, width: number, height: number, battery_percentage: number): DisplayData => ({
             id,
             displayName: name,
             macAddress: mac,
@@ -55,18 +56,18 @@ export default function Home() {
             runningSince: '',
             wakeTime: '',
             nextEventTime: '',
-            battery_percentage: 100,
+            battery_percentage,
             timeOfBattery: '',
             errors: [],
         })
 
         return [
-            makeDummy(-1, 'Dummy 400x300 #1', '00:11:22:33:44:55', 400, 300),
-            makeDummy(-2, 'Dummy 400x300 #2', '00:11:22:33:44:66', 400, 300),
-            makeDummy(-3, 'Dummy 296x128 #1', '00:11:22:33:44:77', 296, 128),
-            makeDummy(-4, 'Dummy 296x128 #2', '00:11:22:33:44:88', 296, 128),
-            makeDummy(-5, 'Dummy 250x122 #1', '00:11:22:33:44:99', 250, 122),
-            makeDummy(-6, 'Dummy 250x122 #2', '00:11:22:33:44:AA', 250, 122),
+            makeDummy(-1, 'Dummy 400x300 #1', '00:11:22:33:44:55', 400, 300, 100),
+            makeDummy(-2, 'Dummy 400x300 #2', '00:11:22:33:44:66', 400, 300, 75),
+            makeDummy(-3, 'Dummy 296x128 #1', '00:11:22:33:44:77', 296, 128, 13),
+            makeDummy(-4, 'Dummy 296x128 #2', '00:11:22:33:44:88', 296, 128, 50),
+            makeDummy(-5, 'Dummy 250x122 #1', '00:11:22:33:44:99', 250, 122, 100),
+            makeDummy(-6, 'Dummy 250x122 #2', '00:11:22:33:44:AA', 250, 122, 80),
         ]
     }
 
@@ -129,7 +130,7 @@ export default function Home() {
             setCustomOrder(prevOrder => {
                 const displayIds = displays.map(d => d.id)
                 const newOrder = [...prevOrder]
-                // Fehlende IDs ergänzen
+                // Fehlende IDs erg├ñnzen
                 displayIds.forEach(id => {
                     if (!newOrder.includes(id)) {
                         newOrder.push(id)
@@ -174,9 +175,10 @@ export default function Home() {
         const total = displays.length
         const online = displays.filter((d) => !d.errors || d.errors.length === 0).length
         const errors = displays.filter((d) => d.errors && d.errors.length > 0).length
-        const avgBattery =
-            total > 0 ? Math.round(displays.reduce((sum, d) => sum + d.battery_percentage, 0) / total) : 0
-        return {total, online, errors, avgBattery}
+        const batteries = displays.map((d) => d.battery_percentage ?? 0)
+        const avgBattery = total > 0 ? Math.round(batteries.reduce((sum, value) => sum + value, 0) / total) : 0
+        const minBattery = total > 0 ? Math.min(...batteries) : 0
+        return {total, online, errors, avgBattery, minBattery}
     }, [displays])
 
     // Filter displays based on search query
@@ -261,17 +263,30 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-amber-300 hover:shadow-md">
+                                                <div className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-amber-300 hover:shadow-md">
                             <div className="flex items-start justify-between">
                                 <div>
                                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Ø Batterie
+                                        Batterie
                                     </p>
-                                    <p className="mt-2 text-3xl font-bold text-amber-600">{stats.avgBattery}%</p>
-                                    <p className="mt-1 text-xs text-slate-600">Durchschnitt</p>
+                                    <p className="mt-2 text-3xl font-bold text-amber-600">
+                                        {batteryMode === 'avg' ? stats.avgBattery : stats.minBattery}%
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-600">
+                                        {batteryMode === 'avg' ? 'Durchschnitt' : 'Niedrigster Stand'}
+                                    </p>
                                 </div>
-                                <div className="rounded-lg bg-amber-50 p-3">
-                                    <Battery className="h-5 w-5 text-amber-600" />
+                                <div className="flex flex-col items-end gap-3">
+                                    <div className="rounded-lg bg-amber-50 p-3">
+                                        <Battery className="h-5 w-5 text-amber-600" />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBatteryMode((prev) => (prev === 'avg' ? 'min' : 'avg'))}
+                                        className="rounded-full border border-amber-200 px-3 py-1 text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-50"
+                                    >
+                                        {batteryMode === 'avg' ? 'Zeige Minimum' : 'Zeige Durchschnitt'}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -346,7 +361,7 @@ export default function Home() {
                             onClick={() => setSearchQuery('')}
                             className="mt-4 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:bg-red-600 active:scale-95"
                         >
-                            Suche zurücksetzen
+                            Suche zur├╝cksetzen
                         </button>
                     </div>
                 </div>
@@ -420,3 +435,4 @@ export default function Home() {
         </main>
     )
 }
+
