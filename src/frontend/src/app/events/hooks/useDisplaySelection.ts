@@ -16,7 +16,7 @@ type UseDisplaySelectionResult = {
 
 const noticeBoardSizes = [
     { width: 296, height: 128 },
-    { width: 250, height: 122 },
+    { width: 250, height: 128 },
 ]
 
 const resolveTargetSize = (
@@ -105,12 +105,12 @@ const dummyPool: DisplayData[] = [
     },
     {
         id: -5,
-        displayName: 'Dummy 250x122 #1',
+        displayName: 'Dummy 250x128 #1',
         macAddress: '00:11:22:33:44:99',
         brand: 'Mock',
         model: 'Preview',
         width: 250,
-        height: 122,
+        height: 128,
         orientation: 'landscape',
         filename: '',
         defaultFilename: '',
@@ -123,12 +123,12 @@ const dummyPool: DisplayData[] = [
     },
     {
         id: -6,
-        displayName: 'Dummy 250x122 #2',
+        displayName: 'Dummy 250x128 #2',
         macAddress: '00:11:22:33:44:AA',
         brand: 'Mock',
         model: 'Preview',
         width: 250,
-        height: 122,
+        height: 128,
         orientation: 'landscape',
         filename: '',
         defaultFilename: '',
