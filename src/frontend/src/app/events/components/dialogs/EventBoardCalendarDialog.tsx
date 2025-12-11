@@ -38,6 +38,7 @@ type EventDraft = {
   allDay: boolean;
   important: boolean;
   qrLink: string;
+  recurring: boolean;
 };
 
 const WEEKDAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -202,7 +203,7 @@ export function EventBoardCalendarDialog({
     setSelectedEventId(null);
     setDraft((prev) => {
       if (prev && prev.id === null) {
-        const nextDraft = { ...prev, date: iso };
+        const nextDraft = { ...prev, date: iso, recurring: prev.recurring ?? false };
         if (!nextDraft.endDate || nextDraft.endDate < iso) {
           nextDraft.endDate = iso;
         }
@@ -217,7 +218,7 @@ export function EventBoardCalendarDialog({
     setSelectedEventId(null);
     setDraft((prev) => {
       if (prev && prev.id === null) {
-        const nextDraft = { ...prev, date: dayIso };
+        const nextDraft = { ...prev, date: dayIso, recurring: prev.recurring ?? false };
         if (!nextDraft.endDate || nextDraft.endDate < dayIso) {
           nextDraft.endDate = dayIso;
         }
@@ -249,6 +250,7 @@ export function EventBoardCalendarDialog({
       allDay: Boolean(event.allDay),
       important: Boolean(event.important),
       qrLink: event.qrLink,
+      recurring: (event as any).recurring ? true : false,
     });
  };
 
@@ -267,6 +269,7 @@ export function EventBoardCalendarDialog({
       allDay: false,
       important: false,
       qrLink: "",
+      recurring: false,
     });
   };
 
@@ -1139,8 +1142,35 @@ export function EventBoardCalendarDialog({
                         }
                       />
                     </div>
+                    <div className={"flex items-center justify-between rounded-xl bg-blue-gray-50/80 px-3 py-2"}>
+                      <div className={"flex flex-col"}>
+                        <Typography variant={"small"} className={"text-sm font-semibold text-blue-gray-700"}>
+                          Wiederkehrendes Ereignis
+                        </Typography>
+                        <span className={"text-[11px] text-blue-gray-500"}>
+                          Markiere, damit dieses Event wöchentlich an diesem Wochentag wiederholt wird
+                        </span>
+                      </div>
+                      <Switch
+                        crossOrigin={""}
+                        ripple={false}
+                        label={""}
+                        checked={draft.recurring}
+                        onChange={(event) => handleDraftChange("recurring", event.target.checked)}
+                      />
+                    </div>
+                    {draft.recurring && (
+                      <Typography variant="small" className="text-xs text-blue-gray-600">
+                        Dieses Ereignis wiederholt sich wöchentlich am {(() => {
+                          const d = parseDate(draft.date);
+                          return d ? d.toLocaleDateString('de-DE', { weekday: 'long' }) : 'gewählten Tag';
+                        })()}.
+                      </Typography>
+                    )}
+
                   </div>
                 </div>
+
                 <Input
                   type={"url"}
                   label={"Link für QR-Code"}
