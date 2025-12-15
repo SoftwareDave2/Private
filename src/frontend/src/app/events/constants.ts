@@ -31,7 +31,7 @@ export const doorSignPersonStatuses: { value: DoorSignPersonStatus; label: strin
 export const defaultDoorSignForm: DoorSignForm = {
     roomNumber: '',
     people: [{ id: 1, name: '', status: 'available', busyUntil: '' }],
-    footerNote: 'Angestellte/r der Hochschuljobbörse.',
+    footerNote: '',
 }
 
 export const defaultEventBoardForm: EventBoardForm = {
