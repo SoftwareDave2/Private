@@ -21,7 +21,7 @@ public class TemplateDisplayUpdateService {
 
     private static final Logger logger = LoggerFactory.getLogger(TemplateDisplayUpdateService.class);
     private final SVGFillService svgFillService;
-    private final OpenEPaperSyncService oeplSync;
+    private final OeplUploadQueueService oeplUploadQueueService;
     private final DisplayTemplateDataRepository templateDataRepo;
     private final DisplayTemplateSubDataRepository subDataRepo;
     private final DisplayTemplateRepository templateRepo;
@@ -34,13 +34,13 @@ public class TemplateDisplayUpdateService {
 
     public TemplateDisplayUpdateService(
             SVGFillService svgFillService,
-            OpenEPaperSyncService oeplSync,
+            OeplUploadQueueService oeplUploadQueueService,
             DisplayTemplateDataRepository templateDataRepo,
             DisplayTemplateSubDataRepository subDataRepo,
             DisplayTemplateRepository templateRepo,
             DisplayRepository displayRepo) {
         this.svgFillService = svgFillService;
-        this.oeplSync = oeplSync;
+        this.oeplUploadQueueService = oeplUploadQueueService;
         this.templateDataRepo = templateDataRepo;
         this.subDataRepo = subDataRepo;
         this.templateRepo = templateRepo;
@@ -114,9 +114,9 @@ public class TemplateDisplayUpdateService {
             SVGToJPEGConverter.convertSVGToJPEG(filledSvg, outPath.toString());
 
             // Step 6: send image to OEPL
-            oeplSync.uploadImageToOEPLForDisplay(basename, displayMac);
+            oeplUploadQueueService.enqueue(basename, displayMac);
 
-            logger.info("Rendered+uploaded mac={} type={} file={}", displayMac, templateType, outPath);
+            logger.info("Rendered+queued mac={} type={} file={}", displayMac, templateType, outPath);
 
         } catch (Exception e) {
             logger.error("Render/upload failed for mac={} type={}", displayMac, templateType, e);
