@@ -310,11 +310,83 @@ public class TemplateBootstrapper implements CommandLineRunner {
                         400,
                         300,
                         """
-                                <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-                                    <rect width="400" height="300" fill="#ffffff"/>
-                                    <text x="20" y="50" font-size="32" fill="#000000">{roomNumber}</text>
-                                    <text x="20" y="90" font-size="18" fill="#000000">{roomType}</text>
-                                </svg>
+                                <?xml version="1.0" encoding="utf-8"?>
+                                    <svg id="root"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 400 300"
+                                         width="400"
+                                         height="300">
+
+                                      <!-- Raumkopf (immer sichtbar) -->
+                                      <text id="room-number"
+                                            x="248" y="46"
+                                            style="fill:#000000; font-family: Arial, sans-serif; font-size:45px; font-weight:700;">
+                                        SP.123
+                                      </text>
+                               
+                                      <text id="room-name"
+                                            x="280" y="290"
+                                            style="fill:#333333; font-family: Arial, sans-serif; font-size:15px; font-weight:700;font-weight:700;">
+                                        Konferenzraum
+                                      </text>
+                               
+                                      <g id="qr-code"
+                                         transform="matrix(1.315342, 0, 0, 1.245268, -105.979878, -40.375223)">
+                                      </g>
+
+                                      <!-- ===================== -->
+                                      <!-- Zustand: BEFÜLLT -->
+                                      <!-- ===================== -->
+                                      <g id="state-filled">
+
+                                        <text id="current-label"
+                                              x="18" y="46"
+                                              style="fill:#ff0000; font-family: Arial, sans-serif; font-size:22px; font-weight:700;">
+                                          Anstehender Termin
+                                        </text>
+
+                                        <rect id="current-box"
+                                              x="12" y="54"
+                                              width="380" height="58"
+                                              style="fill:none; stroke:#000000;" />
+
+                                        <text id="current-time"
+                                              x="18" y="77"
+                                              style="fill:#ff0000; font-family: Arial, sans-serif; font-size:16px;font-weight:700;">
+                                          18.12.25: 11:00 Uhr - 11:30 Uhr
+                                        </text>
+                                        <text id="current-title"
+                                              x="18" y="100"
+                                              style="fill:#ff0000; font-family: Arial, sans-serif; font-size:18px;font-weight:700;">
+                                          Daily Meeting
+                                        </text>
+                                        <path id="line-1" d="M 13 170 L 280 170" style="stroke:#000000;" />
+                                        <path id="line-2" d="M 13 215 L 280 215" style="stroke:#000000;" />
+                                        <text id="next-1a" x="15" y="145" style="font-size:15px;font-weight:700;">19.12.25: 11:30 Uhr - 20.12.25 9:00 Uhr </text>
+                                        <text id="next-1b" x="15" y="160" style="font-size:15px;font-weight:700;">Austellung</text>
+    
+                                        <text id="next-2a" x="15" y="190" style="font-size:15px;font-weight:700;">25.12.25: 12:00 Uhr</text>
+                                        <text id="next-2b" x="15" y="205" style="font-size:15px;font-weight:700;">Weihnachtsessen</text>
+    
+                                        <text id="next-3a" x="15" y="235" style="font-size:15px;font-weight:700;">31.01.2025: 20:00 Uhr - 23:00 Uhr</text>
+                                        <text id="next-3b" x="15" y="250" style="font-size:15px;font-weight:700;">Raclette Essen</text>
+    
+                                      </g>
+                                      <!-- ===================== -->
+                                      <!-- Zustand: LEERLAUF -->
+                                      <!-- ===================== -->
+                                      <g id="state-idle" style="display:none">
+                                   <rect x="21" y="90"
+                                              width="228" height="69"
+                                              style="fill:none; stroke:#ff0000;" />
+                                        <text id="idle-text"
+                                              x="25" y="120"
+                                              style="fill:#333333; font-family: Arial, sans-serif; font-size:24px; font-weight:700;">
+                                          Keine anstehenden
+                                          <tspan x="86" dy="1.2em">Termine</tspan>
+                                        </text>
+                                      </g>
+                                    </svg>
                                 """
                 ),
                 new TemplateSeed(

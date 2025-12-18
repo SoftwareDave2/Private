@@ -1,12 +1,7 @@
 package master.it_projekt_tablohm.services;
 
 import master.it_projekt_tablohm.models.DisplayTemplateSubData;
-import master.it_projekt_tablohm.services.svgfill.DefaultTemplateStrategy;
-import master.it_projekt_tablohm.services.svgfill.DoorSignStrategy;
-import master.it_projekt_tablohm.services.svgfill.EventBoardStrategy;
-import master.it_projekt_tablohm.services.svgfill.NoticeBoardStrategy;
-import master.it_projekt_tablohm.services.svgfill.SvgDomHelper;
-import master.it_projekt_tablohm.services.svgfill.TemplateFillStrategy;
+import master.it_projekt_tablohm.services.svgfill.*;
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.dom.util.DOMUtilities;
 import org.apache.batik.util.XMLResourceDescriptor;
@@ -25,7 +20,8 @@ public class SVGFillService {
     private final List<TemplateFillStrategy> strategies = List.of(
             new NoticeBoardStrategy(),
             new DoorSignStrategy(),
-            new EventBoardStrategy()
+            new EventBoardStrategy(),
+            new RoomBookingStrategy()
     );
 
     private final TemplateFillStrategy defaultStrategy = new DefaultTemplateStrategy();
