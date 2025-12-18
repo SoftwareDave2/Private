@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -113,7 +114,14 @@ public class TemplateDisplayUpdateService {
             Path outPath = UPLOADS_DIR.resolve(basename);
             SVGToJPEGConverter.convertSVGToJPEG(filledSvg, outPath.toString());
 
-            // Step 6: send image to OEPL
+            // Step 6: Persist latest filename to display so dashboard previews show current image
+            display.setFilename(basename);
+            display.setDefaultFilename(basename);
+            display.setLastSwitch(LocalDateTime.now());
+            display.setDoSwitch(false);
+            displayRepo.save(display);
+
+            // Step 7: send image to OEPL Queue
             oeplUploadQueueService.enqueue(basename, displayMac);
 
             logger.info("Rendered+queued mac={} type={} file={}", displayMac, templateType, outPath);

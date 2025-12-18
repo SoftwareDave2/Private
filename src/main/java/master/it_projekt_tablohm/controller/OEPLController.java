@@ -11,6 +11,7 @@ import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.services.DisplayEventService;
 import master.it_projekt_tablohm.services.DisplayHistoryService;
 import master.it_projekt_tablohm.services.OpenEPaperSyncService;
+import master.it_projekt_tablohm.services.OeplUploadQueueService;
 import master.it_projekt_tablohm.services.TemplateManagementService;
 import master.it_projekt_tablohm.services.TemplateMaintenanceService;
 import org.apache.batik.anim.dom.SVG12DOMImplementation;
@@ -35,19 +36,22 @@ public class OEPLController {
     private final TemplateManagementService templateManagementService;
     private final TemplateMaintenanceService templateMaintenanceService;
     private final DisplayHistoryService displayHistoryService;
+    private final OeplUploadQueueService oeplUploadQueueService;
 
     public OEPLController(OpenEPaperSyncService openEPaperSyncService,
                           DisplayRepository displayRepository,
                           DisplayEventService displayEventService,
                           TemplateManagementService templateManagementService,
                           TemplateMaintenanceService templateMaintenanceService,
-                          DisplayHistoryService displayHistoryService) {
+                          DisplayHistoryService displayHistoryService,
+                          OeplUploadQueueService oeplUploadQueueService) {
         this.openEPaperSyncService = openEPaperSyncService;
         this.displayRepository = displayRepository;
         this.displayEventService = displayEventService;
         this.templateManagementService = templateManagementService;
         this.templateMaintenanceService = templateMaintenanceService;
         this.displayHistoryService = displayHistoryService;
+        this.oeplUploadQueueService = oeplUploadQueueService;
     }
 
     @PostMapping(path = "/send-image")
@@ -68,6 +72,7 @@ public class OEPLController {
                 display.setDoSwitch(false);
                 // triggering update and image sending to OEPL
                 displayRepository.save(display);
+                oeplUploadQueueService.enqueue(filename, mac);
             });
 
             return ResponseEntity.ok("Image successfully sent and display updated: " + filename);
