@@ -101,6 +101,15 @@ type DisplayContentPayload = {
     eventEnd?: string | null
 }
 
+type TemplateDefinitionResponse = {
+    templateType: DisplayTypeKey
+    name?: string | null
+    description?: string | null
+    displayWidth?: number | null
+    displayHeight?: number | null
+    svgContent?: string | null
+}
+
 const formatDoorSignDate = (value: string) => {
     if (!value) {
         return '—'
@@ -713,6 +722,8 @@ export default function EventsPage() {
     const [isTemplateCreateDialogOpen, setIsTemplateCreateDialogOpen] = useState<boolean>(false)
     const [templateEditorContent, setTemplateEditorContent] = useState<string>('')
     const [templateCreatorContent, setTemplateCreatorContent] = useState<string>('')
+    const [templateDefinition, setTemplateDefinition] = useState<TemplateDefinitionResponse | null>(null)
+    const [isTemplateSaving, setIsTemplateSaving] = useState<boolean>(false)
     const [isSendInProgress, setIsSendInProgress] = useState<boolean>(false)
     const [isTestSendInProgress, setIsTestSendInProgress] = useState<boolean>(false)
     const [sendFeedback, setSendFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -732,6 +743,14 @@ export default function EventsPage() {
         displayError,
     } = useDisplaySelection(displayType, previewSize)
     const { containerRef: previewContainerRef, previewScale } = usePreviewScale(previewSize, displayType)
+
+    const resolveTemplateDimensions = () => {
+        const fallbackSize = fallbackPreviewDimensions[displayType] ?? fallbackPreviewDimensions['door-sign']
+        return {
+            width: previewSize?.width ?? fallbackSize?.width ?? 400,
+            height: previewSize?.height ?? fallbackSize?.height ?? 300,
+        }
+    }
 
     const resetFormsForDisplayType = (type: DisplayTypeKey) => {
         setDoorSignForm(cloneDoorSignForm(defaultDoorSignForm))
@@ -897,11 +916,46 @@ export default function EventsPage() {
     }
 
     const openTemplateEditDialog = async () => {
-        const size = previewSize ?? fallbackPreviewDimensions[displayType]
-        const width = size?.width ?? 400
-        const height = size?.height ?? 300
+        const { width, height } = resolveTemplateDimensions()
+        const fallbackName = resolveTemplateLabel(displayType, templateTypes) ?? displayType
+        const fallbackDefinition: TemplateDefinitionResponse = {
+            templateType: displayType,
+            name: fallbackName,
+            description: '',
+            displayWidth: width,
+            displayHeight: height,
+        }
         setIsTemplateEditDialogOpen(true)
         setTemplateEditorContent('Lade aktuelles Template ...')
+        setTemplateDefinition(fallbackDefinition)
+        try {
+            const response = await authFetch(
+                `${backendApiUrl}/oepl/templates/${displayType}`,
+                { method: 'GET' },
+            )
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(errorText || `HTTP ${response.status}`)
+            }
+            const payload = (await response.json()) as TemplateDefinitionResponse
+            const normalized: TemplateDefinitionResponse = {
+                templateType: (payload.templateType as DisplayTypeKey) || displayType,
+                name: payload.name ?? fallbackName,
+                description: payload.description ?? '',
+                displayWidth: payload.displayWidth ?? width,
+                displayHeight: payload.displayHeight ?? height,
+                svgContent: payload.svgContent ?? undefined,
+            }
+            setTemplateDefinition(normalized)
+            const content = (payload.svgContent ?? '').trim()
+            setTemplateEditorContent(content.length > 0 ? content : templateSamples[displayType] ?? '')
+            return
+        } catch (error) {
+            console.error('Fehler beim Laden des Templates', error)
+            const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
+            setSendFeedback({ type: 'error', message: `Template konnte nicht geladen werden: ${message}` })
+        }
+
         try {
             const response = await authFetch(
                 `${backendApiUrl}/oepl/templates/raw/${displayType}/${width}x${height}`,
@@ -914,10 +968,57 @@ export default function EventsPage() {
             const svg = await response.text()
             setTemplateEditorContent(svg)
         } catch (error) {
-            console.error('Fehler beim Laden des Templates', error)
-            const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
-            setSendFeedback({ type: 'error', message: `Template konnte nicht geladen werden: ${message}` })
+            console.error('Fallback konnte Template nicht laden', error)
             setTemplateEditorContent(templateSamples[displayType] ?? '')
+        }
+    }
+
+    const handleSaveTemplate = async () => {
+        const { width, height } = resolveTemplateDimensions()
+        const content = templateEditorContent.trim()
+        if (content.length === 0) {
+            setSendFeedback({ type: 'error', message: 'Template-Inhalt darf nicht leer sein.' })
+            return
+        }
+
+        const baseDefinition = templateDefinition ?? {
+            templateType: displayType,
+            name: resolveTemplateLabel(displayType, templateTypes) ?? displayType,
+            description: '',
+            displayWidth: width,
+            displayHeight: height,
+        }
+
+        setIsTemplateSaving(true)
+        setSendFeedback(null)
+        try {
+            const payload = {
+                templateType: baseDefinition.templateType ?? displayType,
+                name: baseDefinition.name ?? resolveTemplateLabel(displayType, templateTypes) ?? displayType,
+                description: baseDefinition.description ?? '',
+                displayWidth: baseDefinition.displayWidth ?? width,
+                displayHeight: baseDefinition.displayHeight ?? height,
+                svgContent: content,
+            }
+
+            const response = await authFetch(`${backendApiUrl}/oepl/templates/${displayType}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(errorText || `HTTP ${response.status}`)
+            }
+
+            setSendFeedback({ type: 'success', message: 'Template wurde gespeichert.' })
+            setIsTemplateEditDialogOpen(false)
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
+            setSendFeedback({ type: 'error', message: `Template konnte nicht gespeichert werden: ${message}` })
+        } finally {
+            setIsTemplateSaving(false)
         }
     }
 
@@ -1364,7 +1465,8 @@ export default function EventsPage() {
                 value={templateEditorContent}
                 onChange={setTemplateEditorContent}
                 onClose={closeTemplateEditDialog}
-                onConfirm={closeTemplateEditDialog}
+                onConfirm={handleSaveTemplate}
+                isConfirming={isTemplateSaving}
             />
 
             <TemplateCodeDialog
