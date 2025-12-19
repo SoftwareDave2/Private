@@ -1,0 +1,26 @@
+<svg id="root" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 296 128" width="296" height="128">
+                                   <!-- globaler Hintergrund: -->
+                                   <rect id="bg" x="0" y="0" width="296" height="128" fill="#ffffff"/>
+                                
+                                   <!-- Zustand: befüllt -->
+                                   <g id="state-filled">
+                                     <rect id="headerBar" x="0.071" y="0.355" width="296" height="37.374" fill="#ff0000" />
+                                     <text id="headerTitle" x="8.415" y="29.554"
+                                           style="fill:#ffffff; font-family: Arial, sans-serif; font-size: 24px; font-weight:700;">Druckerstatus</text>
+                                
+                                     <!-- lieber reines Schwarz statt #333 für saubere Palettierung -->
+                                     <text id="line1" x="9" y="66"
+                                           style="fill:#000000; font-family: Arial, sans-serif; font-size: 20px; font-weight:700;">Textzeile 1</text>
+                                     <text id="line2" x="9" y="93"
+                                           style="fill:#000000; font-family: Arial, sans-serif; font-size: 20px; font-weight:700;">Textzeile 2</text>
+                                   </g>
+                                
+                                   <!-- Zustand: Leerlauf -->
+                                   <g id="state-idle" style="display:none">
+                                     <rect x="0.071" y="0.355" width="296" height="37.374" style="stroke: rgb(255, 0, 0); fill: rgb(255, 0, 0);"/>
+                                         <text style="fill: rgb(255, 255, 255); font-family: Arial, sans-serif; font-size: 28px; white-space: pre;" x="64.476" y="28.386">Hinweisschild</text>
+                                         <g id="QR-Code" transform="matrix(1.333696, 0, 0, 1.208561, -400.829291, -33.080102)" style="">
+                                         </g>
+                                         <text style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; white-space: pre; font-size: 16px;font-weight:700;" x="10" y="60.503">Zum Beschreiben QR-Code scannen</text>
+                                    </g>
+                                 </svg>

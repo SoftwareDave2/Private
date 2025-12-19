@@ -1,0 +1,5 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="400" height="300" fill="#ffffff"/>
+                                    <text x="20" y="40" font-size="28" fill="#000000">{title}</text>
+                                    <text x="20" y="70" font-size="16" fill="#000000">{description}</text>
+                                </svg>

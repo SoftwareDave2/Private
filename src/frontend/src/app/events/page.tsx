@@ -896,9 +896,29 @@ export default function EventsPage() {
         setBookingDraft(null)
     }
 
-    const openTemplateEditDialog = () => {
-        setTemplateEditorContent(templateSamples[displayType] ?? '')
+    const openTemplateEditDialog = async () => {
+        const size = previewSize ?? fallbackPreviewDimensions[displayType]
+        const width = size?.width ?? 400
+        const height = size?.height ?? 300
         setIsTemplateEditDialogOpen(true)
+        setTemplateEditorContent('Lade aktuelles Template ...')
+        try {
+            const response = await authFetch(
+                `${backendApiUrl}/oepl/templates/raw/${displayType}/${width}x${height}`,
+                { method: 'GET' },
+            )
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(errorText || `HTTP ${response.status}`)
+            }
+            const svg = await response.text()
+            setTemplateEditorContent(svg)
+        } catch (error) {
+            console.error('Fehler beim Laden des Templates', error)
+            const message = error instanceof Error ? error.message : 'Unbekannter Fehler'
+            setSendFeedback({ type: 'error', message: `Template konnte nicht geladen werden: ${message}` })
+            setTemplateEditorContent(templateSamples[displayType] ?? '')
+        }
     }
 
     const closeTemplateEditDialog = () => {

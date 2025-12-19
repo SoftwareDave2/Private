@@ -7,6 +7,7 @@ import master.it_projekt_tablohm.models.DisplayTemplate;
 import master.it_projekt_tablohm.models.TemplateType;
 import master.it_projekt_tablohm.repositories.DisplayTemplateRepository;
 import master.it_projekt_tablohm.repositories.TemplateTypeRepository;
+import master.it_projekt_tablohm.services.storage.TemplateFileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,11 +20,14 @@ public class TemplateManagementService {
 
     private final DisplayTemplateRepository templateRepository;
     private final TemplateTypeRepository templateTypeRepository;
+    private final TemplateFileService templateFileService;
 
     public TemplateManagementService(DisplayTemplateRepository templateRepository,
-                                     TemplateTypeRepository templateTypeRepository) {
+                                     TemplateTypeRepository templateTypeRepository,
+                                     TemplateFileService templateFileService) {
         this.templateRepository = templateRepository;
         this.templateTypeRepository = templateTypeRepository;
+        this.templateFileService = templateFileService;
     }
 
     @Transactional
@@ -42,6 +46,7 @@ public class TemplateManagementService {
         applyDefinition(template, dto);
 
         template = templateRepository.save(template);
+        persistSvgToFile(dto);
         return toDto(template);
     }
 
@@ -61,6 +66,7 @@ public class TemplateManagementService {
         applyDefinition(template, dto);
 
         template = templateRepository.save(template);
+        persistSvgToFile(dto);
         return toDto(template);
     }
 
@@ -117,5 +123,14 @@ public class TemplateManagementService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Template type " + templateTypeKey + " not registered"));
+    }
+
+    private void persistSvgToFile(TemplateDefinitionDTO dto) {
+        templateFileService.saveTemplate(
+                dto.getTemplateType(),
+                dto.getDisplayWidth(),
+                dto.getDisplayHeight(),
+                dto.getSvgContent()
+        );
     }
 }
