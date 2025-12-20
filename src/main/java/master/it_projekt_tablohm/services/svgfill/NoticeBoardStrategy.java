@@ -22,6 +22,7 @@ public class NoticeBoardStrategy implements TemplateFillStrategy {
 
     @Override
     public void fill(SVGDocument doc, Map<String, Object> fields, List<DisplayTemplateSubData> subItems) {
+
         String header = coalesce(fields, "headerTitle", "title");
         if (!notBlank(header)) header = "Hinweis";
         setText(doc, "headerTitle", header);

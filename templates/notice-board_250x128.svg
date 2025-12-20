@@ -1,0 +1,57 @@
+<svg id="root" xmlns="http://www.w3.org/2000/svg"
+                                     viewBox="0 0 250 128" width="250" height="128">
+                                
+                                  <!-- globaler Hintergrund -->
+                                  <rect id="bg" x="0" y="0" width="250" height="128" fill="#ffffff"/>
+                                
+                                  <!-- Zustand: befüllt -->
+                                  <g id="state-filled">
+                                
+                                    <!-- Header-Balken -->
+                                    <rect id="headerBar" x="0" y="0" width="250" height="28" fill="#ff0000"/>
+                                
+                                    <!-- Titel -->
+                                    <text id="headerTitle"
+                                          x="5" y="20"
+                                          style="fill:#ffffff; font-family:Arial,sans-serif; font-size:19px; font-weight:700;">
+                                      Hinweis
+                                    </text>
+                                
+                                    <!-- Textzeile 1 -->
+                                    <text id="line1"
+                                          x="8" y="57"
+                                          style="fill:#000000; font-family:Arial,sans-serif; font-size:19px;font-weight:700;">
+                                      Textzeile 1
+                                    </text>
+                                
+                                    <!-- Textzeile 2 -->
+                                    <text id="line2"
+                                          x="8" y="92"
+                                          style="fill:#000000; font-family:Arial,sans-serif; font-size:19px;font-weight:700;">
+                                      Textzeile 2
+                                    </text>
+                                
+                                  </g>
+                                
+                                  <!-- Zustand: Leerlauf -->
+                                  <g id="state-idle" style="display:none">
+                                
+                                    <rect x="0" y="0" width="250" height="28"
+                                          style="fill:#ff0000;"/>
+                                
+                                    <text x="60" y="20"
+                                          style="fill:#fff; font-family:Arial,sans-serif; font-size:20px;font-weight:700;">
+                                      Hinweisschild
+                                    </text>
+                                
+                                    <!-- optionaler QR-Code Platzhalter -->
+                                    <g id="QR-Code" transform="matrix(1,0,0,1,0,0)"></g>
+                                
+                                    <text x="5" y="55"
+                                          style="fill:#333; font-family:Arial,sans-serif; font-size:14px;font-weight:700;">
+                                      Zum Beschreiben QR-Code scannen
+                                    </text>
+                      
+                                  </g>
+                                
+                                </svg>

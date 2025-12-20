@@ -14,9 +14,11 @@ import master.it_projekt_tablohm.services.OpenEPaperSyncService;
 import master.it_projekt_tablohm.services.OeplUploadQueueService;
 import master.it_projekt_tablohm.services.TemplateManagementService;
 import master.it_projekt_tablohm.services.TemplateMaintenanceService;
+import master.it_projekt_tablohm.services.storage.TemplateFileService;
 import org.apache.batik.anim.dom.SVG12DOMImplementation;
 import org.apache.batik.anim.dom.SVGDOMImplementation;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +38,7 @@ public class OEPLController {
     private final TemplateManagementService templateManagementService;
     private final TemplateMaintenanceService templateMaintenanceService;
     private final DisplayHistoryService displayHistoryService;
+    private final TemplateFileService templateFileService;
     private final OeplUploadQueueService oeplUploadQueueService;
 
     public OEPLController(OpenEPaperSyncService openEPaperSyncService,
@@ -44,7 +47,8 @@ public class OEPLController {
                           TemplateManagementService templateManagementService,
                           TemplateMaintenanceService templateMaintenanceService,
                           DisplayHistoryService displayHistoryService,
-                          OeplUploadQueueService oeplUploadQueueService) {
+                          OeplUploadQueueService oeplUploadQueueService,
+                          TemplateFileService templateFileService) {
         this.openEPaperSyncService = openEPaperSyncService;
         this.displayRepository = displayRepository;
         this.displayEventService = displayEventService;
@@ -52,6 +56,7 @@ public class OEPLController {
         this.templateMaintenanceService = templateMaintenanceService;
         this.displayHistoryService = displayHistoryService;
         this.oeplUploadQueueService = oeplUploadQueueService;
+        this.templateFileService = templateFileService;
     }
 
     @PostMapping(path = "/send-image")
@@ -151,6 +156,30 @@ public class OEPLController {
     @GetMapping(path = "/template-types")
     public @ResponseBody ResponseEntity<List<TemplateTypeDTO>> listTemplateTypes() {
         return ResponseEntity.ok(templateManagementService.listTemplateTypes());
+    }
+
+    @GetMapping(path = "/templates/raw/{templateType}/{dimensions}")
+    public @ResponseBody ResponseEntity<String> getTemplateFileRaw(
+            @PathVariable String templateType,
+            @PathVariable String dimensions,
+            @RequestParam(name = "download", defaultValue = "false") boolean download) {
+        int sep = dimensions.indexOf('x');
+        if (sep <= 0 || sep == dimensions.length() - 1) {
+            return ResponseEntity.badRequest().body("dimensions must be <width>x<height>");
+        }
+        try {
+            int w = Integer.parseInt(dimensions.substring(0, sep));
+            int h = Integer.parseInt(dimensions.substring(sep + 1));
+            String svg = templateFileService.loadTemplate(templateType, w, h);
+            ResponseEntity.BodyBuilder builder = ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN);
+            if (download) {
+                String filename = templateType + "_" + w + "x" + h + ".svg";
+                builder.header("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+            }
+            return builder.body(svg);
+        } catch (NumberFormatException ex) {
+            return ResponseEntity.badRequest().body("width and height must be integers");
+        }
     }
 
     @GetMapping(path = "/display-data/history")

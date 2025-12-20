@@ -21,6 +21,7 @@ public class DoorSignStrategy implements TemplateFillStrategy {
 
     @Override
     public void fill(SVGDocument doc, Map<String, Object> fields, List<DisplayTemplateSubData> subItems) {
+
         setText(doc, "roomNumber", str(fields, "roomNumber", "-"));
         setText(doc, "footerNote", str(fields, "footerNote", ""));
 
