@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+                                <svg id="root" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+                                                                  <!-- Weißer Hintergrund für saubere Palettierung -->
+                                                                  <rect x="0" y="0" width="400" height="300" fill="#ffffff"/>
+                                                                  <!-- Obere rechte Raumnummer -->
+                                                                  <text id="roomNumber" x="185" y="60"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:60px; font-weight:700; white-space:pre;">
+                                                                    KS 503
+                                                                  </text>
+                                                                  <!-- Namen (links) -->
+                                                                  <text id="name-1" x="25" y="108"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Uwe Wienkop</text>
+                                                                  <text id="name-2" x="25" y="153"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Louis Burk</text>
+                                                                  <text id="name-3" x="25" y="198"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:26px; white-space:pre;">Vorname Nachname</text>
+                                                                  <!-- Trennlinie -->
+                                                                  <path d="M -2.012 230 L 404.969 230" style="stroke:#ff0000; stroke-width:2; fill:none"/>
+                                                                  <!-- Footer -->
+                                                                  <text id="footerNote" x="25" y="270"
+                                                                        style="fill:#000000; font-family: Arial, sans-serif; font-size:16px; white-space:pre;">
+                                                                    Angestellte der Hochschuljobbörse
+                                                                  </text>
+                                                                  <!-- STATUS: BUSY (Nicht stören) -->
+                                                                  <g id="state-busy">
+                                                                    <rect x="25.232" y="22.884" width="103.118" height="31.715" rx="10" ry="10"
+                                                                          style="fill:#ff0000; stroke:#ff0000; stroke-width:2"/>
+                                                                    <text id="statusText-busy"
+                                                                          x="45" y="43.871"
+                                                                          transform="matrix(0.658162,0,0,0.694913,7.827,11.939)"
+                                                                          style="fill:#ffffff; font-family: Arial, sans-serif; font-size:20px; font-weight:700; white-space:pre;">
+                                                                      nicht stören
+                                                                    </text>
+                                                                  </g>
+                                                                  <!-- STATUS: FREE (empty) -->
+                                                                  <g id="state-free" style="display:none">
+                                                                    <rect x="25.232" y="22.884" width="103.118" height="31.715" rx="10" ry="10"
+                                                                          style="fill:#ffffff; fill-opacity:0; stroke:#000000; stroke-width:1; paint-order:stroke"/>
+                                                                    <text id="statusText-free"
+                                                                          x="48" y="43.871"
+                                                                          transform="matrix(0.658162,0,0,0.694913,14.134,12.290)"
+                                                                          style="fill:#000000; font-family: Arial, sans-serif; font-size:20px; font-weight:700; white-space:pre;">
+                                                                      verfügbar
+                                                                    </text>
+                                                                  </g>
+                                                                </svg>

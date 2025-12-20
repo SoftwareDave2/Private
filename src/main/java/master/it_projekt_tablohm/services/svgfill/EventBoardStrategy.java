@@ -115,42 +115,11 @@ public class EventBoardStrategy implements TemplateFillStrategy {
         }
 
         String title = ev.getTitle() != null ? ev.getTitle() : "";
-        String line2 = formatEventTimeLine(ev);
+        String line2 = SvgDomHelper.formatEventTimeLine(ev);
 
         setText(doc, idLine1, title);
         setText(doc, idLine2, line2);
     }
 
-    private static String formatEventTimeLine(DisplayTemplateSubData ev) {
-        if (ev == null) return "";
 
-        LocalDateTime start = ev.getStart();
-        LocalDateTime end = ev.getEnd();
-        boolean allDay = Boolean.TRUE.equals(ev.getAllDay());
-
-        if (start == null) {
-            return "";
-        }
-
-        String dateStr = start.toLocalDate().format(DATE_FMT);
-
-        if (allDay) {
-            return dateStr + ", Ganztags";
-        }
-
-        if (end != null && end.toLocalDate().isEqual(start.toLocalDate())) {
-            String startTime = start.toLocalTime().format(TIME_FMT);
-            String endTime = end.toLocalTime().format(TIME_FMT);
-            return dateStr + ", " + startTime + " - " + endTime + " Uhr";
-        }
-
-        if (end != null) {
-            String startPart = dateStr + " " + start.toLocalTime().format(TIME_FMT);
-            String endPart = end.toLocalDate().format(DATE_FMT) + " " + end.toLocalTime().format(TIME_FMT);
-            return startPart + " - " + endPart;
-        }
-
-        String startTime = start.toLocalTime().format(TIME_FMT);
-        return dateStr + ", " + startTime + " Uhr";
-    }
 }

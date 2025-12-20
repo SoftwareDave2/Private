@@ -4,9 +4,17 @@ import master.it_projekt_tablohm.models.DisplayTemplateSubData;
 import org.w3c.dom.Element;
 import org.w3c.dom.svg.SVGDocument;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Map;
 
 final public class SvgDomHelper {
+
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy").withLocale(Locale.GERMAN);
+    private static final DateTimeFormatter TIME_FMT =
+            DateTimeFormatter.ofPattern("HH:mm").withLocale(Locale.GERMAN);
 
     private SvgDomHelper() {
     }
@@ -76,4 +84,38 @@ final public class SvgDomHelper {
         }
         return null;
     }
+
+    public static String formatEventTimeLine(DisplayTemplateSubData ev) {
+        if (ev == null) return "";
+
+        LocalDateTime start = ev.getStart();
+        LocalDateTime end = ev.getEnd();
+        boolean allDay = Boolean.TRUE.equals(ev.getAllDay());
+
+        if (start == null) {
+            return "";
+        }
+
+        String dateStr = start.toLocalDate().format(DATE_FMT);
+
+        if (allDay) {
+            return dateStr + ", Ganztags";
+        }
+
+        if (end != null && end.toLocalDate().isEqual(start.toLocalDate())) {
+            String startTime = start.toLocalTime().format(TIME_FMT);
+            String endTime = end.toLocalTime().format(TIME_FMT);
+            return dateStr + ", " + startTime + " - " + endTime + " Uhr";
+        }
+
+        if (end != null) {
+            String startPart = dateStr + " " + start.toLocalTime().format(TIME_FMT);
+            String endPart = end.toLocalDate().format(DATE_FMT) + " " + end.toLocalTime().format(TIME_FMT);
+            return startPart + " - " + endPart;
+        }
+
+        String startTime = start.toLocalTime().format(TIME_FMT);
+        return dateStr + ", " + startTime + " Uhr";
+    }
+
 }

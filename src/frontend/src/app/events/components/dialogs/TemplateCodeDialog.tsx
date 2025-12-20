@@ -8,6 +8,8 @@ type TemplateCodeDialogProps = {
     onChange: (value: string) => void
     onClose: () => void
     onConfirm: () => void
+    confirmLabel?: string
+    isConfirming?: boolean
 }
 
 export function TemplateCodeDialog({
@@ -18,6 +20,8 @@ export function TemplateCodeDialog({
     onChange,
     onClose,
     onConfirm,
+    confirmLabel,
+    isConfirming = false,
 }: TemplateCodeDialogProps) {
     return (
         <Dialog open={open} handler={onClose} size={'xl'}>
@@ -37,8 +41,14 @@ export function TemplateCodeDialog({
                 <Button variant={'text'} color={'gray'} className={'normal-case'} onClick={onClose}>
                     Abbrechen
                 </Button>
-                <Button variant={'filled'} color={'red'} className={'normal-case'} onClick={onConfirm}>
-                    Template speichern
+                <Button
+                    variant={'filled'}
+                    color={'red'}
+                    className={'normal-case'}
+                    onClick={onConfirm}
+                    disabled={isConfirming}
+                >
+                    {isConfirming ? 'Speichere…' : confirmLabel ?? 'Template speichern'}
                 </Button>
             </DialogFooter>
         </Dialog>
