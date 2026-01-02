@@ -33,7 +33,7 @@ import {RoomBookingFormSection} from './components/RoomBookingFormSection'
 import {DisplayPreview} from './components/previews/DisplayPreview'
 import {DoorSignPersonDialog} from './components/dialogs/DoorSignPersonDialog'
 import {EventBoardCalendarDialog} from './components/dialogs/EventBoardCalendarDialog'
-import {RoomBookingEntryDialog} from './components/dialogs/RoomBookingEntryDialog'
+import {RoomBookingCalendarDialog} from './components/dialogs/RoomBookingCalendarDialog'
 import {TemplateCodeDialog} from './components/dialogs/TemplateCodeDialog'
 import {getBackendApiUrl} from '@/utils/backendApiUrl'
 import {authFetch} from '@/utils/authFetch'
@@ -59,14 +59,6 @@ type TemplateDisplayDataRequest = {
 }
 
 const TEST_DISPLAY_MAC = '00:11:22:33:44:55'
-
-type BookingDraft = {
-    id: number
-    title: string
-    startTime: string
-    endTime: string
-    allDay: boolean
-}
 
 type DisplayPayloadForms = {
     doorSignForm: DoorSignForm
@@ -230,18 +222,6 @@ const pickBoundaryDateTime = (values: Array<string | null | undefined>, boundary
     return selected.value
 }
 
-const extractTimeRange = (value: string) => {
-    const segments = value
-        .split('-')
-        .map((segment) => segment.trim())
-        .filter((segment) => segment.length > 0)
-
-    return {
-        startTime: segments.length >= 1 ? segments[0] : '',
-        endTime: segments.length >= 2 ? segments[1] : '',
-    }
-}
-
 const cloneDoorSignForm = (form: DoorSignForm): DoorSignForm => ({
     ...form,
     people: Array.isArray(form.people) ? form.people.map((person) => ({ ...person })) : [],
@@ -359,12 +339,16 @@ const hydrateNoticeBoardForm = (data: TemplateDisplayDataResponse): NoticeBoardF
 
 const hydrateRoomBookingForm = (data: TemplateDisplayDataResponse): RoomBookingForm => {
     const entries = (data.subItems ?? []).map((item, index) => {
-        const isAllDay = Boolean(item.allDay)
+        const isAllDay = item.allDay ?? isAllDayRange(item.start, item.end)
+        const { date } = getIsoDateParts(item.start ?? data.eventStart)
+        const { date: endDate } = getIsoDateParts(item.end ?? data.eventEnd ?? item.start ?? data.eventStart)
         const startTime = isAllDay ? '' : formatTimeOnly(item.start)
         const endTime = isAllDay ? '' : formatTimeOnly(item.end)
         return {
             id: index + 1,
             title: (item.title ?? '').trim(),
+            date,
+            endDate: endDate || date,
             startTime,
             endTime,
             allDay: isAllDay,
@@ -484,21 +468,26 @@ const buildRoomBookingPayload = (form: RoomBookingForm): DisplayContentPayload =
     entriesSource.forEach((entry) => {
         const title = (entry.title ?? '').trim()
         const allDay = Boolean(entry.allDay)
+        const date = (entry.date ?? '').trim()
+        const endDateValue = (entry.endDate ?? '').trim()
         let startTime = (entry.startTime ?? '').trim()
         let endTime = (entry.endTime ?? '').trim()
 
-        if (!startTime && !endTime && typeof entry.time === 'string') {
-            const { startTime: parsedStart, endTime: parsedEnd } = extractTimeRange(entry.time)
-            startTime = parsedStart
-            endTime = parsedEnd
-        }
-
-        if (!title && !startTime && !endTime && !allDay) {
+        if (!title && !date && !startTime && !endTime && !allDay) {
             return
         }
 
-        const start = allDay ? null : formatDateTimeForBackend(startTime)
-        const end = allDay ? null : formatDateTimeForBackend(endTime)
+        const normalizedEndDate = endDateValue && date && endDateValue >= date ? endDateValue : date
+        const start = formatDateAndTimeForBackend(date, startTime)
+        let end = formatDateAndTimeForBackend(normalizedEndDate, endTime)
+
+        if (allDay && normalizedEndDate) {
+            const nextDay = shiftIsoDateByDays(normalizedEndDate, 1)
+            if (nextDay) {
+                end = formatDateAndTimeForBackend(nextDay, undefined)
+            }
+        }
+
         const shouldHighlight = subItems.length === 0
 
         subItems.push({
@@ -506,7 +495,7 @@ const buildRoomBookingPayload = (form: RoomBookingForm): DisplayContentPayload =
             start: start ?? null,
             end: end ?? null,
             highlighted: shouldHighlight,
-            allDay,
+            allDay: allDay || undefined,
         })
     })
 
@@ -716,8 +705,7 @@ export default function EventsPage() {
     const [isPersonDialogOpen, setIsPersonDialogOpen] = useState<boolean>(false)
     const [personDraft, setPersonDraft] = useState<DoorSignPerson | null>(null)
     const [isEventCalendarOpen, setIsEventCalendarOpen] = useState<boolean>(false)
-    const [isBookingDialogOpen, setIsBookingDialogOpen] = useState<boolean>(false)
-    const [bookingDraft, setBookingDraft] = useState<BookingDraft | null>(null)
+    const [isRoomBookingCalendarOpen, setIsRoomBookingCalendarOpen] = useState<boolean>(false)
     const [isTemplateEditDialogOpen, setIsTemplateEditDialogOpen] = useState<boolean>(false)
     const [isTemplateCreateDialogOpen, setIsTemplateCreateDialogOpen] = useState<boolean>(false)
     const [templateEditorContent, setTemplateEditorContent] = useState<string>('')
@@ -818,6 +806,7 @@ export default function EventsPage() {
 
         const expectedType = displayType
         setIsEventCalendarOpen(false)
+        setIsRoomBookingCalendarOpen(false)
         let isCancelled = false
         const controller = new AbortController()
 
@@ -884,36 +873,8 @@ export default function EventsPage() {
     const openEventCalendar = () => setIsEventCalendarOpen(true)
     const closeEventCalendar = () => setIsEventCalendarOpen(false)
 
-    const openBookingDialog = (entry: BookingEntry) => {
-        const isAllDay = Boolean(entry.allDay)
-        let startTime = (entry.startTime ?? '').trim()
-        let endTime = (entry.endTime ?? '').trim()
-        if (!startTime && !endTime && typeof entry.time === 'string') {
-            const parts = entry.time
-                .split('-')
-                .map((part) => part.trim())
-                .filter((part) => part.length > 0)
-            startTime = parts.length >= 1 ? parts[0] : ''
-            endTime = parts.length >= 2 ? parts[1] : ''
-        }
-        if (isAllDay) {
-            startTime = ''
-            endTime = ''
-        }
-        setBookingDraft({
-            id: entry.id,
-            title: entry.title,
-            startTime,
-            endTime,
-            allDay: isAllDay,
-        })
-        setIsBookingDialogOpen(true)
-    }
-
-    const closeBookingDialog = () => {
-        setIsBookingDialogOpen(false)
-        setBookingDraft(null)
-    }
+    const openRoomBookingCalendar = () => setIsRoomBookingCalendarOpen(true)
+    const closeRoomBookingCalendar = () => setIsRoomBookingCalendarOpen(false)
 
     const openTemplateEditDialog = async () => {
         const { width, height } = resolveTemplateDimensions()
@@ -1100,37 +1061,31 @@ export default function EventsPage() {
         }))
     }
 
-    const addBookingEntry = () => {
-        let createdEntry: BookingEntry | null = null
+    const upsertRoomBookingEntry = (nextEntry: BookingEntry) => {
         setRoomBookingForm((prev) => {
-            if (prev.entries.length >= 4) {
-                return prev
-            }
-            const nextId = prev.entries.length === 0 ? 1 : Math.max(...prev.entries.map((entry) => entry.id)) + 1
-            createdEntry = { id: nextId, title: '', startTime: '', endTime: '', allDay: false }
+            const exists = prev.entries.some((entry) => entry.id === nextEntry.id)
+            const updatedEntries = exists
+                ? prev.entries.map((entry) => (entry.id === nextEntry.id ? nextEntry : entry))
+                : [...prev.entries, nextEntry]
+            const sorted = [...updatedEntries].sort((a, b) => {
+                const dateCompare = (a.date || '').localeCompare(b.date || '')
+                if (dateCompare !== 0) {
+                    return dateCompare
+                }
+                return (a.startTime || '').localeCompare(b.startTime || '')
+            })
             return {
                 ...prev,
-                entries: [...prev.entries, createdEntry],
+                entries: sorted,
             }
         })
-        if (createdEntry) {
-            openBookingDialog(createdEntry)
-        }
     }
 
     const removeBookingEntry = (entryId: number) => {
-        if (bookingDraft && bookingDraft.id === entryId) {
-            closeBookingDialog()
-        }
-        setRoomBookingForm((prev) => {
-            if (prev.entries.length <= 1) {
-                return prev
-            }
-            return {
-                ...prev,
-                entries: prev.entries.filter((entry) => entry.id !== entryId),
-            }
-        })
+        setRoomBookingForm((prev) => ({
+            ...prev,
+            entries: prev.entries.filter((entry) => entry.id !== entryId),
+        }))
     }
 
     const savePersonDialog = () => {
@@ -1143,35 +1098,6 @@ export default function EventsPage() {
             busyUntil: personDraft.status === 'busy' ? personDraft.busyUntil : '',
         })
         closePersonDialog()
-    }
-
-    const saveBookingDialog = () => {
-        if (!bookingDraft) {
-            return
-        }
-        const start = bookingDraft.allDay ? '' : bookingDraft.startTime.trim()
-        const end = bookingDraft.allDay ? '' : bookingDraft.endTime.trim()
-        const timeLabel = bookingDraft.allDay
-            ? 'Ganztägig'
-            : start && end
-                ? `${start} - ${end}`
-                : start || end
-        setRoomBookingForm((prev) => ({
-            ...prev,
-            entries: prev.entries.map((entry) =>
-                entry.id === bookingDraft.id
-                    ? {
-                        ...entry,
-                        title: bookingDraft.title,
-                        startTime: start,
-                        endTime: end,
-                        allDay: bookingDraft.allDay,
-                        time: timeLabel ?? '',
-                    }
-                    : entry,
-            ),
-        }))
-        closeBookingDialog()
     }
 
     const handleSendToDisplay = async () => {
@@ -1309,9 +1235,7 @@ export default function EventsPage() {
                 <RoomBookingFormSection
                     form={roomBookingForm}
                     onFormChange={setRoomBookingForm}
-                    onAddEntry={addBookingEntry}
-                    onEditEntry={openBookingDialog}
-                    onRemoveEntry={removeBookingEntry}
+                    onOpenCalendar={openRoomBookingCalendar}
                 />
             )
         default:
@@ -1487,12 +1411,12 @@ export default function EventsPage() {
                 onDeleteEvent={removeEventBoardEvent}
             />
 
-            <RoomBookingEntryDialog
-                open={isBookingDialogOpen}
-                draft={bookingDraft}
-                onClose={closeBookingDialog}
-                onChange={(nextDraft) => setBookingDraft(nextDraft)}
-                onSave={saveBookingDialog}
+            <RoomBookingCalendarDialog
+                open={isRoomBookingCalendarOpen}
+                entries={roomBookingForm.entries}
+                onClose={closeRoomBookingCalendar}
+                onSaveEntry={upsertRoomBookingEntry}
+                onDeleteEntry={removeBookingEntry}
             />
 
             <DoorSignPersonDialog
