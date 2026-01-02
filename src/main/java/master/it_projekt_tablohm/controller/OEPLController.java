@@ -11,6 +11,7 @@ import master.it_projekt_tablohm.repositories.DisplayRepository;
 import master.it_projekt_tablohm.services.DisplayEventService;
 import master.it_projekt_tablohm.services.DisplayHistoryService;
 import master.it_projekt_tablohm.services.OpenEPaperSyncService;
+import master.it_projekt_tablohm.services.OeplUploadQueueService;
 import master.it_projekt_tablohm.services.TemplateManagementService;
 import master.it_projekt_tablohm.services.TemplateMaintenanceService;
 import master.it_projekt_tablohm.services.storage.TemplateFileService;
@@ -38,6 +39,7 @@ public class OEPLController {
     private final TemplateMaintenanceService templateMaintenanceService;
     private final DisplayHistoryService displayHistoryService;
     private final TemplateFileService templateFileService;
+    private final OeplUploadQueueService oeplUploadQueueService;
 
     public OEPLController(OpenEPaperSyncService openEPaperSyncService,
                           DisplayRepository displayRepository,
@@ -45,6 +47,7 @@ public class OEPLController {
                           TemplateManagementService templateManagementService,
                           TemplateMaintenanceService templateMaintenanceService,
                           DisplayHistoryService displayHistoryService,
+                          OeplUploadQueueService oeplUploadQueueService,
                           TemplateFileService templateFileService) {
         this.openEPaperSyncService = openEPaperSyncService;
         this.displayRepository = displayRepository;
@@ -52,6 +55,7 @@ public class OEPLController {
         this.templateManagementService = templateManagementService;
         this.templateMaintenanceService = templateMaintenanceService;
         this.displayHistoryService = displayHistoryService;
+        this.oeplUploadQueueService = oeplUploadQueueService;
         this.templateFileService = templateFileService;
     }
 
@@ -73,6 +77,7 @@ public class OEPLController {
                 display.setDoSwitch(false);
                 // triggering update and image sending to OEPL
                 displayRepository.save(display);
+                oeplUploadQueueService.enqueue(filename, mac);
             });
 
             return ResponseEntity.ok("Image successfully sent and display updated: " + filename);

@@ -44,7 +44,7 @@ public class OpenEPaperSyncService {
     private Session session;
 
     // 192.168.2.66
-    private static final String OEPL_HOST = "10.138.169.101"; // System.getenv("OEPL_HOST"); 92.168.4.1
+    private static final String OEPL_HOST = "192.168.178.59"; // System.getenv("OEPL_HOST"); 92.168.4.1
     private static final String OEPL_GET_DB_PATH = "/get_db";
     private static final String TAG_TYPE_PATH = "static/tagtypes/";
     private static final String UPLOADS_DIR = System.getProperty("user.dir")
