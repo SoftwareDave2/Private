@@ -13,6 +13,7 @@ import static master.it_projekt_tablohm.services.svgfill.SvgDomHelper.notBlank;
 import static master.it_projekt_tablohm.services.svgfill.SvgDomHelper.setStyleProp;
 import static master.it_projekt_tablohm.services.svgfill.SvgDomHelper.setText;
 import static master.it_projekt_tablohm.services.svgfill.SvgDomHelper.setTransform;
+import static master.it_projekt_tablohm.services.svgfill.SvgDomHelper.setQrCode;
 import static master.it_projekt_tablohm.services.svgfill.SvgDomHelper.str;
 import static master.it_projekt_tablohm.services.svgfill.SvgDomHelper.toggleDisplay;
 
@@ -22,6 +23,7 @@ public class EventBoardStrategy implements TemplateFillStrategy {
             DateTimeFormatter.ofPattern("dd.MM.yyyy").withLocale(Locale.GERMAN);
     private static final DateTimeFormatter TIME_FMT =
             DateTimeFormatter.ofPattern("HH:mm").withLocale(Locale.GERMAN);
+    private static final int QR_SIZE_PX = 60;
 
     @Override
     public boolean supports(String templateType) {
@@ -39,7 +41,8 @@ public class EventBoardStrategy implements TemplateFillStrategy {
                     "event-3-text-1", "event-3-text-2",
                     "event-4-text-1", "event-4-text-2",
                     "events-line-1", "events-line-2", "events-line-3",
-                    "event-4-highlight-frame"
+                    "event-4-highlight-frame",
+                    "event-1-qr", "event-2-qr", "event-3-qr", "event-4-qr"
             )) {
                 toggleDisplay(doc, id, false);
             }
@@ -66,6 +69,7 @@ public class EventBoardStrategy implements TemplateFillStrategy {
             toggleDisplay(doc, "events-header-bg", false);
             setTransform(doc, "event-1-text-1", "translate(0,-30)");
             setTransform(doc, "event-1-text-2", "translate(0,-30)");
+            setTransform(doc, "event-1-qr", "translate(310 36)");
             setStyleProp(doc, "event-1-text-1", "font-size", "22px");
             setStyleProp(doc, "event-1-text-2", "font-size", "20px");
         }
@@ -86,11 +90,13 @@ public class EventBoardStrategy implements TemplateFillStrategy {
             DisplayTemplateSubData ev = normalEvents.get(i);
             String baseId = "event-" + (i + 1);
             setEventLines(doc, baseId, ev);
+            setEventQr(doc, baseId, ev);
         }
 
         for (int i = normalEvents.size(); i < 4; i++) {
             String baseId = "event-" + (i + 1);
             setEventLines(doc, baseId, null);
+            setEventQr(doc, baseId, null);
         }
 
         setStyleProp(doc, "event-4-highlight-frame", "stroke", "none");
@@ -99,6 +105,7 @@ public class EventBoardStrategy implements TemplateFillStrategy {
         if (highlight != null) {
             String baseId = "event-4";
             setEventLines(doc, baseId, highlight);
+            setEventQr(doc, baseId, highlight);
             setStyleProp(doc, "event-4-highlight-frame", "stroke", "#ff0000");
             toggleDisplay(doc, "events-line-3", false);
         }
@@ -121,5 +128,13 @@ public class EventBoardStrategy implements TemplateFillStrategy {
         setText(doc, idLine2, line2);
     }
 
+    private static void setEventQr(SVGDocument doc, String baseId, DisplayTemplateSubData ev) {
+        String qrId = baseId + "-qr";
+        if (ev == null) {
+            setQrCode(doc, qrId, null, QR_SIZE_PX);
+            return;
+        }
+        setQrCode(doc, qrId, ev.getQrCodeUrl(), QR_SIZE_PX);
+    }
 
 }

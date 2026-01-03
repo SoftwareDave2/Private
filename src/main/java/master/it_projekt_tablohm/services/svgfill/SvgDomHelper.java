@@ -1,5 +1,10 @@
 package master.it_projekt_tablohm.services.svgfill;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import master.it_projekt_tablohm.models.DisplayTemplateSubData;
 import org.w3c.dom.Element;
 import org.w3c.dom.svg.SVGDocument;
@@ -116,6 +121,67 @@ final public class SvgDomHelper {
 
         String startTime = start.toLocalTime().format(TIME_FMT);
         return dateStr + ", " + startTime + " Uhr";
+    }
+
+    static void setQrCode(SVGDocument doc, String id, String value, int sizePx) {
+        Element container = doc.getElementById(id);
+        if (container == null) return;
+
+        while (container.getFirstChild() != null) {
+            container.removeChild(container.getFirstChild());
+        }
+
+        String trimmed = value == null ? "" : value.trim();
+        if (trimmed.isEmpty()) {
+            toggleDisplay(doc, id, false);
+            return;
+        }
+
+        BitMatrix matrix;
+        try {
+            matrix = new QRCodeWriter().encode(
+                    trimmed,
+                    BarcodeFormat.QR_CODE,
+                    sizePx,
+                    sizePx,
+                    Map.of(EncodeHintType.MARGIN, 1)
+            );
+        } catch (WriterException e) {
+            toggleDisplay(doc, id, false);
+            return;
+        }
+
+        String ns = doc.getDocumentElement() != null ? doc.getDocumentElement().getNamespaceURI() : null;
+        if (ns == null || ns.isBlank()) {
+            ns = "http://www.w3.org/2000/svg";
+        }
+
+        double scale = sizePx / (double) matrix.getWidth();
+        Element group = doc.createElementNS(ns, "g");
+        group.setAttribute("transform", String.format(Locale.ROOT, "scale(%.6f)", scale));
+
+        Element path = doc.createElementNS(ns, "path");
+        path.setAttribute("d", buildQrPath(matrix));
+        path.setAttribute("fill", "#000");
+        path.setAttribute("shape-rendering", "crispEdges");
+
+        group.appendChild(path);
+        container.appendChild(group);
+        toggleDisplay(doc, id, true);
+    }
+
+    private static String buildQrPath(BitMatrix matrix) {
+        StringBuilder d = new StringBuilder();
+        int w = matrix.getWidth();
+        int h = matrix.getHeight();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if (matrix.get(x, y)) {
+                    d.append("M").append(x).append(" ").append(y).append("h1v1h-1z");
+                }
+            }
+        }
+        return d.toString();
     }
 
 }
